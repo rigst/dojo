@@ -1,0 +1,9 @@
+Alguém pediu para trocar a senha da conta {{ user.get_username }} no Dojo.
+
+Se foi você, abra o link abaixo e escolha a nova senha:
+
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+Se não foi, ignore este e-mail. A senha atual continua valendo.
+
+Dojo

@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br" class="ds-root"
+      {% if user.is_authenticated %}data-tema-fonte="servidor"{% endif %}
+      {% if user.is_authenticated and user.tema != "auto" %}data-tema="{{ user.tema }}"{% endif %}>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ marca }}{% endblock %} · {{ marca }}</title>
+    <meta name="description" content="Dojo: mentoria de programação passo a passo. Você escolhe o projeto e a stack, e o mentor orienta o que fazer, como fazer e por quê, sem escrever o código por você.">
+
+    {% comment %}
+    O SVG serve a quase todo navegador atual; o PNG de 32 cobre os que não leem
+    SVG na aba, e o apple-touch é o que aparece quando alguém salva o Dojo na
+    tela inicial do celular, sem ele, o iOS recorta a própria página.
+    {% endcomment %}
+    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'favicon-32.png' %}" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {% comment %}
+    Três famílias japonesas com latim próprio. A escolha não é enfeite: o latim
+    desenhado por uma fundição japonesa herda a proporção e o ritmo do desenho
+    dos kana, e é o que dá o sotaque sem precisar de nenhum ornamento oriental
+    por cima. O Zen Old Mincho ainda traz o kanji do carimbo (済).
+    {% endcomment %}
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1+Code:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/dojo.css' %}">
+
+    {% comment %}
+    Para quem está autenticado, o atributo no <html> já vem do servidor e é
+    aplicado antes de qualquer pintura. Nenhuma tela pisca ao navegar.
+
+    Para quem não está, a escolha mora no navegador, e ela precisa ser aplicada
+    ANTES do CSS pintar: fazer isso no fim do body significaria um flash branco
+    na cara de quem escolheu o escuro, a cada página.
+    {% endcomment %}
+    <script nonce="{{ request.csp_nonce }}">
+      (function () {
+        try {
+          var raiz = document.documentElement;
+          if (raiz.dataset.temaFonte === "servidor") return;
+          var escolha = localStorage.getItem("dojo-tema");
+          if (escolha === "claro" || escolha === "escuro") raiz.dataset.tema = escolha;
+        } catch (e) {}
+      })();
+    </script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% if user.is_authenticated %}app-shell{% else %}app-public{% endif %} {% block body_class %}{% endblock %}">
+
+<a class="ds-pular" href="#conteudo">Pular para o conteúdo</a>
+
+{% if user.is_authenticated %}
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Abrir menu de navegação">
+
+    <aside class="app-side">
+        <div class="app-side-head">
+            <a class="app-brand" href="{% url 'painel' %}">
+                {% include "core/_marca.html" %}
+                <span class="app-brand-word">{{ marca }}</span>
+                <span class="app-brand-kanji" aria-hidden="true">道場</span>
+            </a>
+            <label for="nav-toggle" class="nav-burger">
+                {% include "core/_ico.html" with ico="fechar" %}
+            </label>
+        </div>
+
+        <a class="ds-btn nav-destaque" href="{% url 'projeto_novo' %}">
+            {% include "core/_ico.html" with ico="novo" %}
+            <span>Novo projeto</span>
+        </a>
+
+        <nav class="app-nav" aria-label="Navegação principal">
+            <div class="nav-group">
+                <span class="nav-label">Prática</span>
+                <a href="{% url 'painel' %}" class="nav-link{% if request.path == '/' %} is-active{% endif %}">
+                    {% include "core/_ico.html" with ico="painel" %}
+                    <span>Painel</span>
+                </a>
+            </div>
+
+            {% if projetos_lateral %}
+            <div class="nav-group">
+                <span class="nav-label">Projetos</span>
+                {% for projeto in projetos_lateral %}
+                <a href="{{ projeto.get_absolute_url }}"
+                   class="nav-link nav-link--projeto{% if projeto.get_absolute_url == request.path %} is-active{% endif %}"
+                   title="{{ projeto.titulo }}">
+                    {% include "core/_ico.html" with ico="projeto" %}
+                    <span>{{ projeto.titulo }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="nav-group">
+                <span class="nav-label">Você</span>
+                <a href="{% url 'conta' %}" class="nav-link{% if '/conta/' in request.path %} is-active{% endif %}">
+                    {% include "core/_ico.html" with ico="conta" %}
+                    <span>Conta</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="app-side-foot">
+            <div class="app-side-rodape">
+                {% include "core/_tema.html" %}
+                <div class="pe-legal">
+                    <a href="{% url 'termos' %}">Termos</a>
+                    <a href="{% url 'privacidade' %}">Privacidade</a>
+                </div>
+                <form method="post" action="{% url 'logout' %}" class="app-inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="app-sair">
+                        Sair
+                        {% include "core/_ico.html" with ico="sair" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </aside>
+
+    <div class="app-frame">
+        <div class="app-topo">
+            <label for="nav-toggle" class="nav-burger" aria-label="Abrir menu">
+                {% include "core/_ico.html" with ico="menu" %}
+            </label>
+            <a class="app-brand" href="{% url 'painel' %}">
+                {% include "core/_marca.html" %}
+                <span class="app-brand-word">{{ marca }}</span>
+            </a>
+            {% include "core/_tema.html" %}
+        </div>
+        <main class="app-main" id="conteudo">
+{% else %}
+    <main class="app-main app-main--public" id="conteudo">
+{% endif %}
+
+{% comment %}
+Um bloco `content` só, servido por dois invólucros. Ter um bloco para cada
+estado deixaria toda tela pública precisando lembrar qual dos dois usar.
+{% endcomment %}
+{% block content %}{% endblock %}
+
+{% if user.is_authenticated %}
+        </main>
+    </div>
+{% else %}
+    </main>
+{% endif %}
+
+{% comment %}
+Avisos no canto inferior direito: perto de onde a mão está e longe do conteúdo,
+que não precisa se mexer para dar espaço a eles. role="status" faz o leitor de
+tela anunciar sem roubar o foco.
+{% endcomment %}
+{% if messages %}
+<div class="ds-avisos" role="status" aria-live="polite" data-avisos>
+    {% for message in messages %}
+    <div class="ds-aviso ds-aviso--{{ message.tags|default:'info' }}">
+        <span class="ds-aviso-marca" aria-hidden="true">
+            {% if message.tags == "error" %}{% include "core/_ico.html" with ico="erro" %}
+            {% elif message.tags == "warning" or message.tags == "info" %}{% include "core/_ico.html" with ico="atencao" %}
+            {% else %}{% include "core/_ico.html" with ico="ok" %}{% endif %}
+        </span>
+        <p>{{ message }}</p>
+        <button type="button" class="ds-aviso-fechar" aria-label="Dispensar aviso">
+            {% include "core/_ico.html" with ico="fechar" %}
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script src="{% static 'js/htmx.min.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'js/dojo-ui.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

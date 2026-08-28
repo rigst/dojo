@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Excluir {{ projeto.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page page--narrow">
+    <div class="page-head">
+        <span class="ds-kicker">Excluir projeto</span>
+        <h1 class="ds-h2">{{ projeto.titulo }}</h1>
+        <p class="page-sub">Vão junto: {{ projeto.planos.count }} plano(s), os passos, as submissões de código e a conversa com o mentor. Não dá para desfazer.</p>
+    </div>
+
+    <form method="post" class="form-campos">
+        {% csrf_token %}
+        <div class="campo">
+            <label for="confirmacao">Digite <strong>{{ projeto.titulo }}</strong> para confirmar</label>
+            <input id="confirmacao" name="confirmacao" autocomplete="off" required>
+        </div>
+        <div class="form-actions">
+            <a class="ds-btn ds-btn--discreto" href="{% url 'projeto_editar' projeto.pk %}">Cancelar</a>
+            <button type="submit" class="ds-btn ds-btn--perigo">Excluir para sempre</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

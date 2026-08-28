@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Senha trocada{% endblock %}
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">Conta</span>
+        <h1 class="ds-h1">Senha trocada</h1>
+        <p class="page-sub">A próxima entrada já usa a senha nova.</p>
+    </div>
+    <p><a class="ds-btn" href="{% url 'conta' %}">Voltar à conta</a></p>
+</div>
+{% endblock %}

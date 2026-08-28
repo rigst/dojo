@@ -1,0 +1,14 @@
+{% comment %}
+Alternador de tema. Fica no shell, e não só na página da conta: quem programa à
+noite troca de tema por causa da luz do quarto, não por causa de uma preferência
+que valha uma visita a uma tela de configuração.
+
+Dois estados só (claro/escuro). O "acompanhar o sistema" continua existindo na
+conta, mas ele é uma escolha de quem já pensou no assunto, e não cabe num
+botão de um clique.
+{% endcomment %}
+<button type="button" class="tema-botao" data-tema-botao
+        aria-label="Alternar entre tema claro e escuro">
+    <span class="tema-ico tema-ico--sol">{% include "core/_ico.html" with ico="sol" %}</span>
+    <span class="tema-ico tema-ico--lua">{% include "core/_ico.html" with ico="lua" %}</span>
+</button>

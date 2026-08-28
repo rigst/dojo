@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{{ projeto.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page-head page-head--row">
+        <div>
+            <span class="ds-kicker">{{ projeto.stacks_texto }}</span>
+            <h1 class="ds-h1">{{ projeto.titulo }}</h1>
+            <p class="page-sub">{{ projeto.objetivo }}</p>
+        </div>
+        {% comment %}
+        Só o que se usa toda vez fica aqui. Exportar e refazer o plano moram no
+        pé da lista: são ações raras, e no cabeçalho competiam com "Começar",
+        que é a razão de a tela existir.
+        {% endcomment %}
+        <div class="page-head-actions">
+            <a class="ds-btn" href="{% url 'chat' projeto.pk %}">
+                {% include "core/_ico.html" with ico="chat" %}
+                <span>Conversar</span>
+            </a>
+            {% comment %}
+            A ação central da tela. Sem ela, quem acabou de gerar o plano cai
+            numa lista e precisa deduzir que o título do passo é clicável.
+            {% endcomment %}
+            {% if atual %}
+            <a class="ds-btn ds-btn--solid" href="{{ atual.get_absolute_url }}">
+                {% if feitos %}Continuar no passo{% else %}Começar pelo passo{% endif %} {{ atual.numero }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <span class="stat-label">Progresso</span>
+            <span class="stat-valor num">{{ pct }}%</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Passos</span>
+            <span class="stat-valor num">{{ feitos }}/{{ total }}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Plano</span>
+            <span class="stat-valor num">v{{ plano.versao }}</span>
+        </div>
+    </div>
+
+    {% if concluido %}
+    <section class="fecho">
+        <span class="selo selo--grande selo--estampa" role="img" aria-label="Projeto concluído">済</span>
+        <div>
+            <h2 class="ds-h2">Plano concluído</h2>
+            <p class="ds-muted">Todos os passos deste plano foram aprovados. O que vem agora é seu: continue o projeto por conta, ou crie um plano novo para a próxima parte dele.</p>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="ds-card">
+        <h2 class="secao-titulo">O caminho</h2>
+        <p class="page-sub">{{ plano.resumo }}</p>
+
+        <ol class="etapas">
+            {% for etapa in etapas %}
+            <li class="etapa">
+                <div class="etapa-head">
+                    <span class="passo-num num">{{ etapa.ordem }}</span>
+                    <div>
+                        <h3>{{ etapa.titulo }}</h3>
+                        {% if etapa.objetivo %}<p class="ds-muted">{{ etapa.objetivo }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <ul class="passos">
+                    {% for passo in etapa.passos.all %}
+                    <li class="passo-linha passo-linha--{{ passo.status }}">
+                        <span class="passo-num num">{{ passo.numero }}</span>
+                        {% comment %}
+                        Passo na fila continua clicável: ler adiante é legítimo
+                       , o que a fila ordena é a prática, não a leitura. Antes
+                        era texto inerte, e o link do rodapé do passo levava ao
+                        mesmo lugar, o que deixava as duas telas em desacordo.
+                        {% endcomment %}
+                        {% if passo.status == "bloqueado" %}
+                        <a class="passo-titulo ds-muted" href="{{ passo.get_absolute_url }}">{{ passo.titulo }}</a>
+                        <span class="ds-badge" title="Abre quando o anterior for concluído. Você pode ler adiante.">na fila</span>
+                        {% else %}
+                        <a class="passo-titulo" href="{{ passo.get_absolute_url }}">{{ passo.titulo }}</a>
+                        {% if passo.status == "concluido" %}
+                        {% include "core/_selo.html" with rotulo="Passo concluído" %}
+                        {% elif passo.status == "em_revisao" %}
+                        <span class="ds-badge ds-badge--atencao">ajustes pendentes</span>
+                        {% else %}
+                        <span class="ds-badge ds-badge--agora">agora</span>
+                        {% endif %}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endfor %}
+        </ol>
+
+        <div class="plano-acoes">
+            <a href="{% url 'plano_editar' projeto.pk %}">Editar o plano</a>
+            <a href="{% url 'projeto_editar' projeto.pk %}">Editar o projeto</a>
+            <a href="{% url 'projeto_markdown' projeto.pk %}">Exportar em Markdown</a>
+            <a href="{% url 'projeto_planejar' projeto.pk %}"
+               title="Gera um plano novo a partir do objetivo. O atual fica guardado, mas sai da frente.">
+                Refazer o plano
+            </a>
+            {% for anterior in versoes_anteriores %}
+            <a href="{% url 'plano_versao' projeto.pk anterior.versao %}">Ver o plano v{{ anterior.versao }}</a>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+{% include "core/_marca_dagua.html" %}
+{% endblock %}

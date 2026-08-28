@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Conversa · {{ projeto.titulo }}{% endblock %}
+
+{% comment %}
+A tela de conversa é a única que ocupa a janela inteira: o chat já rola por
+dentro, e deixar o documento rolar junto punha duas barras lado a lado.
+{% endcomment %}
+{% block body_class %}tela-conversa{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker"><a href="{{ projeto.get_absolute_url }}">{{ projeto.titulo }}</a></span>
+        <h1 class="ds-h2">Conversa</h1>
+        <p class="page-sub">Sobre o projeto como um todo. Para falar de um passo específico, abra o passo: assim o mentor recebe o contexto dele junto.</p>
+    </div>
+
+    {% include "mentoria/_chat.html" with projeto=projeto %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/chat.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endblock %}

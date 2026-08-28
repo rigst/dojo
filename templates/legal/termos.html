@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Termos de uso{% endblock %}
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">Legal</span>
+        <h1 class="ds-h1">Termos de uso</h1>
+    </div>
+    <section class="ds-card prosa">
+        <h2>O que o Dojo é</h2>
+        <p>Uma ferramenta de estudo. O mentor orienta o caminho e a teoria; o código é escrito por você, e a responsabilidade pelo que você constrói é sua.</p>
+
+        <h2>O que o mentor não é</h2>
+        <p>As respostas são geradas por um modelo de linguagem e podem estar erradas. Confira contra a documentação oficial antes de levar qualquer coisa para produção.</p>
+
+        <h2>Sua conta</h2>
+        <p>Você é responsável pela guarda da sua senha. Pode excluir a conta a qualquer momento na página da conta, e a exclusão apaga os dados ligados a ela.</p>
+
+        <h2>Conta de visitante</h2>
+        <p>A entrada como visitante cria uma conta temporária, sem cadastro. Ela é apagada automaticamente {{ visitante_ttl }} horas depois de criada, junto com os projetos, planos, passos e conversas que você produzir nela. Não há como recuperar o que foi apagado, então crie uma conta se quiser guardar seu trabalho.</p>
+
+        <h2>Uso da API</h2>
+        <p>Quem hospeda o Dojo paga pelas respostas do mentor. Por isso existe um teto de gasto mensal por conta, definido pela administração do sistema e visível na página da conta; a conta de visitante tem um teto menor. Ao chegar no limite, o mentor para de responder até a virada do mês.</p>
+
+        <h2>Uso indevido</h2>
+        <p>Criar contas de visitante em série, automatizar requisições ou usar o app para algo que não seja estudar programação pode levar ao bloqueio do acesso.</p>
+    </section>
+</div>
+{% endblock %}

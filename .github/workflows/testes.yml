@@ -1,0 +1,56 @@
+name: testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    env:
+      # A suíte roda contra o dublê: nenhum teste do CI fala com a API da
+      # Anthropic. Os que falam levam o marcador `ia_real` e ficam de fora.
+      DOJO_IA_BACKEND: fake
+      DJANGO_ENV: development
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+
+      - name: Checagem do Django
+        run: python manage.py check
+
+      - name: Migrations sem pendência
+        # Modelo alterado sem migration passa nos testes e quebra no deploy.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Testes
+        run: python -m pytest -q -m "not ia_real"
+
+      - name: Navegador para os testes de ponta a ponta
+        run: python -m playwright install --with-deps chromium
+
+      - name: Testes de ponta a ponta
+        # Sobem o mesmo uvicorn do desenvolvimento contra um banco temporário.
+        run: python -m pytest -q -m e2e
+
+      # Os de comparação de tela (`-m visual`) não entram aqui: a renderização
+      # de texto depende das fontes instaladas na máquina, e a referência
+      # gravada no computador de quem desenvolve não bate com a do runner.
+      # Eles são rodados à mão antes de commitar mudança de CSS.
+
+      - name: Imports mortos
+        run: |
+          pip install pyflakes
+          # As migrations são geradas e têm imports que o pyflakes reclama;
+          # o `!` faz o passo falhar quando sobra qualquer outra coisa.
+          ! pyflakes core usuarios projetos mentoria revisoes ia legal config \
+            | grep -v "/migrations/" | grep .

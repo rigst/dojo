@@ -1,0 +1,14 @@
+{% comment %}
+A marca é um ensō: o círculo que o pincel fecha em um só gesto, e que fica
+aberto quando o gesto ainda não terminou.
+
+Três arcos em vez de um círculo, com espessuras decrescentes: o pincel entra
+carregado, vai secando e termina fino. Um `<circle>` de espessura única daria a
+mesma forma sem gesto nenhum, que é a diferença entre um traço e um ícone.
+{% endcomment %}
+<svg class="app-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"
+     fill="none" stroke="currentColor" stroke-linecap="round">
+    <path class="mk-entrada" d="M22.75 7.96 A10.5 10.5 0 0 1 25.09 21.25" stroke-width="3.5"/>
+    <path class="mk-corpo"   d="M25.09 21.25 A10.5 10.5 0 0 1 6.13 12.41" stroke-width="2.4"/>
+    <path class="mk-saida"   d="M6.13 12.41 A10.5 10.5 0 0 1 12.76 6.01" stroke-width="1.3"/>
+</svg>

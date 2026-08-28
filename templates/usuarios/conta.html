@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Conta{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">Você</span>
+        <h1 class="ds-h1">Conta</h1>
+        <p class="page-sub">{{ user.get_username }}{% if user.email %} · {{ user.email }}{% endif %}</p>
+    </div>
+
+    {% if user.eh_visitante %}
+    <section class="aviso-visita">
+        {% include "core/_selo.html" with grande=1 glifo="客" rotulo="Conta de visitante" %}
+        <div>
+            <h2 class="ds-h2">Você está de visita</h2>
+            <p>
+                Esta conta foi criada sem cadastro e é apagada
+                {{ visitante_ttl }} horas depois de nascer, junto com os projetos, os
+                planos e as conversas que você criar nela. Para guardar o que fizer,
+                crie uma conta.
+            </p>
+            <p class="form-actions">
+                <a class="ds-btn ds-btn--solid" href="{% url 'cadastrar' %}">Criar uma conta</a>
+            </p>
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="ds-card">
+        <h2 class="secao-titulo">Gasto do mês</h2>
+        {% comment %}
+        Leitura, não controle: o teto é definido por quem hospeda o app, porque
+        a chave da Anthropic é uma só, do provedor, e é a conta dele que cada
+        resposta consome.
+        {% endcomment %}
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-label">Gasto</span>
+                <span class="stat-valor num">US$ {{ uso.custo_usd|floatformat:2 }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Limite</span>
+                <span class="stat-valor num">US$ {{ limite|floatformat:2 }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Respostas</span>
+                <span class="stat-valor num">{{ uso.mensagens }}</span>
+            </div>
+        </div>
+        <div class="ds-progress" style="margin-top:1rem">
+            <span class="ds-progress-fill" data-pct="{{ pct_uso }}"></span>
+        </div>
+        <p class="campo-ajuda">
+            {% if user.limite_e_excecao %}
+            Este é um limite definido para a sua conta pela administração do app.
+            {% else %}
+            O limite é o padrão do sistema, definido por quem hospeda o app.
+            {% endif %}
+            Ele volta a zero na virada do mês; ao chegar nele, o mentor para de
+            responder até lá.
+        </p>
+    </section>
+
+    {% if not user.eh_visitante %}
+    <section class="ds-card">
+        <h2 class="secao-titulo">Senha</h2>
+        <p class="ds-muted">Trocar a senha encerra as outras sessões abertas nesta conta.</p>
+        <p><a class="ds-btn" href="{% url 'senha_trocar' %}">Trocar senha</a></p>
+    </section>
+    {% endif %}
+
+    <section class="ds-card">
+        <h2 class="secao-titulo">Aparência</h2>
+        <form method="post" class="form-campos">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="tema">
+            <div class="escolhas">
+                {% for valor, rotulo in user.Tema.choices %}
+                <label class="escolha">
+                    <input type="radio" name="tema" value="{{ valor }}" {% if user.tema == valor %}checked{% endif %}>
+                    <span><strong>{{ rotulo }}</strong></span>
+                </label>
+                {% endfor %}
+            </div>
+            <div class="form-actions"><button class="ds-btn">Salvar tema</button></div>
+        </form>
+    </section>
+
+    <section class="ds-card">
+        <h2 class="secao-titulo">Seus dados</h2>
+        <p class="ds-muted">Projetos, planos, passos e conversas são seus. Leve embora quando quiser.</p>
+        <p><a class="ds-btn" href="{% url 'exportar_dados' %}">Baixar tudo em JSON</a></p>
+
+        <details class="codigo-guardado" style="margin-top:1.5rem">
+            <summary>{% if user.eh_visitante %}encerrar a visita agora{% else %}excluir minha conta{% endif %}</summary>
+            <form method="post" action="{% url 'excluir_conta' %}" class="form-campos" style="padding:0 .9rem .9rem">
+                {% csrf_token %}
+                <p>
+                    {% if user.eh_visitante %}
+                    Apaga esta conta de visitante e tudo que você criou nela, sem esperar o prazo.
+                    {% else %}
+                    Apaga a conta e tudo que está ligado a ela. Não dá para desfazer.
+                    {% endif %}
+                </p>
+                <div class="campo">
+                    <label for="confirmacao">Digite <strong>{{ user.get_username }}</strong> para confirmar</label>
+                    <input id="confirmacao" name="confirmacao" autocomplete="off">
+                </div>
+                <div class="form-actions">
+                    <button class="ds-btn ds-btn--perigo"
+                            data-confirmar="Apagar a conta e todos os dados?">
+                        {% if user.eh_visitante %}Encerrar a visita{% else %}Excluir conta{% endif %}
+                    </button>
+                </div>
+            </form>
+        </details>
+    </section>
+</div>
+{% endblock %}

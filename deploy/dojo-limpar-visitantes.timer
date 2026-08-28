@@ -1,0 +1,16 @@
+# /etc/systemd/system/dojo-limpar-visitantes.timer
+#
+#   systemctl enable --now dojo-limpar-visitantes.timer
+
+[Unit]
+Description=Dojo: limpeza diária das contas de visitante
+
+[Timer]
+OnCalendar=daily
+# Se o servidor estava desligado na hora marcada, roda ao voltar em vez de
+# pular o dia.
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

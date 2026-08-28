@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load prosa %}
+
+{% block title %}Revisão · {{ passo.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">
+            <a href="{{ passo.get_absolute_url }}">{{ passo.projeto.titulo }} · passo {{ passo.numero }}</a>
+        </span>
+        <div class="veredito">
+            {% if revisao.aprovado %}
+            {% comment %}
+            Aprovado ganha o carimbo, não uma etiqueta: no vocabulário de onde
+            esta interface vem, aprovar é estampar. A animação roda uma vez, ao
+            abrir a tela em que o passo acabou de passar.
+            {% endcomment %}
+            <span class="selo selo--grande selo--estampa" role="img"
+                  aria-label="Passo aprovado" title="Passo aprovado">済</span>
+            {% endif %}
+            <div>
+                <h1 class="ds-h2">{{ passo.titulo }}</h1>
+                <p class="veredito-rotulo{% if revisao.aprovado %} veredito-rotulo--ok{% endif %}">
+                    {{ revisao.get_veredito_display }}
+                </p>
+            </div>
+        </div>
+        <p class="page-sub">{{ revisao.resumo }}</p>
+    </div>
+
+    {% if revisao.criterios_avaliados %}
+    <section class="ds-card">
+        <h2 class="secao-titulo">Critério por critério</h2>
+        <ul class="criterios criterios--avaliados">
+            {% for item in revisao.criterios_avaliados %}
+            <li class="{% if item.atende %}atende{% else %}falta{% endif %}">
+                <span class="criterio-marca" aria-hidden="true">
+                    {% if item.atende %}{% include "core/_ico.html" with ico="ok" %}
+                    {% else %}{% include "core/_ico.html" with ico="fechar" %}{% endif %}
+                </span>
+                <div>
+                    <strong>{{ item.criterio|prosa_curta }}</strong>
+                    {% if item.comentario %}<p class="ds-muted">{{ item.comentario|prosa_curta }}</p>{% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if revisao.problemas %}
+    <section class="ds-card">
+        <h2 class="secao-titulo">O que ajustar</h2>
+        <ul class="problemas">
+            {% for problema in revisao.problemas %}
+            <li class="problema problema--{{ problema.severidade }}">
+                <span class="ds-badge {% if problema.severidade == 'bloqueia' %}ds-badge--erro{% elif problema.severidade == 'importante' %}ds-badge--atencao{% endif %}">{{ problema.severidade }}</span>
+                <div>
+                    <strong>{{ problema.onde|prosa_curta }}</strong>
+                    <p>{{ problema.o_que|prosa_curta }}</p>
+                    <p class="ds-muted">{{ problema.por_que|prosa_curta }}</p>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {% if revisao.pontos_fortes %}
+    <section class="ds-card">
+        <h2 class="secao-titulo">O que ficou bom</h2>
+        <ul class="criterios criterios--nota">
+            {% for ponto in revisao.pontos_fortes %}<li>{{ ponto|prosa_curta }}</li>{% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <div class="form-actions">
+        <a class="ds-btn" href="{{ passo.get_absolute_url }}">Voltar ao passo</a>
+        {% comment %}
+        O botão dizia "ver o próximo passo" e levava ao plano, que é o lugar de
+        onde a pessoa acabou de sair. Agora ele leva ao passo mesmo; quando não
+        há próximo, o rótulo muda em vez de mentir.
+        {% endcomment %}
+        {% if revisao.aprovado %}
+        {% if passo.proximo %}
+        <a class="ds-btn ds-btn--solid" href="{{ passo.proximo.get_absolute_url }}">
+            Próximo passo: {{ passo.proximo.titulo|truncatechars:38 }}
+        </a>
+        {% else %}
+        <a class="ds-btn ds-btn--solid" href="{{ passo.projeto.get_absolute_url }}">Ver o plano completo</a>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

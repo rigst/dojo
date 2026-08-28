@@ -1,0 +1,23 @@
+<!--
+Favicon: o mesmo ensō da marca (templates/core/_marca.html), em três arcos de
+espessura decrescente — o pincel entra carregado e termina seco.
+
+Duas diferenças em relação ao ícone da interface, e as duas por causa dos 16
+pixels da aba:
+
+  · sem placa de fundo. Quadrado escuro some na barra escura do navegador e
+    quadrado claro some na clara; o traço solto se vê nas duas.
+  · traço bem mais grosso. Na proporção do ícone da tela, o arco vira um fio de
+    um pixel e desaparece.
+
+A cor é o vermelhão do carimbo, único acento da identidade — e a versão viva
+(#c4472b), não a fechada que o texto usa: aqui não há requisito de contraste de
+leitura, e o tom mais aberto sobrevive melhor ao redimensionamento.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <g fill="none" stroke="#c4472b" stroke-linecap="round">
+    <path d="M22.75 7.96 A10.5 10.5 0 0 1 25.09 21.25" stroke-width="5.4"/>
+    <path d="M25.09 21.25 A10.5 10.5 0 0 1 6.13 12.41" stroke-width="4"/>
+    <path d="M6.13 12.41 A10.5 10.5 0 0 1 12.76 6.01" stroke-width="2.4"/>
+  </g>
+</svg>

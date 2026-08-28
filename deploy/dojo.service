@@ -1,0 +1,54 @@
+# /etc/systemd/system/dojo.service
+#
+# Instalação direta no servidor: um venv em /srv/dojo/.venv, o código em
+# /srv/dojo, e o gunicorn escutando num socket unix que só o nginx enxerga.
+#
+# O ambiente vem do próprio .env do app, lido pelo settings, e não por
+# EnvironmentFile: o formato do systemd não aceita valor com espaço sem aspas,
+# e o .env tem pelo menos um (DJANGO_DEFAULT_FROM_EMAIL). Duas cópias da mesma
+# configuração, divergindo em silêncio, é pior que uma.
+
+[Unit]
+Description=Dojo (gunicorn + uvicorn worker)
+After=network-online.target postgresql.service redis.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=dojo
+Group=dojo
+WorkingDirectory=/srv/dojo
+Environment=DJANGO_ENV=production
+Environment=PYTHONUNBUFFERED=1
+
+# UvicornWorker, e não o worker sync padrão: o chat, o plano e a revisão são
+# servidos por SSE, e em WSGI cada conversa aberta prenderia um worker inteiro
+# até a resposta terminar.
+#
+# O timeout é alto porque a conexão fica legitimamente parada enquanto o modelo
+# pensa. Quem prova que ela está viva é o batimento de core/sse.py.
+ExecStart=/srv/dojo/.venv/bin/gunicorn config.asgi:application \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind unix:/run/dojo/dojo.sock \
+    --workers 3 \
+    --timeout 300 \
+    --graceful-timeout 30 \
+    --access-logfile - \
+    --error-logfile -
+
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=3
+
+# Cria /run/dojo com dono dojo:dojo a cada boot e apaga na parada. Sem isso o
+# socket precisaria morar num diretório criado à mão, que some no reboot.
+RuntimeDirectory=dojo
+RuntimeDirectoryMode=0755
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+{% extends "usuarios/_auth_base.html" %}
+{% block title %}Link enviado{% endblock %}
+{% block auth %}
+<div class="auth-header">
+    <h1>Verifique seu e-mail</h1>
+    {% comment %}
+    A mensagem não confirma se o e-mail existe: dizer "não encontramos essa
+    conta" transformaria a tela num verificador de quem tem conta aqui.
+    {% endcomment %}
+    <p>Se houver uma conta com esse endereço, o link de troca de senha chega em instantes. Ele vale por algumas horas.</p>
+</div>
+<p class="auth-rodape"><a href="{% url 'login' %}">Voltar para a entrada</a>.</p>
+{% endblock %}

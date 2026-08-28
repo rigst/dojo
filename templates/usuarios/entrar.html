@@ -1,0 +1,47 @@
+{% extends "usuarios/_auth_base.html" %}
+
+{% block title %}Entrar{% endblock %}
+
+{% block auth %}
+<div class="auth-header">
+    <h1>Entrar</h1>
+    <p>Retome de onde você parou.</p>
+</div>
+
+{% if form.errors %}
+<p class="auth-erro">Usuário ou senha não conferem.</p>
+{% endif %}
+
+<form method="post" class="form-campos">
+    {% csrf_token %}
+    {% for campo in form %}
+    <div class="campo">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+    </div>
+    {% endfor %}
+    <button type="submit" class="ds-btn ds-btn--solid auth-submit">Entrar</button>
+</form>
+
+<p class="auth-rodape">
+    <a href="{% url 'password_reset' %}">Esqueci minha senha</a>
+</p>
+
+{% comment %}
+Entrar sem cadastro. Fica depois do formulário e com peso menor: quem já tem
+conta veio para entrar, e a porta de visita não pode competir com isso.
+{% endcomment %}
+<div class="auth-visita">
+    <span class="auth-ou">ou</span>
+    <form method="post" action="{% url 'entrar_visitante' %}">
+        {% csrf_token %}
+        <button type="submit" class="ds-btn auth-submit">Entrar como visitante</button>
+    </form>
+    <p class="auth-nota">
+        Conta pronta na hora, sem cadastro, com um projeto e um mentor de verdade.
+        Ela e tudo o que você criar nela somem em {{ visitante_ttl }} horas.
+    </p>
+</div>
+
+<p class="auth-rodape">Ainda não tem conta? <a href="{% url 'cadastrar' %}">Criar uma</a>.</p>
+{% endblock %}

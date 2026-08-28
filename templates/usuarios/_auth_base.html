@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+Esqueleto das telas de entrada: pincel de um lado, formulário do outro. As duas
+telas (entrar e criar conta) só diferem no miolo, então o resto mora aqui.
+{% endcomment %}
+
+{% block content %}
+<div class="auth-shell">
+    <aside class="auth-arte">
+        {% comment %}
+        Hokusai, "Bamboo" (Met, domínio público). Bambu é o clichê certo aqui:
+        cresce em nós, um segmento por vez, cada um firmando o anterior, que
+        é literalmente o que o app faz com um projeto. E é nanquim, da mesma
+        família de gesto do ensō da marca. Créditos em static/img/CREDITOS.md.
+        {% endcomment %}
+        <img class="arte" src="{% static 'img/bambu.jpg' %}" alt="">
+        <div class="auth-arte-texto">
+            <blockquote>Um nó de cada vez.<br>É assim que o bambu fica em pé.</blockquote>
+            <cite>{{ marca }}, {{ lema }}</cite>
+        </div>
+        <span class="auth-credito">Hokusai · c. 1830 · domínio público</span>
+    </aside>
+
+    <div class="auth-lado">
+        <div class="auth-card">
+            <div class="auth-topo">
+                <span class="app-brand">
+                    {% include "core/_marca.html" %}
+                    <span class="app-brand-word">{{ marca }}</span>
+                </span>
+                {% include "core/_tema.html" %}
+            </div>
+
+            {% block auth %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

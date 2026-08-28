@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Revisando{% endblock %}
+
+{% block content %}
+<div class="page page--leitura" data-revisar
+     data-stream="{% url 'revisao_stream' submissao.pk %}"
+     data-destino="{% url 'revisao_detalhe' 0 %}">
+    <div class="page-head">
+        <span class="ds-kicker">{{ submissao.passo.projeto.titulo }} · passo {{ submissao.passo.numero }}</span>
+        <h1 class="ds-h2">Lendo seu código</h1>
+        <p class="page-sub">O mentor está conferindo critério por critério. Leva alguns segundos.</p>
+    </div>
+
+    <section class="ds-card">
+        <div class="espera" data-espera>
+            <p class="espera-estado" role="status" aria-live="polite">Revisando…</p>
+            <div class="ds-progress"><span class="ds-progress-fill espera-barra"></span></div>
+        </div>
+        <p class="auth-erro" data-erro hidden></p>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/revisar.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endblock %}

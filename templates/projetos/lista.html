@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Painel{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page-head page-head--row">
+        <div>
+            <span class="ds-kicker">{% if arquivados %}Arquivo{% else %}Prática{% endif %}</span>
+            <h1 class="ds-h1">{% if arquivados %}Projetos arquivados{% else %}Seus projetos{% endif %}</h1>
+            <p class="page-sub">
+                {% if arquivados %}
+                Saíram do painel, mas continuam inteiros. Abra um e desarquive quando quiser voltar a ele.
+                {% else %}
+                O mentor diz o que fazer, como fazer e por quê. Quem escreve o código é você.
+                {% endif %}
+            </p>
+        </div>
+        {% if projetos %}
+        <div class="page-head-actions">
+            <a class="ds-btn" href="{% url 'projeto_novo' %}">
+                {% include "core/_ico.html" with ico="novo" %}
+                <span>Novo projeto</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if retomar %}
+    {% comment %}
+    A retomada vem antes da grade: quem abre o painel quase sempre quer voltar
+    para onde estava, não escolher entre projetos.
+    {% endcomment %}
+    <a class="retomar" href="{{ retomar.get_absolute_url }}">
+        <span class="retomar-ico">{% include "core/_ico.html" with ico="passo" %}</span>
+        <span class="retomar-texto">
+            <span class="ds-kicker">Continue de onde parou</span>
+            <strong>{{ retomar.titulo }}</strong>
+            <span class="ds-muted">{{ retomar.projeto.titulo }} · passo <span class="num">{{ retomar.numero }}</span></span>
+        </span>
+        <span class="retomar-seta">{% include "core/_ico.html" with ico="seta" %}</span>
+    </a>
+    {% endif %}
+
+    {% if tem_arquivados %}
+    <nav class="abas" aria-label="Filtro de projetos">
+        <a href="{% url 'painel' %}" class="aba{% if not arquivados %} is-active{% endif %}">Em prática</a>
+        <a href="{% url 'painel' %}?arquivados=1" class="aba{% if arquivados %} is-active{% endif %}">Arquivados</a>
+    </nav>
+    {% endif %}
+
+    {% if projetos %}
+    <div class="grade">
+        {% for projeto in projetos %}
+        {% with progresso=projeto.progresso %}
+        <a class="objeto-card" href="{{ projeto.get_absolute_url }}">
+            <span class="ds-kicker">{{ projeto.stacks_texto }}</span>
+            <h3>
+                {{ projeto.titulo }}
+                {% if projeto.status == "concluido" %}{% include "core/_selo.html" with rotulo="Plano concluído" %}{% endif %}
+            </h3>
+            <p>{{ projeto.objetivo|truncatechars:110 }}</p>
+            <div class="objeto-card-pe">
+                <div class="ds-progress" aria-hidden="true">
+                    <span class="ds-progress-fill" data-pct="{{ progresso.2 }}"></span>
+                </div>
+                <span class="ds-muted num">{{ progresso.0 }}/{{ progresso.1 }} passos</span>
+            </div>
+        </a>
+        {% endwith %}
+        {% endfor %}
+    </div>
+    {% elif arquivados %}
+    <p class="ds-muted">Nenhum projeto arquivado.</p>
+    {% else %}
+    <section class="vazio">
+        <div class="vazio-texto">
+            <h2 class="secao-titulo">Comece por aqui</h2>
+            <p>Escolha algo que você realmente queira usar depois. Projeto sem destino vira exercício, e exercício a gente abandona no terceiro dia.</p>
+            <p>O mentor vai montar o caminho em etapas e passos, e acompanhar cada um deles com você.</p>
+            <p style="margin-top:1.4rem">
+                <a class="ds-btn ds-btn--solid" href="{% url 'projeto_novo' %}">
+                    {% include "core/_ico.html" with ico="novo" %}
+                    <span>Criar o primeiro projeto</span>
+                </a>
+            </p>
+        </div>
+        <figure class="vazio-arte">
+            {% comment %}
+            Sesshū, paisagem em tinta esparramada (domínio público). Ocupa o
+            vazio da primeira visita, que é a tela mais vazia do app, em vez
+            de deixar meio metro de cor lisa. Créditos em static/img/CREDITOS.md.
+            {% endcomment %}
+            <img src="{% static 'img/paisagem-tinta.png' %}" alt="">
+            <figcaption>Sesshū · séc. XV · domínio público</figcaption>
+        </figure>
+    </section>
+    {% endif %}
+</div>
+
+{% if projetos %}{% include "core/_marca_dagua.html" %}{% endif %}
+{% endblock %}

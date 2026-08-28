@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Montando o plano{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    {% comment %}
+    O texto anterior dizia "o mentor está lendo o objetivo" ANTES de qualquer
+    clique: a tela afirmava estar trabalhando enquanto esperava por você. Agora
+    o título é um convite, e a promessa de espera só aparece depois de começar.
+    {% endcomment %}
+    <div class="page-head">
+        <span class="ds-kicker">{{ projeto.titulo }}</span>
+        <h1 class="ds-h1">{% if plano_atual %}Refazer o plano{% else %}Montar o plano{% endif %}</h1>
+        <p class="page-sub">
+            {% if plano_atual %}
+            O mentor vai montar um plano novo a partir do que você escrever aqui.
+            O atual (versão {{ plano_atual.versao }}) fica guardado, mas sai da
+            frente. Os passos já concluídos não são levados para o novo.
+            {% else %}
+            O mentor lê o objetivo e a stack e divide o projeto em etapas e
+            passos. Leva um ou dois minutos, e você acompanha por aqui.
+            {% endif %}
+        </p>
+    </div>
+
+    <section class="ds-card" data-planejar
+             data-stream="{% url 'projeto_planejar_stream' projeto.pk %}"
+             data-briefing="{% url 'projeto_briefing_stream' projeto.pk %}">
+        {% comment %}
+        O briefing entra aqui, e não numa tela antes: perguntar o que falta e
+        gerar o plano são a mesma espera, e separá-las em dois passos só
+        adiciona um clique entre a pessoa e o plano.
+
+        As perguntas são geradas pelo mentor ao abrir a tela. Se essa chamada
+        falhar, resta o campo livre embaixo. O briefing é um extra, e não pode
+        impedir alguém de planejar.
+        {% endcomment %}
+        <div class="briefing" data-briefing-campo>
+            <div class="briefing-espera" data-briefing-espera>
+                <p class="ds-muted">O mentor está vendo o que falta perguntar…</p>
+                <div class="ds-progress"><span class="ds-progress-fill espera-barra"></span></div>
+            </div>
+
+            <div class="briefing-perguntas" data-briefing-perguntas hidden></div>
+
+            <div class="campo">
+                <label for="briefing">Algo mais que ele deva saber? (opcional)</label>
+                <textarea id="briefing" rows="3" placeholder="Ex.: já sei SQL, nunca usei ORM. Quero que rode em Docker desde o começo."></textarea>
+                <span class="campo-ajuda">Restrições, o que você já domina, o que quer evitar.</span>
+            </div>
+        </div>
+
+        <div class="form-actions" data-briefing-acoes>
+            {% if plano_atual %}
+            <a class="ds-btn ds-btn--discreto" href="{{ projeto.get_absolute_url }}">Cancelar</a>
+            {% endif %}
+            <button type="button" class="ds-btn ds-btn--solid" data-gerar>
+                {% if plano_atual %}Refazer o plano{% else %}Gerar o plano{% endif %}
+            </button>
+        </div>
+
+        <div class="espera ds-oculto" data-espera hidden>
+            <p class="espera-estado" role="status" aria-live="polite" data-estado>Conversando com o mentor…</p>
+            <div class="ds-progress"><span class="ds-progress-fill espera-barra"></span></div>
+            <p class="ds-muted" data-decorrido></p>
+        </div>
+
+        <p class="auth-erro ds-oculto" data-erro hidden></p>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/planejar.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endblock %}

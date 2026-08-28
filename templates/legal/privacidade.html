@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Privacidade{% endblock %}
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">Legal</span>
+        <h1 class="ds-h1">Privacidade</h1>
+    </div>
+    <section class="ds-card prosa">
+        <h2>O que fica guardado</h2>
+        <p>Seus projetos, planos, passos, conversas com o mentor e o código que você envia para revisão. Também o consumo mensal de API, para o controle de limite.</p>
+
+        <h2>O que sai daqui</h2>
+        <p>Para responder, o app envia à API da Anthropic o contexto do projeto, o passo em foco, o histórico recente da conversa e o código que você colar. Não são enviados sua senha nem seu e-mail.</p>
+
+        <h2>Quem paga a API</h2>
+        <p>A chave de acesso à Anthropic é de quem hospeda o Dojo, e é usada para todas as contas. Você não precisa de chave própria e não é cobrado pelas respostas.</p>
+
+        <h2>Conta de visitante</h2>
+        <p>A conta de visitante não pede nome, e-mail nem senha. O endereço de IP é usado apenas para limitar quantas contas de visita podem ser criadas em sequência, e não fica associado à conta. Passadas {{ visitante_ttl }} horas, a conta e tudo que ela produziu são apagados.</p>
+
+        <h2>Levar e apagar</h2>
+        <p>Na página da conta você baixa tudo em JSON e pode excluir a conta. A exclusão apaga em cascata projetos, planos, passos, conversas e submissões.</p>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+asgiref==3.12.1
+Django==6.1
+dj-database-url==3.1.2
+gunicorn==26.2.0
+sqlparse==0.6.0
+
+# Servidor ASGI: o chat é servido por SSE, e em WSGI cada conversa aberta
+# prenderia um worker inteiro até a resposta terminar.
+uvicorn==0.52.4
+
+# Banco de produção. Em desenvolvimento o padrão é SQLite.
+psycopg[binary]==3.2.12
+
+# Cliente do cache compartilhado. O backend de cache do Django é dele, e sem
+# este pacote produção não sobe: é no cache que moram as travas de força bruta
+# da entrada e de criação de contas de visitante.
+redis==7.1.0
+
+# Mentoria: cliente oficial da Anthropic e validação dos retornos estruturados
+# (plano e revisão de código voltam como JSON schema, não como texto solto).
+anthropic==1.2.0
+pydantic==2.13.4
+
+# Render e sanitização das respostas do mentor. nh3 é obrigatório: o markdown
+# vem de um modelo de linguagem e não pode ir cru para o template.
+Markdown==3.10.3
+nh3==0.3.7
+
+# Cifra a chave de API que o usuário guarda no perfil (BYOK).
+cryptography==50.0.1

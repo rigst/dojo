@@ -1,0 +1,9 @@
+{% comment %}
+O carimbo 済 ("sumi": encerrado, quitado). O mesmo que se estampa em papel
+resolvido num escritório japonês. É a única cor da interface, e ela aparece
+onde significa exatamente o que significa: este passo foi aprovado.
+
+Coincidência que vale a pena: 済 se lê "sumi", igual a 墨, a tinta.
+{% endcomment %}
+<span class="selo{% if grande %} selo--grande{% endif %}" role="img"
+      aria-label="{{ rotulo|default:'Concluído' }}" title="{{ rotulo|default:'Concluído' }}">{{ glifo|default:"済" }}</span>

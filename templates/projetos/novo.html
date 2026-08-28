@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Novo projeto{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">Novo projeto</span>
+        <h1 class="ds-h1">O que você vai construir?</h1>
+        <p class="page-sub">O plano sai do que você escrever aqui. Seja concreto: o que o programa faz, para quem e o que precisa estar pronto para você considerar terminado.</p>
+    </div>
+
+    <form method="post" class="form-campos form-novo">
+        {% csrf_token %}
+
+        {% include "projetos/_form_projeto.html" %}
+
+        <div class="form-actions">
+            <a class="ds-btn ds-btn--discreto" href="{% url 'painel' %}">Cancelar</a>
+            <button type="submit" class="ds-btn ds-btn--solid">Criar e planejar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

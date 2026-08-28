@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Página não encontrada{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <section class="vazio">
+        <div class="vazio-texto">
+            <span class="ds-kicker">Erro 404</span>
+            <h1 class="ds-h2" style="margin:.3rem 0 .8rem">Não há nada aqui</h1>
+            <p>O endereço não existe, ou o que estava nele pertence a outra pessoa. Nos dois casos a resposta é esta mesma, por segurança.</p>
+            <p style="margin-top:1.4rem"><a class="ds-btn" href="{% url 'painel' %}">Voltar ao painel</a></p>
+        </div>
+        <figure class="vazio-arte">
+            <img src="{% static 'img/paisagem-tinta.png' %}" alt="">
+        </figure>
+    </section>
+</div>
+{% endblock %}

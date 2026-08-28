@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Plano v{{ plano.versao }} · {{ projeto.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page-head">
+        <span class="ds-kicker"><a href="{{ projeto.get_absolute_url }}">{{ projeto.titulo }}</a></span>
+        <h1 class="ds-h1">Plano v{{ plano.versao }}</h1>
+        <p class="page-sub">
+            Versão de {{ plano.gerado_em|date:"d/m/Y" }}, guardada quando o plano foi refeito.
+            É registro: não dá para editar nem retomar por aqui.
+        </p>
+    </div>
+
+    <section class="ds-card">
+        <h2 class="secao-titulo">O caminho de então</h2>
+        <p class="page-sub">{{ plano.resumo }}</p>
+
+        <ol class="etapas">
+            {% for etapa in etapas %}
+            <li class="etapa">
+                <div class="etapa-head">
+                    <span class="passo-num num">{{ etapa.ordem }}</span>
+                    <div>
+                        <h3>{{ etapa.titulo }}</h3>
+                        {% if etapa.objetivo %}<p class="ds-muted">{{ etapa.objetivo }}</p>{% endif %}
+                    </div>
+                </div>
+                <ul class="passos">
+                    {% for passo in etapa.passos.all %}
+                    <li class="passo-linha">
+                        <span class="passo-num num">{{ passo.numero }}</span>
+                        <span class="passo-titulo ds-muted">{{ passo.titulo }}</span>
+                        {% if passo.status == "concluido" %}{% include "core/_selo.html" with rotulo="Estava concluído" %}{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endfor %}
+        </ol>
+    </section>
+</div>
+{% endblock %}

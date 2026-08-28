@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Editar o plano · {{ projeto.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page-head page-head--row">
+        <div>
+            <span class="ds-kicker"><a href="{{ projeto.get_absolute_url }}">{{ projeto.titulo }}</a></span>
+            <h1 class="ds-h1">Editar o plano</h1>
+            <p class="page-sub">Corrija o que o mentor errou sem jogar fora o que ele acertou. Passos concluídos continuam concluídos; a numeração se recompõe sozinha quando você move ou remove algo.</p>
+        </div>
+        <div class="page-head-actions">
+            <a class="ds-btn ds-btn--solid" href="{{ projeto.get_absolute_url }}">Concluir edição</a>
+        </div>
+    </div>
+
+    {% for etapa in etapas %}
+    <section class="ds-card etapa-edicao">
+        <form method="post" action="{% url 'etapa_editar' etapa.pk %}" class="etapa-forma">
+            {% csrf_token %}
+            <span class="passo-num num">{{ etapa.ordem }}</span>
+            <div class="etapa-campos">
+                <label class="ds-so-leitor" for="etapa-{{ etapa.pk }}-titulo">Título da etapa</label>
+                <input id="etapa-{{ etapa.pk }}-titulo" name="titulo" value="{{ etapa.titulo }}" class="entrada-titulo">
+                <label class="ds-so-leitor" for="etapa-{{ etapa.pk }}-objetivo">Objetivo da etapa</label>
+                <input id="etapa-{{ etapa.pk }}-objetivo" name="objetivo" value="{{ etapa.objetivo }}"
+                       placeholder="O que esta etapa entrega">
+            </div>
+            <button type="submit" class="ds-btn ds-btn--discreto">Salvar etapa</button>
+        </form>
+
+        <ul class="passos-edicao">
+            {% for passo in etapa.passos.all %}
+            <li class="passo-edicao">
+                <span class="passo-num num">{{ passo.numero }}</span>
+                <div class="passo-edicao-corpo">
+                    <strong>{{ passo.titulo }}</strong>
+                    <span class="ds-muted">{{ passo.o_que_fazer|truncatechars:90 }}</span>
+                    <span class="passo-edicao-meta">
+                        {{ passo.criterios_aceite|length }} critério(s)
+                        {% if passo.status == "concluido" %}· concluído{% endif %}
+                    </span>
+                </div>
+
+                <div class="passo-edicao-acoes">
+                    <form method="post" action="{% url 'passo_mover' passo.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="direcao" value="cima">
+                        <button class="linha-ico" type="submit" aria-label="Mover para cima"
+                                {% if forloop.first %}disabled{% endif %}>
+                            {% include "core/_ico.html" with ico="cima" %}
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'passo_mover' passo.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="direcao" value="baixo">
+                        <button class="linha-ico" type="submit" aria-label="Mover para baixo"
+                                {% if forloop.last %}disabled{% endif %}>
+                            {% include "core/_ico.html" with ico="baixo" %}
+                        </button>
+                    </form>
+                    <a class="linha-ico" href="{% url 'passo_editar' passo.pk %}" aria-label="Editar o passo">
+                        {% include "core/_ico.html" with ico="editar" %}
+                    </a>
+                    <form method="post" action="{% url 'passo_remover' passo.pk %}">
+                        {% csrf_token %}
+                        <button class="linha-ico linha-ico--perigo" type="submit" aria-label="Remover o passo"
+                                data-confirmar="Remover “{{ passo.titulo }}”? As submissões e a revisão deste passo vão junto.">
+                            {% include "core/_ico.html" with ico="excluir" %}
+                        </button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <a class="ds-btn ds-btn--discreto" href="{% url 'passo_novo' etapa.pk %}">
+            {% include "core/_ico.html" with ico="novo" %}
+            <span>Adicionar passo nesta etapa</span>
+        </a>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

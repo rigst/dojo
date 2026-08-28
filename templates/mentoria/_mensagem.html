@@ -1,0 +1,12 @@
+{% load prosa %}
+{% if mensagem.do_mentor %}
+<div class="msg msg--mentor">
+    <span class="msg-marca" aria-hidden="true"></span>
+    <div class="prosa">{{ mensagem.conteudo|prosa }}</div>
+    {% if mensagem.erro %}
+    <p class="msg-erro">resposta interrompida ({{ mensagem.erro }})</p>
+    {% endif %}
+</div>
+{% else %}
+<div class="msg msg--aluno"><p>{{ mensagem.conteudo }}</p></div>
+{% endif %}

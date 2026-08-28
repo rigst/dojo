@@ -1,0 +1,16 @@
+# /etc/systemd/system/dojo-limpar-visitantes.service
+#
+# Apaga as contas de visitante vencidas com tudo o que produziram. A limpeza
+# também roda de carona quando alguém entra como visitante; este timer é a rede
+# de segurança para quando ninguém entra por um tempo.
+
+[Unit]
+Description=Dojo: apaga contas de visitante vencidas
+
+[Service]
+Type=oneshot
+User=dojo
+Group=dojo
+WorkingDirectory=/srv/dojo
+Environment=DJANGO_ENV=production
+ExecStart=/srv/dojo/.venv/bin/python manage.py limpar_visitantes

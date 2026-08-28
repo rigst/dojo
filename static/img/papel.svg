@@ -1,0 +1,14 @@
+<!--
+Textura de papel: ruído fractal suave, um só arquivo, usado como camada por
+cima do fundo (ver --ds-textura no dojo.css).
+
+É SVG e não PNG porque assim ela escala sem peso: 700 bytes cobrem qualquer
+tela, e a opacidade fica com o CSS, que sabe qual é o tema.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+  <filter id="fibra">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="4" seed="7" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  <rect width="220" height="220" filter="url(#fibra)"/>
+</svg>

@@ -1,0 +1,92 @@
+# /etc/nginx/sites-available/dojo
+#
+# Instalação direta no servidor, com o gunicorn escutando no socket unix criado
+# pelo dojo.service. O que importa aqui são três coisas: os cabeçalhos de proxy
+# (sem eles o app se tranca sozinho, veja abaixo), o caminho dos estáticos e o
+# buffer desligado nas rotas de stream.
+
+upstream dojo {
+    server unix:/run/dojo/dojo.sock fail_timeout=0;
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name dojo.exemplo.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name dojo.exemplo.com;
+
+    ssl_certificate     /etc/letsencrypt/live/dojo.exemplo.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/dojo.exemplo.com/privkey.pem;
+
+    # O aluno cola arquivo inteiro no campo de revisão. O padrão do nginx é 1M
+    # e devolveria 413 antes de a mensagem do app aparecer.
+    client_max_body_size 8m;
+
+    # O mesmo STATIC_ROOT que o `manage.py collectstatic` escreve. Os arquivos
+    # saem com hash no nome (ManifestStaticFilesStorage), então cache longo é
+    # seguro: mudou o conteúdo, mudou a URL.
+    location /static/ {
+        alias /srv/dojo/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Sonda de saúde. Fora do log porque um monitor batendo a cada 15s afoga o
+    # arquivo de acesso.
+    location = /saude/ {
+        proxy_pass http://dojo;
+        include /etc/nginx/proxy_params;
+        access_log off;
+    }
+
+    # Rotas de SSE: o chat, a geração do plano e a revisão.
+    #
+    # Sem `proxy_buffering off` o nginx acumula a resposta inteira antes de
+    # repassar. O streaming continua funcionando no servidor e o usuário vê uma
+    # espera longa seguida de um bloco de texto, que é exatamente o que o SSE
+    # existe para evitar. O X-Accel-Buffering que a aplicação envia faria o
+    # mesmo, mas depender só dele deixa a configuração muda sobre a intenção.
+    location ~ /(stream|planejar/stream|chat/stream)/?$ {
+        proxy_pass http://dojo;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+
+        proxy_buffering off;
+        chunked_transfer_encoding on;
+
+        # A resposta do modelo pode levar minutos. O read timeout precisa
+        # sobreviver a isso; o batimento de 15s mantém a conexão com tráfego.
+        proxy_read_timeout 600s;
+        proxy_send_timeout 600s;
+    }
+
+    location / {
+        proxy_pass http://dojo;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+
+        # X-Forwarded-For é o que o app usa para contar tentativas de senha por
+        # IP, e X-Forwarded-Proto é o que evita o laço de redirecionamento: o
+        # nginx termina o TLS e conversa em http com o gunicorn, então sem este
+        # cabeçalho o Django vê http e manda de volta para https, para sempre.
+        # Os dois só valem se o .env ligar DJANGO_TRUST_X_FORWARDED_FOR=1 e
+        # DJANGO_USE_X_FORWARDED_PROTO=1.
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_read_timeout 120s;
+    }
+}

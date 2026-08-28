@@ -1,0 +1,80 @@
+{% load prosa %}
+{% comment %}
+O chat, servido em dois lugares: ao lado do passo e sozinho na tela do projeto.
+`passo` pode não existir, sem ele a conversa é sobre o projeto inteiro.
+{% endcomment %}
+<aside class="chat{% if not passo %} chat--inteiro{% endif %}" data-chat
+       data-stream="{% url 'chat_stream' projeto.pk %}"
+       {% if passo %}data-passo="{{ passo.pk }}"{% endif %}>
+
+    <header class="chat-head">
+        <span class="chat-head-marca">{% include "core/_marca.html" %}</span>
+        <div class="chat-head-texto">
+            <span class="ds-kicker">Mentor</span>
+            {% if passo %}
+            <span class="chat-head-sub">passo {{ passo.numero }} · {{ passo.titulo|truncatechars:34 }}</span>
+            {% else %}
+            <span class="chat-head-sub">o projeto como um todo</span>
+            {% endif %}
+        </div>
+    </header>
+
+    {% comment %}
+    aria-live="polite" para o leitor de tela anunciar a resposta sem roubar o
+    foco de quem está digitando; aria-busy marca o intervalo em que o texto
+    ainda está chegando, para não ser lido pela metade.
+    {% endcomment %}
+    <div class="chat-fluxo" data-fluxo role="log" aria-live="polite" aria-busy="false">
+        {% for mensagem in mensagens %}
+        {% include "mentoria/_mensagem.html" %}
+        {% empty %}
+        <div class="chat-vazio">
+            <p><strong>Pergunte o que travou.</strong></p>
+            <p>O mentor explica o caminho e a teoria por trás, sem escrever o código por você. Se você pedir a solução pronta, ele responde com o que falta você entender para escrevê-la.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% comment %}
+    O compositor é uma moldura só: o campo de texto por dentro, sem borda
+    própria, e a barra de ações embaixo dele.
+
+    A versão anterior punha o botão em `position: absolute` dentro do campo, e
+    o `<textarea>` é inline por padrão, então o container media alguns pixels a
+    mais que a caixa visível e o botão descia para cima da borda. Moldura com
+    :focus-within resolve a posição e o anel de foco de uma vez, sem número
+    mágico nenhum.
+    {% endcomment %}
+    <form class="chat-forma" data-forma>
+        <div class="chat-caixa">
+            <label class="ds-so-leitor" for="pergunta">Sua pergunta</label>
+            <textarea id="pergunta" name="pergunta" rows="2" data-pergunta
+                      placeholder="O que travou?"></textarea>
+
+            <div class="chat-barra">
+                {% if passo %}
+                {% comment %}
+                Travar é o momento mais importante do app, e antes dependia de a
+                pessoa saber formular a pergunta. O botão escreve o começo dela.
+                {% endcomment %}
+                <button type="button" class="chat-atalho" data-travado>
+                    {% include "core/_ico.html" with ico="travado" %}
+                    <span>Estou travado</span>
+                </button>
+                {% endif %}
+
+                <span class="chat-dica">Enter envia</span>
+                <button type="submit" class="ds-btn ds-btn--solid chat-enviar" data-enviar>
+                    <span>Perguntar</span>
+                    {% include "core/_ico.html" with ico="seta" %}
+                </button>
+            </div>
+        </div>
+
+        {% comment %}
+        O rodapé fica vazio até haver o que dizer: é onde o custo da resposta
+        aparece, e onde um erro de conexão é anunciado.
+        {% endcomment %}
+        <p class="chat-rodape" data-rodape></p>
+    </form>
+</aside>

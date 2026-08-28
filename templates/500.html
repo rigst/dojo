@@ -1,0 +1,33 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-br" class="ds-root">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Erro no servidor · Dojo</title>
+    <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+    <link rel="icon" href="{% static 'favicon-32.png' %}" sizes="32x32" type="image/png">
+    <link rel="stylesheet" href="{% static 'css/dojo.css' %}">
+</head>
+{% comment %}
+Sem {% extends %} e sem context processor: o 500 é renderizado quando algo já
+falhou, e um template que depende do banco ou da sessão falharia junto, que é
+como um erro de servidor vira uma página em branco.
+{% endcomment %}
+<body class="app-public">
+    <main class="app-main app-main--public">
+        <div class="page page--leitura">
+            <section class="vazio">
+                <div class="vazio-texto">
+                    <span class="ds-kicker">Erro 500</span>
+                    <h1 class="ds-h2" style="margin:.3rem 0 .8rem">Algo quebrou do nosso lado</h1>
+                    <p>Não foi você. O erro foi registrado; tente de novo em instantes.</p>
+                    <p style="margin-top:1.4rem"><a class="ds-btn" href="/">Voltar ao início</a></p>
+                </div>
+                <figure class="vazio-arte">
+                    <img src="{% static 'img/paisagem-tinta.png' %}" alt="">
+                </figure>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

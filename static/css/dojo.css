@@ -1,0 +1,1495 @@
+/* Dojo. Sistema visual.
+ *
+ * A direção vem das duas obras que já vivem no app: o bambu de Hokusai e a
+ * paisagem de Sesshū. Nanquim sobre papel, e é literalmente isso que a
+ * interface é. Nada de "inspirado no Japão": os materiais são os mesmos.
+ *
+ *   sumi   墨  a tinta. Preto de nanquim, que não é preto de tela: puxa quente
+ *              e vive em diluições, não em cinzas. É a cor do texto E a cor do
+ *              botão principal. No vocabulário original, tinta é tinta.
+ *   washi  和紙 o papel. Off-white FRIO, levemente esverdeado, com fibra à
+ *              mostra. Não é creme: creme é papel de embrulho ocidental, e foi
+ *              o que esta folha era antes.
+ *   shu    朱  o vermelhão do carimbo. Aparece em 1% da tela, nunca como
+ *              preenchimento. É a única cor que a tradição deixa interromper
+ *              o sumi, e aqui ela marca aprovação (ver `.selo`).
+ *   rokushō 緑青 o verdete do bronze oxidado. Critério cumprido.
+ *
+ * O que mudou em relação à versão anterior: o acento âmbar saiu. Ele fazia a
+ * tela parecer papel kraft, e âmbar sobre creme é o lugar-comum para onde todo
+ * projeto escorrega. Agora o peso está no contraste tinta/papel, e a cor é
+ * evento, não superfície.
+ *
+ * Sobre o tema escuro: TODA cor mora na camada de tokens abaixo. Regra que
+ * escreve cor literal fora dela funciona no claro e some no escuro, se for
+ * preciso uma cor nova, o lugar dela é aqui em cima, nos três blocos.
+ */
+
+:root {
+    /* ---- Papel e tinta ---- */
+    --ds-bg: #eceee7;
+    --ds-panel: #e4e7de;
+    --ds-surface: #f5f6f1;
+    --ds-line: #d5d8ce;
+    --ds-line-dash: #bcc0b4;
+
+    --ds-text-900: #1b1b18;
+    --ds-text-700: #3b3d36;
+    /* Diluições da mesma tinta, não cinzas neutros: 500 é o piso do texto
+     * secundário (6,3:1 sobre o papel) e 400 o piso do que ainda é texto. */
+    --ds-text-500: #55574f;
+    --ds-text-400: #696b64;
+
+    /* ---- Acento: a própria tinta ----
+     * O botão principal é sumi cheio sobre papel. Parece óbvio depois de
+     * escrito, e é o que separa esta tela de mais uma com botão colorido. */
+    --ds-acento: #1b1b18;
+    --ds-acento-claro: #3b3d36;
+    --ds-acento-escuro: #000000;
+    --ds-acento-veu: #e3e6dc;
+    --ds-acento-linha: #b9bdb1;
+    --ds-acento-tinta: #1b1b18;
+    /* Tinta que fica POR CIMA do acento: papel no claro, papel no escuro. */
+    --ds-acento-contraste: #f5f6f1;
+
+    /* ---- Os dois acentos: 朱 e 藍 ----
+     * O par clássico do artesanato japonês. O carimbo vermelho e o pano de
+     * índigo. Aqui eles dividem o trabalho por significado, não por gosto:
+     *
+     *   朱 shu  aprovação e agora. O selo, o passo em curso, o anel de foco.
+     *           Se preencher área maior que um selo, é erro de aplicação.
+     *   藍 ai   explicação. A voz do mentor no chat e a camada de teoria,
+     *           o "por que é assim", que é a razão de o app existir.
+     *
+     * Duas cores com dois papéis: quando as duas aparecem na mesma tela, elas
+     * dizem coisas diferentes, e é isso que justifica a segunda. */
+    --ds-selo: #b53f24;
+    --ds-selo-veu: #f7e7e1;
+    --ds-ai: #2c4f6b;
+    --ds-ai-veu: #e2e8ee;
+    --ds-ai-linha: #b7c6d3;
+
+    /* ---- Estados ---- */
+    --ds-ok: #4a7460;
+    --ds-ok-veu: #e2ebe4;
+    --ds-atencao: #7c5d1e;
+    --ds-atencao-veu: #f2ecdb;
+    --ds-erro: #a8342a;
+    --ds-erro-veu: #f6e5e2;
+
+    /* ---- A lateral é sumi nos dois temas ---- */
+    --ds-lateral: #1b1b18;
+    --ds-lateral-tinta: #eceee7;
+    --ds-lateral-fraca: rgba(236, 238, 231, 0.6);
+    --ds-lateral-linha: rgba(236, 238, 231, 0.13);
+
+    /* ---- Tipografia ----
+     * As três famílias são japonesas com latim próprio, e é essa a razão da
+     * escolha: o latim delas herda a proporção e o ritmo do desenho japonês
+     * sem precisar de nenhum enfeite oriental por cima.
+     *
+     *   mincho  明朝  serifa de pincel. Só em título, e pouco.
+     *   gothic  ゴシック  o texto corrido.
+     *   code           mono da família M+, para rótulo, número e código. */
+    --ds-font-sans: "Zen Kaku Gothic New", system-ui, -apple-system, sans-serif;
+    --ds-font-display: "Zen Old Mincho", Georgia, serif;
+    --ds-font-mono: "M PLUS 1 Code", ui-monospace, "SFMono-Regular", monospace;
+
+    /* ---- Movimento (discreto: isto é ferramenta de trabalho) ---- */
+    --ds-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+    --ds-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ds-fast: 130ms;
+    --ds-mid: 220ms;
+
+    /* ---- Ritmo: a escala de espaço ----
+     *
+     * 間 (ma): o intervalo é elemento, não sobra. E, como na carpintaria
+     * japonesa, tudo sai de um módulo só: o 間 dimensiona o tatame, o vão entre
+     * pilares e o cômodo inteiro, cada medida um múltiplo da mesma unidade.
+     *
+     * O módulo aqui é 8px. Antes desta escala a folha usava 41 valores
+     * diferentes de espaçamento (0,42rem, 0,45rem, 0,55rem, 1,05rem, 1,15rem…),
+     * todos fazendo o mesmo trabalho e nenhum concordando com o outro. Agora
+     * são oito degraus, e escolher espaçamento virou escolher o degrau.
+     *
+     *   ma-1  4px   encosto: ícone e rótulo, marcador e texto
+     *   ma-2  8px   dentro de um controle
+     *   ma-3  12px  entre linhas de uma lista
+     *   ma-4  16px  respiro interno de um bloco
+     *   ma-5  24px  entre campos de um formulário
+     *   ma-6  32px  entre blocos de uma seção
+     *   ma-7  48px  entre seções da folha
+     *   ma-8  72px  o vão grande, para abrir a página
+     */
+    --ma-1: 0.25rem;
+    --ma-2: 0.5rem;
+    --ma-3: 0.75rem;
+    --ma-4: 1rem;
+    --ma-5: 1.5rem;
+    --ma-6: 2rem;
+    --ma-7: 3rem;
+    --ma-8: 4.5rem;
+
+    --ds-gap: var(--ma-7);
+    --ds-lateral-larg: 262px;
+    /* Quase reto: canto arredondado é simpatia de framework, e aqui o corte
+     * limpo é que dá a precisão. */
+    --ds-raio: 2px;
+    --ds-raio-folha: 3px;
+    --ds-control-y: 0.66rem;
+    --ds-control-x: 1.2rem;
+
+    --ds-focus-ring: 0 0 0 2px var(--ds-bg), 0 0 0 4px var(--ds-selo);
+    --ds-shadow-soft: 0 1px 2px rgba(27, 27, 24, 0.04), 0 10px 24px rgba(27, 27, 24, 0.05);
+
+    /* Textura de papel. No claro ela escurece de leve; no escuro precisa
+     * clarear, senão some. Por isso são dois tokens e não um. */
+    --ds-textura-opacidade: 0.07;
+    --ds-textura-mistura: multiply;
+    /* Como a arte em nanquim entra na tela: no claro é tinta escura sobre
+     * papel; no escuro, papel claro sobre tinta. A imagem inverte. */
+    --ds-arte-filtro: none;
+    --ds-arte-opacidade: 0.9;
+    --ds-arte-mistura: multiply;
+
+    color-scheme: light;
+}
+
+/* O escuro é o padrão de quem programa à noite; o :not() deixa a escolha
+ * explícita de tema claro vencer a preferência do sistema. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) {
+        --ds-bg: #131412;
+        --ds-panel: #0d0e0c;
+        --ds-surface: #1b1d19;
+        --ds-line: #2b2d28;
+        --ds-line-dash: #3d403a;
+
+        --ds-text-900: #edeee8;
+        --ds-text-700: #c9cbc3;
+        --ds-text-500: #a2a49b;
+        --ds-text-400: #83857c;
+
+        --ds-acento: #edeee8;
+        --ds-acento-claro: #ffffff;
+        --ds-acento-escuro: #c9cbc3;
+        --ds-acento-veu: #202220;
+        --ds-acento-linha: #3d403a;
+        --ds-acento-tinta: #edeee8;
+        --ds-acento-contraste: #131412;
+
+        --ds-selo: #e87658;
+        --ds-selo-veu: #2b1c17;
+        --ds-ai: #7fa8c4;
+        --ds-ai-veu: #19212a;
+        --ds-ai-linha: #33475a;
+
+        --ds-ok: #8ab49b;
+        --ds-ok-veu: #1a221d;
+        --ds-atencao: #d3ac63;
+        --ds-atencao-veu: #241f14;
+        --ds-erro: #e88a7c;
+        --ds-erro-veu: #271816;
+
+        --ds-lateral: #0b0c0a;
+        --ds-lateral-linha: rgba(236, 238, 231, 0.1);
+
+        --ds-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 24px rgba(0, 0, 0, 0.4);
+
+        --ds-textura-opacidade: 0.06;
+        --ds-textura-mistura: screen;
+        --ds-arte-filtro: invert(1);
+        --ds-arte-opacidade: 0.75;
+        --ds-arte-mistura: screen;
+
+        color-scheme: dark;
+    }
+}
+
+:root[data-tema="escuro"] {
+    --ds-bg: #131412;
+    --ds-panel: #0d0e0c;
+    --ds-surface: #1b1d19;
+    --ds-line: #2b2d28;
+    --ds-line-dash: #3d403a;
+
+    --ds-text-900: #edeee8;
+    --ds-text-700: #c9cbc3;
+    --ds-text-500: #a2a49b;
+    --ds-text-400: #83857c;
+
+    --ds-acento: #edeee8;
+    --ds-acento-claro: #ffffff;
+    --ds-acento-escuro: #c9cbc3;
+    --ds-acento-veu: #202220;
+    --ds-acento-linha: #3d403a;
+    --ds-acento-tinta: #edeee8;
+    --ds-acento-contraste: #131412;
+
+    --ds-selo: #e87658;
+    --ds-selo-veu: #2b1c17;
+    --ds-ai: #7fa8c4;
+    --ds-ai-veu: #19212a;
+    --ds-ai-linha: #33475a;
+
+    --ds-ok: #8ab49b;
+    --ds-ok-veu: #1a221d;
+    --ds-atencao: #d3ac63;
+    --ds-atencao-veu: #241f14;
+    --ds-erro: #e88a7c;
+    --ds-erro-veu: #271816;
+
+    --ds-lateral: #0b0c0a;
+    --ds-lateral-linha: rgba(236, 238, 231, 0.1);
+
+    --ds-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.45), 0 10px 24px rgba(0, 0, 0, 0.4);
+
+    --ds-textura-opacidade: 0.06;
+    --ds-textura-mistura: screen;
+    --ds-arte-filtro: invert(1);
+    --ds-arte-opacidade: 0.75;
+    --ds-arte-mistura: screen;
+
+    color-scheme: dark;
+}
+
+/* BASE */
+.ds-root {
+    /* Entrelinha 1,75: o gothic tem altura-x alta e o texto adensa rápido. É
+     * também o ar que a composição japonesa dá ao corpo do texto. */
+    font-family: var(--ds-font-sans); font-size: 16px; line-height: 1.75;
+    color: var(--ds-text-900); background: var(--ds-bg);
+    -webkit-font-smoothing: antialiased;
+}
+body { margin: 0; background: var(--ds-bg); min-height: 100vh; }
+
+/* A fibra do papel.
+ *
+ * Camada fixa por cima do fundo e por baixo de tudo, com pointer-events: none.
+ * Ela existe para a tela não ser uma chapa de cor lisa nas áreas em que não há
+ * conteúdo, que num app de leitura são muitas. Fixed e não repeat-no-scroll:
+ * assim a textura não "anda" junto com o texto, que daria a impressão errada de
+ * que ela é conteúdo. */
+body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: url("../img/papel.svg") repeat;
+    background-size: 220px 220px;
+    opacity: var(--ds-textura-opacidade);
+    mix-blend-mode: var(--ds-textura-mistura);
+}
+/* O conteúdo sobe acima da textura do papel sem precisar de z-index em cada bloco. */
+.app-side, .app-frame, .app-main, .ds-avisos { position: relative; z-index: 1; }
+* { box-sizing: border-box; }
+/* Link é tinta com sublinhado fino, não cor: numa tela em que só o carimbo
+ * tem cor, um link azul (ou âmbar) seria a coisa mais barulhenta da página. */
+a { color: var(--ds-text-900); text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+a:hover { text-decoration-color: var(--ds-selo); }
+
+/* O mincho entra só aqui, e em tamanho grande: é uma serifa de pincel, e ela
+ * cansa em texto corrido. Toda a leitura é do gothic. */
+.ds-display { font-family: var(--ds-font-display); font-weight: 600; letter-spacing: -0.01em; }
+.ds-h1 {
+    font-family: var(--ds-font-display); font-weight: 600;
+    font-size: clamp(1.9rem, 3.2vw, 2.7rem); line-height: 1.22; letter-spacing: -0.012em;
+    margin: 0;
+}
+.ds-h2 {
+    font-family: var(--ds-font-display); font-weight: 600;
+    font-size: clamp(1.35rem, 2vw, 1.7rem); line-height: 1.3; letter-spacing: -0.008em;
+    margin: 0;
+}
+.ds-muted { color: var(--ds-text-500); }
+
+/* Rótulos técnicos: pequenos e MUITO espaçados. É o gesto tipográfico que a
+ * edição japonesa usa para separar o rótulo do conteúdo sem caixa nem cor:
+ * o espaço entre as letras faz o trabalho que uma tarja faria. */
+.ds-kicker,
+.nav-label,
+.campo > label,
+.data-table th,
+.stat-label,
+.def-list dt {
+    font-family: var(--ds-font-mono);
+    /* 0.75rem = 12px, o piso para maiúscula em mono: a M PLUS 1 Code tem
+     * altura-x baixa, e a 10px (onde isto estava) o rótulo de um campo de
+     * formulário virava enfeite ilegível. O espacejamento diminui junto, porque
+     * tracking largo que ajudava a distinguir 10px atrapalha a 12px. */
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ds-text-500);
+}
+
+/* Rótulo de campo é instrução de preenchimento, não legenda: ganha mais corpo
+ * e menos espacejamento que o kicker, que só abre seção. */
+.campo > label {
+    font-size: 0.82rem;
+    letter-spacing: 0.1em;
+    color: var(--ds-text-700);
+}
+
+/* Números e identificadores: mono com dígito de largura fixa, para coluna de
+ * número não dançar a cada atualização. */
+.num,
+.stat-valor,
+.passo-num,
+.custo-valor {
+    font-family: var(--ds-font-mono);
+    font-feature-settings: "tnum" 1, "zero" 1;
+    letter-spacing: -0.02em;
+}
+
+/* KASURE: abre seção.
+ *
+ * A cota de arquitetura que veio do A.R.Q. (linha com ticks nas pontas) saiu:
+ * ela pertence a uma prancha técnica, não a uma folha de nanquim. No lugar,
+ * o traço que vai secando. Cheio onde o pincel encosta e sumindo à direita,
+ * que é o que kasure quer dizer. Um degradê, sem imagem e sem enfeite. */
+.secao-titulo {
+    display: flex; align-items: baseline; gap: var(--ma-4);
+    margin: 0 0 var(--ma-5);
+    font-family: var(--ds-font-sans); font-weight: 700;
+    font-size: 0.92rem; letter-spacing: 0.02em;
+}
+.secao-titulo::after {
+    content: ""; flex: 1; height: 1px; align-self: center;
+    background: linear-gradient(to right, var(--ds-line-dash) 0%, var(--ds-line) 45%, transparent 100%);
+}
+
+/* "Por que é assim" é a camada que separa este app de um tutorial, e é a única
+ * seção que recebe o índigo: a mesma tinta da voz do mentor no chat. */
+.secao-titulo--teoria { color: var(--ds-ai); }
+.secao-titulo--teoria::after {
+    background: linear-gradient(to right, var(--ds-ai) 0%, var(--ds-ai-linha) 45%, transparent 100%);
+    opacity: 0.7;
+}
+
+/* MARCA */
+.app-brand { display: inline-flex; align-items: center; gap: var(--ma-2); text-decoration: none; color: inherit; }
+.app-brand-mark { width: 2rem; height: 2rem; flex-shrink: 0; }
+/* No hover a saída do traço engrossa um pouco: o pincel voltando ao papel.
+ * É o único movimento da marca, e dura o suficiente para ser notado uma vez. */
+.app-brand-mark .mk-saida { transition: stroke-width 420ms var(--ds-ease-out); }
+.app-brand:hover .mk-saida { stroke-width: 2.4; }
+.app-brand-word {
+    font-family: var(--ds-font-display); font-weight: 600;
+    font-size: 1.2rem; letter-spacing: 0.01em;
+}
+/* 道場 miúdo ao lado do nome: o app se chama Dojo, e a palavra existe. Fica no
+ * tamanho de uma nota de rodapé porque é isso que ela é. */
+.app-brand-kanji {
+    font-family: var(--ds-font-display);
+    font-size: 0.72rem; letter-spacing: 0.18em;
+    color: var(--ds-lateral-fraca);
+    align-self: flex-end; padding-bottom: var(--ma-1);
+}
+
+/* SHELL: lateral escura fixa, folha clara ao lado */
+.nav-toggle { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.app-side {
+    position: fixed; top: 0; left: 0; bottom: 0; width: var(--ds-lateral-larg); z-index: 20;
+    display: flex; flex-direction: column;
+    background: var(--ds-lateral); color: var(--ds-lateral-tinta);
+}
+.app-side-head { display: flex; align-items: center; justify-content: space-between; padding: var(--ma-4) var(--ma-4) var(--ma-4); }
+.nav-burger { display: none; }
+
+/* `.app-side` na frente não é decoração: .ds-btn é declarado mais abaixo nesta
+ * folha e, com a mesma especificidade, venceria por posição.
+ *
+ * Na lateral a relação se inverte: o fundo já é sumi, então a ação principal é
+ * um bloco de PAPEL sobre a tinta. Usar --ds-acento aqui pintaria preto sobre
+ * preto, porque no tema claro o acento é a própria tinta. */
+.app-side .nav-destaque {
+    margin: 0 var(--ma-4) var(--ma-4); justify-content: flex-start;
+    background: var(--ds-lateral-tinta); border-color: var(--ds-lateral-tinta);
+    color: var(--ds-lateral);
+}
+.app-side .nav-destaque:hover {
+    background: #fff; border-color: #fff; color: var(--ds-lateral);
+    transform: none; box-shadow: none;
+}
+
+.app-nav { flex: 1; overflow-y: auto; padding: var(--ma-1) var(--ma-3) var(--ma-4); display: flex; flex-direction: column; gap: var(--ma-4); }
+.nav-group { display: flex; flex-direction: column; gap: var(--ma-1); }
+.nav-label { display: flex; align-items: center; gap: var(--ma-2); padding: var(--ma-1) var(--ma-2) var(--ma-1); color: var(--ds-lateral-fraca); }
+.nav-label::before { content: ""; width: 0.45rem; height: 0.45rem; border-radius: 1px; background: currentColor; }
+
+.nav-link {
+    position: relative; display: flex; align-items: center; gap: var(--ma-3);
+    padding: var(--ma-2) var(--ma-3); border-radius: var(--ds-raio);
+    text-decoration: none; font-size: 0.95rem; color: var(--ds-lateral-tinta);
+    transition: background var(--ds-fast) ease, color var(--ds-fast) ease;
+}
+.nav-link svg { width: 1.15rem; height: 1.15rem; flex-shrink: 0; color: var(--ds-lateral-fraca); transition: color var(--ds-fast) ease; }
+.nav-link:hover { background: rgba(255, 255, 255, 0.06); }
+.nav-link:hover svg { color: var(--ds-lateral-tinta); }
+.nav-link.is-active { font-weight: 700; }
+.nav-link.is-active svg { color: var(--ds-lateral-tinta); }
+/* A lateral é sumi nos dois temas, então nada de --ds-acento aqui: no tema
+ * claro ele É a tinta, e o marcador sumiria no próprio fundo. O vermelhão
+ * marca "você está aqui". O mesmo pote de tinta do carimbo. */
+.nav-link.is-active::before {
+    content: ""; position: absolute; left: -0.75rem; top: 0.3rem; bottom: 0.3rem;
+    width: 2px; background: var(--ds-selo);
+}
+
+.app-side-foot {
+    padding: var(--ma-4) var(--ma-4) var(--ma-4); display: flex; flex-direction: column; gap: var(--ma-3);
+    border-top: 1px solid var(--ds-lateral-linha);
+}
+.app-quota { display: flex; flex-direction: column; gap: var(--ma-1); font-size: 0.72rem; color: var(--ds-lateral-fraca); }
+.app-quota strong { color: var(--ds-lateral-tinta); font-weight: 500; }
+.app-side-rodape { display: flex; align-items: center; justify-content: space-between; gap: var(--ma-4); }
+.app-inline-form { margin: 0; }
+.app-sair {
+    display: flex; align-items: center; gap: var(--ma-2); background: none; border: 0;
+    color: var(--ds-lateral-fraca); font: inherit; font-size: 0.84rem; cursor: pointer; padding: var(--ma-1) 0;
+    transition: color var(--ds-fast) ease;
+}
+.app-sair:hover { color: var(--ds-lateral-tinta); }
+.app-sair svg { width: 0.9rem; height: 0.9rem; }
+.pe-legal { display: flex; gap: var(--ma-3); font-size: 0.8rem; }
+.pe-legal a { color: var(--ds-lateral-fraca); text-decoration: none; }
+.pe-legal a:hover { text-decoration: underline; }
+
+.app-frame { position: relative; margin-left: var(--ds-lateral-larg); min-height: 100vh; }
+/* A folha: o conteúdo tem uma largura de leitura e fica CENTRADO nela, não
+ * colado à esquerda. Em monitor largo, texto grudado na borda esquerda com meio
+ * metro de vazio à direita é desconforto puro. */
+.app-main { position: relative; width: 100%; min-height: 100vh; padding: var(--ma-7) var(--ma-6) var(--ma-8); overflow-x: clip; }
+/* Sem padding: a tela de entrada monta o próprio layout de borda a borda. As
+ * páginas públicas de texto (termos, privacidade) recuperam a margem abaixo. */
+.app-main--public { min-height: 100vh; padding: 0; display: grid; }
+.app-main--public > .page { padding: var(--ma-7) var(--ma-5) var(--ma-8); max-width: 52rem; }
+
+/* RITMO: a página e suas seções */
+/* margin-inline aqui, e não em `.app-main > *`: item de grade com margem
+ * automática deixa de esticar e passa a caber no conteúdo. Foi o que encolheu
+ * a tela de entrada quando a regra era genérica. */
+.page { display: flex; flex-direction: column; gap: var(--ds-gap); width: 100%; max-width: 68rem; margin-inline: auto; }
+.page--narrow { margin: 0 auto; width: 100%; max-width: 34rem; }
+.page--leitura { margin: 0 auto; width: 100%; max-width: 52rem; }
+.page-head--row { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ma-5); }
+.page-head .ds-kicker { display: block; }
+.page-head h1 { margin: var(--ma-1) 0 0; }
+.page-sub { margin: var(--ma-2) 0 0; color: var(--ds-text-500); max-width: 46rem; line-height: 1.55; }
+.page-head-actions { display: flex; gap: var(--ma-2); flex-shrink: 0; }
+
+/* .ds-card não é caixa: é um bloco impresso na folha. Superfície de verdade só
+ * para objeto repetido numa grade (.objeto-card). */
+.ds-card { display: block; }
+.grade { display: grid; gap: var(--ma-4); grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); }
+.objeto-card {
+    display: flex; flex-direction: column; gap: var(--ma-3);
+    background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: var(--ds-raio-folha);
+    padding: var(--ma-4) var(--ma-5); text-decoration: none; color: inherit;
+    transition: border-color var(--ds-fast) ease, box-shadow var(--ds-mid) var(--ds-ease), transform var(--ds-fast) var(--ds-ease-out);
+}
+a.objeto-card:hover { border-color: var(--ds-text-700); }
+.objeto-card h3 { margin: 0; font-family: var(--ds-font-display); font-size: 1.05rem; font-weight: 600; }
+.objeto-card p { margin: 0; color: var(--ds-text-500); font-size: 0.92rem; }
+
+/* BOTÕES */
+.ds-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--ma-2);
+    white-space: nowrap; cursor: pointer; text-decoration: none;
+    font-family: var(--ds-font-sans); font-weight: 500; font-size: 0.95rem; line-height: 1.2;
+    border-radius: var(--ds-raio); padding: var(--ds-control-y) var(--ds-control-x);
+    background: var(--ds-surface); color: var(--ds-text-900); border: 1px solid var(--ds-line);
+    position: relative; overflow: hidden;
+    transition: background var(--ds-fast) ease, color var(--ds-fast) ease,
+        border-color var(--ds-fast) ease, box-shadow var(--ds-mid) var(--ds-ease),
+        transform var(--ds-fast) var(--ds-ease-out);
+}
+.ds-btn svg { width: 1rem; height: 1rem; }
+/* Sem translateY: papel não levita. O que muda no hover é a tinta da borda. */
+.ds-btn:hover { border-color: var(--ds-text-900); color: var(--ds-text-900); }
+.ds-btn--solid { color: var(--ds-acento-contraste); background: var(--ds-acento); border-color: var(--ds-acento); }
+.ds-btn--solid:hover { color: var(--ds-acento-contraste); background: var(--ds-acento-escuro); border-color: var(--ds-acento-escuro); }
+.ds-btn--discreto { background: none; border-color: transparent; color: var(--ds-text-500); }
+.ds-btn--discreto:hover { background: var(--ds-panel); }
+.ds-btn:active { box-shadow: none; transform: translateY(1px); transition-duration: 60ms; }
+.ds-btn:focus-visible { outline: 2px solid var(--ds-selo); outline-offset: 2px; }
+.ds-btn[disabled] { opacity: 0.5; pointer-events: none; }
+
+/* Envio em curso: um filete percorre a base do botão */
+.ds-btn.is-busy { pointer-events: none; opacity: 0.85; }
+.ds-btn.is-busy::before {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: currentColor; opacity: 0.5;
+    animation: ds-busy 900ms var(--ds-ease) infinite;
+}
+@keyframes ds-busy {
+    0% { transform: scaleX(0); transform-origin: left; }
+    50% { transform: scaleX(1); transform-origin: left; }
+    51% { transform: scaleX(1); transform-origin: right; }
+    100% { transform: scaleX(0); transform-origin: right; }
+}
+
+.form-actions { display: flex; gap: var(--ma-2); justify-content: flex-end; margin-top: var(--ma-4); }
+
+/* FORMULÁRIOS */
+.form-campos { display: flex; flex-direction: column; gap: var(--ma-4); }
+.campo { display: flex; flex-direction: column; gap: var(--ma-1); min-width: 0; }
+.campo input, .campo select, .campo textarea {
+    width: 100%; min-height: 2.65rem; padding: var(--ma-2) var(--ma-3);
+    border: 1px solid var(--ds-line-dash); border-radius: var(--ds-raio);
+    background: var(--ds-surface); color: var(--ds-text-900); font: inherit;
+}
+.campo textarea { min-height: 7rem; resize: vertical; line-height: 1.6; }
+.campo input:focus, .campo select:focus, .campo textarea:focus {
+    outline: none; border-color: var(--ds-text-900); box-shadow: var(--ds-focus-ring);
+}
+.campo-ajuda { font-size: 0.88rem; color: var(--ds-text-500); }
+.campo-erro { font-size: 0.88rem; color: var(--ds-erro); }
+.campo-erro ul { margin: 0; padding-left: var(--ma-4); }
+.campo--codigo textarea { font-family: var(--ds-font-mono); font-size: 0.9rem; min-height: 14rem; }
+
+/* Escolha que muda o rumo do trabalho merece linha própria, não um <select> */
+.escolhas { display: grid; gap: var(--ma-2); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.escolha {
+    display: flex; gap: var(--ma-3); align-items: flex-start; cursor: pointer;
+    padding: var(--ma-3) var(--ma-4); border: 1px solid var(--ds-line); border-radius: var(--ds-raio-folha);
+    background: var(--ds-surface);
+    transition: border-color var(--ds-fast) ease, background var(--ds-fast) ease;
+}
+.escolha:hover { border-color: var(--ds-acento-linha); }
+.escolha input { margin-top: var(--ma-1); accent-color: var(--ds-acento); }
+.escolha:has(input:checked) { border-color: var(--ds-acento); background: var(--ds-acento-veu); }
+.escolha strong { display: block; font-weight: 600; }
+.escolha span { display: block; font-size: 0.88rem; color: var(--ds-text-500); }
+
+/* BADGES */
+/* Etiqueta: retângulo de fio, não pílula colorida. A pílula é o vocabulário do
+ * framework; o fio é o da folha impressa. */
+.ds-badge {
+    display: inline-flex; align-items: center; gap: var(--ma-2);
+    font-family: var(--ds-font-mono); font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.13em; padding: var(--ma-1) var(--ma-2); border-radius: 2px;
+    border: 1px solid var(--ds-line-dash); color: var(--ds-text-500); background: none;
+}
+.ds-badge--agora { color: var(--ds-selo); border-color: var(--ds-selo); }
+.ds-badge .ds-dot { width: 0.35rem; height: 0.35rem; border-radius: 50%; background: currentColor; }
+/* As variantes seguem sem preenchimento: o que muda é a tinta do fio e da
+ * palavra. Etiqueta tingida voltaria a ser pílula de framework. */
+.ds-badge--ok { color: var(--ds-ok); border-color: var(--ds-ok); }
+.ds-badge--atencao { color: var(--ds-atencao); border-color: var(--ds-atencao); }
+.ds-badge--erro { color: var(--ds-erro); border-color: var(--ds-erro); }
+
+/* PROGRESSO */
+.ds-progress { width: 100%; height: 5px; border-radius: 0; background: color-mix(in srgb, var(--ds-text-900) 10%, transparent); overflow: hidden; }
+.ds-progress-fill { height: 100%; width: 0; border-radius: 0; background: linear-gradient(90deg, var(--ds-acento-escuro), var(--ds-acento-claro)); transition: width 800ms var(--ds-ease-out); }
+
+/* INDICADORES */
+.stats { display: flex; flex-wrap: wrap; gap: 1px; background: var(--ds-line); }
+.stat { flex: 1 1 9rem; padding: var(--ma-3) var(--ma-4); background: var(--ds-panel); }
+.stat-valor { display: block; font-size: 1.3rem; font-weight: 600; margin-top: var(--ma-1); }
+
+/* TABELAS: impressas na folha, sem caixa */
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td { text-align: left; padding: var(--ma-3) var(--ma-3); border-bottom: 1px solid var(--ds-line); }
+.data-table th { border-bottom-color: var(--ds-line-dash); }
+
+/* AVISOS: canto inferior direito, perto da mão e longe do conteúdo */
+.ds-avisos { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 40; display: flex; flex-direction: column; gap: var(--ma-2); max-width: 24rem; }
+.ds-aviso {
+    display: flex; align-items: flex-start; gap: var(--ma-2);
+    padding: var(--ma-3) var(--ma-4); border-radius: var(--ds-raio-folha); font-size: 0.92rem;
+    background: var(--ds-surface); border: 1px solid var(--ds-line); box-shadow: var(--ds-shadow-soft);
+    animation: ds-sobe 340ms var(--ds-ease-out) both;
+}
+.ds-aviso p { margin: 0; flex: 1; }
+.ds-aviso-marca svg { width: 1.1rem; height: 1.1rem; }
+.ds-aviso--success { color: var(--ds-ok); background: var(--ds-ok-veu); border-color: color-mix(in srgb, var(--ds-ok) 28%, transparent); }
+.ds-aviso--error { color: var(--ds-erro); background: var(--ds-erro-veu); border-color: color-mix(in srgb, var(--ds-erro) 28%, transparent); }
+.ds-aviso--warning, .ds-aviso--info { color: var(--ds-atencao); background: var(--ds-atencao-veu); border-color: color-mix(in srgb, var(--ds-atencao) 28%, transparent); }
+.ds-aviso-fechar { background: none; border: 0; cursor: pointer; color: inherit; opacity: 0.6; padding: 0; }
+.ds-aviso-fechar:hover { opacity: 1; }
+.ds-aviso-fechar svg { width: 0.85rem; height: 0.85rem; }
+.ds-aviso.is-saindo { animation: ds-some 220ms var(--ds-ease) both; }
+@keyframes ds-sobe { from { opacity: 0; transform: translateY(0.6rem); } to { opacity: 1; transform: none; } }
+@keyframes ds-some { to { opacity: 0; transform: translateY(0.4rem); } }
+
+/* MODAIS */
+.ds-modal { border: 1px solid var(--ds-line); border-radius: var(--ds-raio-folha); padding: 0; background: var(--ds-surface); color: var(--ds-text-900); max-width: 34rem; width: calc(100vw - 2rem); }
+.ds-modal::backdrop { background: rgba(0, 0, 0, 0.45); }
+.ds-modal-corpo { padding: var(--ma-5) var(--ma-5) var(--ma-5); }
+.ds-modal-titulo { margin: 0 0 var(--ma-2); font-family: var(--ds-font-display); font-size: 1.2rem; }
+.ds-modal-sub { margin: 0 0 var(--ma-4); color: var(--ds-text-500); font-size: 0.95rem; }
+
+/* PROSA: o markdown que o mentor devolve */
+.prosa { line-height: 1.7; }
+.prosa > :first-child { margin-top: 0; }
+.prosa > :last-child { margin-bottom: 0; }
+.prosa h2, .prosa h3 { font-family: var(--ds-font-display); font-weight: 600; margin: var(--ma-5) 0 var(--ma-2); }
+.prosa h2 { font-size: 1.15rem; }
+.prosa h3 { font-size: 1rem; }
+.prosa p, .prosa ul, .prosa ol { margin: 0 0 var(--ma-4); }
+.prosa li { margin-bottom: var(--ma-1); }
+/* A ficha de código vale onde quer que o mentor escreva, e não só na coluna
+   de leitura: critério de aceite, armadilha e problema de revisão também
+   citam arquivo e comando. Sem os seletores abaixo o <code> cai no padrão
+   do navegador, que é maior que o texto ao redor e quebra a linha. */
+.prosa code, .criterios code, .problema code { font-family: var(--ds-font-mono); font-size: 0.86em; background: var(--ds-panel); border: 1px solid var(--ds-line); border-radius: var(--ds-raio); padding: 0.08em 0.32em; }
+.prosa pre { background: var(--ds-panel); border: 1px solid var(--ds-line); border-radius: var(--ds-raio); padding: var(--ma-4) var(--ma-4); overflow-x: auto; }
+.prosa pre code { background: none; border: 0; padding: 0; font-size: 0.88rem; }
+.prosa blockquote { margin: 0 0 var(--ma-4); padding-left: var(--ma-4); border-left: 3px solid var(--ds-acento-linha); color: var(--ds-text-500); }
+.prosa table { width: 100%; border-collapse: collapse; margin-bottom: var(--ma-4); }
+.prosa th, .prosa td { border-bottom: 1px solid var(--ds-line); padding: var(--ma-2) var(--ma-2); text-align: left; }
+
+/* Guarda anti-spoiler: bloco de código longo demais fica dobrado. O mentor não
+ * deve escrever a implementação; quando escapa, quem decide ver é você. */
+.codigo-guardado { border: 1px dashed var(--ds-line-dash); border-radius: var(--ds-raio); background: var(--ds-panel); margin: 0 0 var(--ma-4); }
+.codigo-guardado > summary { cursor: pointer; padding: var(--ma-3) var(--ma-4); font-size: 0.9rem; color: var(--ds-acento-tinta); font-family: var(--ds-font-mono); }
+.codigo-guardado > summary::marker { color: var(--ds-acento); }
+.codigo-guardado pre { margin: 0 var(--ma-4) var(--ma-4); }
+
+/* ACESSIBILIDADE */
+.ds-so-leitor {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.ds-pular { position: absolute; left: 0.5rem; top: -3rem; z-index: 50; background: var(--ds-surface); padding: var(--ma-2) var(--ma-4); border-radius: var(--ds-raio); transition: top var(--ds-fast) ease; }
+.ds-pular:focus { top: 0.5rem; }
+:focus-visible { outline: 2px solid var(--ds-selo); outline-offset: 2px; }
+
+/* AUTENTICAÇÃO */
+.auth-header { margin-bottom: var(--ma-5); }
+.auth-header .app-brand { margin-bottom: var(--ma-4); }
+.auth-header h1 { font-family: var(--ds-font-display); font-size: 1.4rem; margin: 0 0 var(--ma-1); }
+.auth-header p { margin: 0; color: var(--ds-text-500); font-size: 0.95rem; }
+.auth-erro { color: var(--ds-erro); background: var(--ds-erro-veu); border: 1px solid color-mix(in srgb, var(--ds-erro) 28%, transparent); border-radius: var(--ds-raio); padding: var(--ma-3) var(--ma-4); font-size: 0.92rem; margin-bottom: var(--ma-4); }
+.auth-submit { width: 100%; margin-top: var(--ma-5); }
+.auth-rodape { margin-top: var(--ma-5); font-size: 0.92rem; color: var(--ds-text-500); text-align: center; }
+
+/* A barra de topo só existe no mobile: é onde mora o botão da gaveta.
+ * Declarada ANTES do @media de propósito. As duas regras têm a mesma
+ * especificidade, então quem vem depois vence, e a ordem invertida deixava o
+ * botão do menu invisível justamente onde ele é a única saída. */
+.app-topo { display: none; align-items: center; gap: var(--ma-3); padding: var(--ma-3) var(--ma-4); border-bottom: 1px solid var(--ds-line); background: var(--ds-panel); position: sticky; top: 0; z-index: 15; }
+
+/* RESPONSIVO: a lateral vira gaveta; o passo e o chat se empilham */
+@media (max-width: 60rem) {
+    .app-side { transform: translateX(-100%); transition: transform var(--ds-mid) var(--ds-ease); }
+    .nav-toggle:checked ~ .app-side { transform: none; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.45); }
+    .nav-burger { display: inline-flex; cursor: pointer; color: inherit; }
+    .nav-burger svg { width: 1.4rem; height: 1.4rem; }
+    .app-frame { margin-left: 0; }
+    .app-main { padding: var(--ma-5) var(--ma-4) var(--ma-7); }
+    .app-topo { display: flex; }
+    /* O cabeçalho com ações vira coluna: em linha, os botões saíam pela
+     * direita da tela e viravam um retângulo cortado no canto. */
+    .page-head--row { flex-direction: column; gap: var(--ma-4); }
+    .page-head-actions { flex-wrap: wrap; }
+}
+
+
+/* MOVIMENTO REDUZIDO */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* ---------------------------------------------------------------------------
+ * PLANO, PASSO E CHAT: as telas próprias do Dojo
+ * ------------------------------------------------------------------------- */
+
+.ds-oculto[hidden], [hidden] { display: none !important; }
+
+/* Etapas do plano: linhas com marcador, sem caixa */
+/* O ritmo do sumário, de fora para dentro: etapas bem separadas (ma-7), o
+ * cabeçalho da etapa respirando do bloco de passos (ma-4), e as linhas de
+ * passo próximas entre si. É a hierarquia que faz o olho ver primeiro as
+ * etapas e só depois os passos de cada uma. */
+.etapas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ma-7); }
+.etapa-head { display: flex; gap: var(--ma-3); align-items: baseline; margin-bottom: var(--ma-4); }
+.etapa-head h3 { margin: 0; font-family: var(--ds-font-display); font-size: 1.05rem; }
+.etapa-head p { margin: var(--ma-1) 0 0; font-size: 0.95rem; }
+.passo-num { color: var(--ds-text-400); font-size: 0.82rem; }
+
+/* Os passos recuam para começar sob o título da etapa, não sob o número dela:
+ * o recuo é o que diz "isto pertence àquela etapa". */
+.passos { list-style: none; margin: 0; padding: 0 0 0 var(--ma-5); display: flex; flex-direction: column; gap: var(--ma-1); }
+/* Sem fio entre as linhas. A lista tinha uma régua por passo, mais uma no
+ * fecho e outra antes das ações: o sumário virava papel pautado, e o olho
+ * lia as linhas em vez dos títulos. O espaçamento já separa os itens. */
+/* O recuo à esquerda é ma-4 porque a marca de vermelhão do passo em curso
+ * ocupa a margem: com o padding anterior de 4px o número encostava na tinta.
+ * A altura de linha (ma-3 acima e abaixo) dá ~44px, que é também um alvo de
+ * toque decente no celular. */
+.passo-linha {
+    display: flex; align-items: center; gap: var(--ma-3);
+    padding: var(--ma-3) var(--ma-3) var(--ma-3) var(--ma-4);
+}
+/* Coluna fixa para o número: todos os títulos começam no mesmo lugar, mesmo
+ * quando a etapa passa de nove passos e o número fica mais largo. */
+.passo-linha .passo-num { min-width: 2.2rem; }
+/* O título não estica: sem os fios da tabela, uma etiqueta na outra ponta da
+ * tela ficava desligada do passo a que pertence. Colada ao título, ela se lê
+ * como parte da mesma linha. */
+.passo-titulo { text-decoration: none; color: var(--ds-text-900); }
+.passo-linha .ds-badge, .passo-linha .selo { margin-left: var(--ma-2); }
+a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline; }
+.passo-linha--concluido .passo-titulo { color: var(--ds-text-500); }
+/* O passo em curso não é uma faixa colorida: é um traço de vermelhão na
+ * margem, do mesmo pote de tinta do carimbo. Marca sem tingir. */
+/* Só o traço, sem faixa. A faixa atravessava a linha inteira enquanto o texto
+ * ocupava o primeiro terço, e o resultado era um realce vazio de dois terços.
+ * O traço de vermelhão sozinho marca sem tingir, que era a intenção. */
+.passo-linha--disponivel, .passo-linha--em_andamento, .passo-linha--em_revisao {
+    position: relative;
+}
+.passo-linha--disponivel .passo-titulo { font-weight: 500; }
+.passo-linha--disponivel::before,
+.passo-linha--em_andamento::before,
+.passo-linha--em_revisao::before {
+    content: ""; position: absolute; left: 0; top: var(--ma-1); bottom: var(--ma-1);
+    width: 2px; border-radius: 2px; background: var(--ds-selo);
+}
+
+/* A tela do passo: leitura à esquerda, mentor à direita. */
+.passo-tela { display: grid; gap: var(--ma-6); grid-template-columns: minmax(0, 1fr); align-items: start; width: 100%; max-width: 74rem; margin-inline: auto; }
+@media (min-width: 64rem) {
+    .passo-tela { grid-template-columns: minmax(0, 1fr) 23rem; }
+    /* O chat acompanha a rolagem do documento: a pergunta costuma nascer no
+     * meio da leitura, e ter de rolar de volta até ele quebra o raciocínio. */
+    .passo-tela .chat { position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); }
+}
+.passo-doc { display: flex; flex-direction: column; gap: var(--ma-6); max-width: 44rem; }
+.passo-doc section { margin: 0; }
+.passo-pular { margin-top: calc(var(--ma-3) * -1); }
+
+.criterios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ma-2); }
+/* Bloco, e não flex: o item é uma frase corrida, e o texto do mentor traz
+ * <code> no meio dela. Em flex cada trecho vira um item e a frase se
+ * parte em colunas. Quem precisa de flex aqui é só a lista avaliada, que
+ * tem ícone ao lado do texto; ela pede de volta logo abaixo. */
+.criterios li { display: block; padding-left: var(--ma-5); position: relative; }
+.criterios li::before {
+    content: ""; position: absolute; left: 0; top: 0.55rem;
+    width: 0.55rem; height: 0.55rem; border: 1px solid var(--ds-line-dash); border-radius: 2px;
+}
+.criterios--alerta li::before { border-color: var(--ds-atencao); background: var(--ds-atencao-veu); }
+.criterios--avaliados li { display: flex; gap: var(--ma-2); align-items: flex-start; padding-left: 0; }
+.criterios--avaliados li::before { display: none; }
+.criterio-marca svg { width: 1.1rem; height: 1.1rem; margin-top: var(--ma-1); }
+.criterios--avaliados .atende .criterio-marca { color: var(--ds-ok); }
+.criterios--avaliados .falta .criterio-marca { color: var(--ds-erro); }
+.criterios--avaliados p { margin: var(--ma-1) 0 0; font-size: 0.92rem; }
+
+.problemas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ma-4); }
+.problema { display: flex; gap: var(--ma-3); align-items: flex-start; }
+.problema p { margin: var(--ma-1) 0 0; font-size: 0.95rem; }
+
+.hist-revisoes { list-style: none; margin: var(--ma-4) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--ma-2); }
+.hist-revisoes a { display: inline-flex; align-items: center; gap: var(--ma-2); text-decoration: none; }
+
+/* O CHAT
+ *
+ * Duas vozes com pesos diferentes de propósito: a pergunta do aluno é uma
+ * bolha curta e destacada; a resposta do mentor ocupa a coluna inteira, porque
+ * é texto para ler, não para bater o olho. Dar bolha às duas faria a explicação
+ *, que é o produto, parecer recado de aplicativo de mensagem.
+ */
+.chat {
+    display: flex; flex-direction: column; min-height: 26rem;
+    background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: var(--ds-raio-folha);
+    overflow: hidden;
+}
+/* Na tela dedicada o chat É o conteúdo, e ocupa o que sobra da janela: a folha
+ * vira uma coluna de altura fixa e só o fluxo de mensagens rola. Antes o chat
+ * tinha altura calculada em rem e sobrava documento para rolar em volta. Duas
+ * barras de rolagem lado a lado. */
+.tela-conversa .app-main {
+    height: 100vh; overflow: hidden; padding-bottom: var(--ma-5);
+    display: flex; flex-direction: column;
+}
+.tela-conversa .page { flex: 1; min-height: 0; }
+.tela-conversa .page--leitura { display: flex; flex-direction: column; }
+.chat--inteiro { flex: 1; min-height: 18rem; }
+
+.chat-head {
+    display: flex; align-items: center; gap: var(--ma-3);
+    padding: var(--ma-3) var(--ma-4); border-bottom: 1px solid var(--ds-line);
+    background: var(--ds-panel);
+}
+.chat-head-marca { display: flex; color: var(--ds-ai); }
+.chat-head-marca svg { width: 1.35rem; height: 1.35rem; }
+.chat-head-texto { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.chat-head-sub {
+    font-size: 0.85rem; color: var(--ds-text-500);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.chat-fluxo {
+    flex: 1; overflow-y: auto; padding: var(--ma-4) var(--ma-4) var(--ma-5);
+    display: flex; flex-direction: column; gap: var(--ma-5);
+    scroll-behavior: smooth;
+    /* Fio de rolagem discreto: a barra cheia do sistema corta a coluna de
+     * texto em telas estreitas. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--ds-line-dash) transparent;
+}
+.chat-vazio { color: var(--ds-text-500); font-size: 0.95rem; line-height: 1.65; }
+.chat-vazio p { margin: 0 0 var(--ma-2); }
+.chat-vazio strong { color: var(--ds-text-900); }
+
+.msg { font-size: 0.97rem; }
+.msg p { margin: 0 0 var(--ma-3); }
+.msg p:last-child { margin-bottom: 0; }
+
+.msg--aluno {
+    align-self: flex-end; max-width: 88%;
+    background: var(--ds-acento-veu); border: 1px solid var(--ds-line-dash);
+    border-radius: var(--ds-raio-folha); padding: var(--ma-3) var(--ma-4);
+}
+
+/* O turno do mentor é ancorado por um traço na margem. O mesmo gesto do
+ * pincel da marca, e o que diz "aqui começa outra fala" sem precisar de rótulo. */
+.msg--mentor { position: relative; padding-left: var(--ma-4); }
+.msg-marca {
+    position: absolute; left: 0; top: 0.35em; bottom: 0.2em; width: 2px;
+    border-radius: 2px;
+    /* Índigo, não tinta: é a voz do mentor, e o par shu/ai divide a tela em
+     * "aprovado" e "explicado". Um traço cinza não dizia nada. */
+    background: var(--ds-ai);
+    opacity: 0.75;
+}
+.msg--mentor .prosa { font-size: 0.97rem; line-height: 1.7; }
+.msg--mentor .prosa h2, .msg--mentor .prosa h3 { font-size: 1rem; margin: var(--ma-4) 0 var(--ma-2); }
+.msg--mentor .prosa pre { font-size: 0.85rem; }
+
+.msg--erro {
+    color: var(--ds-erro); background: var(--ds-erro-veu);
+    border: 1px solid color-mix(in srgb, var(--ds-erro) 28%, transparent);
+    border-radius: var(--ds-raio); padding: var(--ma-2) var(--ma-3);
+}
+.msg-erro { color: var(--ds-text-400); font-size: 0.8rem; font-family: var(--ds-font-mono); margin-top: var(--ma-2); }
+
+/* Cursor de digitação: some sob prefers-reduced-motion pela regra global. */
+.msg.is-escrevendo .prosa p:last-child::after {
+    content: ""; display: inline-block; width: 0.5em; height: 1em;
+    margin-left: 0.15em; vertical-align: text-bottom;
+    background: var(--ds-ai); animation: ds-pisca 1s steps(2) infinite;
+}
+@keyframes ds-pisca { 50% { opacity: 0; } }
+
+/* O COMPOSITOR
+ *
+ * Uma moldura só. O campo por dentro não tem borda; quem desenha o contorno e
+ * o anel de foco é a moldura, via :focus-within. A versão anterior posicionava
+ * o botão em absolute dentro do campo e ele caía por cima da borda. Textarea
+ * é inline, e o vão de linha-base fazia o container medir mais que a caixa.
+ */
+/* Uma moldura só por superfície de escrita. A faixa do compositor tinha borda
+ * de topo e fundo de painel, e a caixa dentro dela tinha borda inteira a oito
+ * pixels da borda da folha: quadrado dentro de quadrado. Fica a caixa, que é o
+ * que recebe o foco; a faixa vira só o respiro em volta. */
+.chat-forma { padding: var(--ma-4); }
+.chat-caixa {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--ds-line-dash); border-radius: var(--ds-raio);
+    background: var(--ds-panel);
+    transition: border-color var(--ds-fast) ease, box-shadow var(--ds-fast) ease;
+}
+.chat-caixa:focus-within { border-color: var(--ds-text-900); box-shadow: var(--ds-focus-ring); }
+.chat-caixa textarea {
+    display: block; width: 100%; resize: none;
+    border: 0; background: none; color: var(--ds-text-900);
+    font: inherit; font-size: 0.95rem; line-height: 1.5;
+    padding: var(--ma-3) var(--ma-3) var(--ma-1); min-height: 3.2rem; max-height: 40vh;
+}
+.chat-caixa textarea:focus { outline: none; }
+
+.chat-barra {
+    display: flex; align-items: center; gap: var(--ma-2); flex-wrap: wrap;
+    padding: var(--ma-1) var(--ma-2) var(--ma-2) var(--ma-2);
+}
+/* Ao lado do passo o chat tem 23rem, e aí a dica de teclado é a primeira coisa
+ * a sair: ela ensina um atalho, enquanto o botão e o "estou travado" fazem o
+ * trabalho. Na tela dedicada, onde sobra largura, a dica volta. */
+.chat:not(.chat--inteiro) .chat-dica { display: none; }
+.chat:not(.chat--inteiro) .chat-enviar { margin-left: auto; }
+.chat-atalho {
+    display: inline-flex; align-items: center; gap: var(--ma-1); cursor: pointer;
+    white-space: nowrap;
+    padding: var(--ma-1) var(--ma-2); font: inherit; font-size: 0.84rem;
+    color: var(--ds-text-500); background: none;
+    border: 1px solid transparent; border-radius: var(--ds-raio);
+    transition: color var(--ds-fast) ease, border-color var(--ds-fast) ease;
+}
+.chat-atalho:hover { color: var(--ds-selo); border-color: var(--ds-selo); }
+.chat-atalho svg { width: 0.95rem; height: 0.95rem; }
+.chat-dica {
+    margin-left: auto; font-family: var(--ds-font-mono); font-size: 0.74rem;
+    color: var(--ds-text-400); white-space: nowrap;
+}
+.chat-enviar { padding: var(--ma-2) var(--ma-3); font-size: 0.88rem; gap: var(--ma-2); }
+.chat-enviar svg { width: 0.9rem; height: 0.9rem; }
+/* Sem min-height: a linha só ocupa espaço quando tem o que dizer. Reservar
+ * altura para um texto que quase nunca aparece deixava um vão morto embaixo
+ * do campo em toda tela. */
+.chat-rodape {
+    margin: var(--ma-1) 0 0;
+    font-family: var(--ds-font-mono); font-size: 0.76rem; color: var(--ds-text-400);
+}
+.chat-rodape:empty { display: none; }
+
+/* Espera (plano e revisão): barra que anda sozinha, porque não há percentual
+ * de verdade para mostrar. Fingir um seria mentira na tela. */
+.espera { display: flex; flex-direction: column; gap: var(--ma-2); }
+.espera-estado { margin: 0; }
+.espera-barra { width: 40%; animation: ds-vaivem 1.6s var(--ds-ease) infinite; }
+@keyframes ds-vaivem {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+}
+
+/* As stacks são muitas: caixas menores, em grade densa. */
+.escolhas--stacks { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: var(--ma-2); }
+.escolha--compacta { padding: var(--ma-2) var(--ma-2); align-items: center; }
+.escolha--compacta span { font-size: 0.92rem; color: var(--ds-text-900); }
+
+.def-list { display: grid; grid-template-columns: auto 1fr; gap: var(--ma-2) var(--ma-4); margin: 0; }
+.def-list dd { margin: 0; }
+
+/* ---------------------------------------------------------------------------
+ * TEMA, ARTE E VAZIO: a camada que dá cara ao app
+ * ------------------------------------------------------------------------- */
+
+/* Botão de tema: o sol e a lua ocupam a MESMA célula da grade, e só um está
+ * visível. Trocar o ícone por JS obrigaria o script a saber desenhar SVG; assim
+ * quem decide é o CSS, que já sabe qual é o tema. */
+.tema-botao {
+    display: grid; place-items: center; cursor: pointer;
+    width: 1.9rem; height: 1.9rem; padding: 0; flex-shrink: 0;
+    background: none; border: 1px solid transparent; border-radius: var(--ds-raio);
+    color: inherit; opacity: 0.7;
+    transition: opacity var(--ds-fast) ease, border-color var(--ds-fast) ease;
+}
+.tema-botao:hover { opacity: 1; border-color: currentColor; }
+.tema-botao svg { width: 1.05rem; height: 1.05rem; }
+.tema-ico { grid-area: 1 / 1; display: flex; }
+.tema-ico--sol { display: none; }
+:root[data-tema="escuro"] .tema-ico--sol { display: flex; }
+:root[data-tema="escuro"] .tema-ico--lua { display: none; }
+@media (prefers-color-scheme: dark) {
+    :root:not([data-tema="claro"]) .tema-ico--sol { display: flex; }
+    :root:not([data-tema="claro"]) .tema-ico--lua { display: none; }
+    /* O data-tema explícito continua vencendo a preferência do sistema. */
+    :root[data-tema="claro"] .tema-ico--sol { display: none; }
+    :root[data-tema="claro"] .tema-ico--lua { display: flex; }
+}
+
+/* Nanquim sobre papel: no claro é tinta escura; no escuro a imagem é invertida
+ * e vira papel claro sobre tinta. A mesma arte serve aos dois temas, sem uma
+ * segunda versão do arquivo. */
+.arte {
+    filter: var(--ds-arte-filtro);
+    opacity: var(--ds-arte-opacidade);
+    mix-blend-mode: var(--ds-arte-mistura);
+}
+
+/* ENTRADA: a folha ao lado do pincel */
+.auth-shell {
+    display: grid; min-height: 100vh; background: var(--ds-bg);
+    grid-template-columns: 1fr;
+}
+.auth-arte { display: none; }
+@media (min-width: 56rem) {
+    .auth-shell { grid-template-columns: 1.05fr 1fr; }
+    .auth-arte {
+        display: flex; flex-direction: column; justify-content: flex-end;
+        position: relative; overflow: hidden;
+        padding: var(--ma-7); background: var(--ds-panel);
+        border-right: 1px solid var(--ds-line);
+    }
+}
+.auth-arte img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: 60% 30%;
+}
+/* Véu sobre a arte: o texto cai em cima do bambu, e nanquim tem preto e
+ * branco na mesma imagem, sem o degradê, metade da frase some. */
+.auth-arte::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to top, var(--ds-panel) 4%, color-mix(in srgb, var(--ds-panel) 72%, transparent) 32%, transparent 62%);
+}
+.auth-arte-texto { position: relative; z-index: 1; max-width: 24rem; }
+.auth-arte-texto blockquote {
+    margin: 0 0 var(--ma-4); font-family: var(--ds-font-display);
+    font-size: 1.5rem; line-height: 1.25; letter-spacing: -0.02em;
+}
+.auth-arte-texto cite { font-style: normal; font-size: 0.88rem; color: var(--ds-text-500); }
+.auth-credito {
+    position: absolute; right: 1rem; bottom: 0.8rem; z-index: 1;
+    font-family: var(--ds-font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--ds-text-400);
+}
+.auth-lado { display: grid; place-items: center; padding: var(--ma-6) var(--ma-5); }
+.auth-card {
+    width: 100%; max-width: 24rem;
+    background: none; border: 0; border-radius: 0; padding: 0; box-shadow: none;
+}
+.auth-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--ma-6); }
+
+/* VAZIO, onde não há conteúdo, a arte ocupa o silêncio em vez de deixar
+ * um retângulo de cor lisa. */
+.vazio {
+    display: grid; gap: var(--ma-5); align-items: center;
+    grid-template-columns: 1fr; justify-items: start;
+    padding: var(--ma-4) 0 var(--ma-6);
+}
+@media (min-width: 52rem) {
+    .vazio { grid-template-columns: 1fr 15rem; }
+}
+.vazio-arte { display: none; }
+@media (min-width: 52rem) {
+    .vazio-arte { display: block; justify-self: center; }
+        /* O arquivo é PNG com alfa: a tinta está no canal de cor e o papel virou
+     * transparência (ver como foi gerado em static/img/CREDITOS.md). Por isso
+     * aqui não há mistura nem máscara. O recorte já veio pronto, e no escuro
+     * basta inverter a tinta. */
+    .vazio-arte img {
+        width: 100%; max-width: 14rem; height: auto;
+        filter: var(--ds-arte-filtro); opacity: 0.8;
+        /* Dissolve as bordas: o alfa tira o papel, mas o scan tem sujeira nas
+         * beiradas que ainda desenharia um retângulo fraco. */
+        -webkit-mask-image: radial-gradient(78% 74% at 50% 50%, #000 55%, transparent 92%);
+        mask-image: radial-gradient(78% 74% at 50% 50%, #000 55%, transparent 92%);
+    }
+    .vazio-arte figcaption {
+        margin-top: var(--ma-2); text-align: center;
+        font-family: var(--ds-font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+        text-transform: uppercase; color: var(--ds-text-400);
+    }
+}
+.vazio-texto { max-width: 34rem; }
+.vazio-texto p { color: var(--ds-text-500); line-height: 1.6; }
+
+/* Marca-d'água do painel: a paisagem bem apagada no canto, para a tela larga
+ * não virar um vazio chapado. */
+.marca-dagua {
+    position: fixed; right: -2rem; bottom: -3rem; width: 28rem; max-width: 40vw;
+    pointer-events: none; z-index: 0;
+}
+.marca-dagua img {
+    width: 100%; height: auto;
+    filter: var(--ds-arte-filtro);
+    opacity: 0.085;
+    /* A máscara só suaviza a borda de baixo, onde a imagem sai da tela. */
+    -webkit-mask-image: linear-gradient(to top, transparent 2%, #000 30%);
+    mask-image: linear-gradient(to top, transparent 2%, #000 30%);
+}
+@media (max-width: 60rem) { .marca-dagua { display: none; } }
+
+/* RETOMADA: a faixa "continue de onde parou" */
+.retomar {
+    display: flex; align-items: center; gap: var(--ma-4); text-decoration: none; color: inherit;
+    padding: var(--ma-4) var(--ma-5); border-radius: var(--ds-raio-folha);
+    background: var(--ds-acento-veu); border: 1px solid var(--ds-line-dash);
+    transition: border-color var(--ds-fast) ease, transform var(--ds-fast) var(--ds-ease-out);
+}
+.retomar:hover { border-color: var(--ds-selo); }
+.retomar-ico { display: flex; color: var(--ds-acento-tinta); }
+.retomar-ico svg { width: 1.5rem; height: 1.5rem; }
+.retomar-texto { display: flex; flex-direction: column; gap: var(--ma-1); flex: 1; min-width: 0; }
+.retomar-texto strong { font-size: 1.02rem; }
+.retomar-texto .ds-muted { font-size: 0.88rem; }
+.retomar-seta { display: flex; color: var(--ds-acento-tinta); }
+.retomar-seta svg { width: 1.15rem; height: 1.15rem; }
+
+.objeto-card-pe { display: flex; align-items: center; gap: var(--ma-3); margin-top: auto; padding-top: var(--ma-2); }
+.objeto-card-pe .ds-progress { flex: 1; }
+.objeto-card-pe .num { font-size: 0.82rem; white-space: nowrap; }
+
+/* NOVO PROJETO: o formulário mais longo do app, então ele respira */
+.form-novo { gap: var(--ma-6); }
+.grupo { border: 0; padding: 0; margin: 0; min-width: 0; }
+.grupo > .campo-ajuda { display: block; margin: calc(var(--ma-2) * -1) 0 var(--ma-4); }
+.campo--curto input { max-width: 8rem; }
+
+.stack-grupo { margin-bottom: var(--ma-4); }
+.stack-grupo-nome {
+    display: flex; align-items: center; gap: var(--ma-2); margin-bottom: var(--ma-2);
+    font-family: var(--ds-font-mono); font-size: 0.75rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.14em; color: var(--ds-text-500);
+}
+.stack-grupo-nome svg { width: 0.95rem; height: 0.95rem; }
+
+.stack-opcoes { display: flex; flex-wrap: wrap; gap: var(--ma-2); }
+/* Chip, e não caixa de seleção em coluna: 26 tecnologias em lista viram uma
+ * rolagem; em chips, cabem numa varredura de olho. A caixa continua lá, só
+ * escondida. É ela que carrega o estado e a acessibilidade. */
+.stack-chip {
+    display: inline-flex; align-items: center; cursor: pointer;
+    padding: var(--ma-2) var(--ma-3); border-radius: var(--ds-raio);
+    border: 1px solid var(--ds-line-dash); background: var(--ds-surface);
+    font-size: 0.92rem;
+    transition: border-color var(--ds-fast) ease, background var(--ds-fast) ease, color var(--ds-fast) ease;
+}
+.stack-chip input {
+    position: absolute; width: 1px; height: 1px; opacity: 0;
+    /* Não é display:none: assim o campo continua focável pelo teclado. */
+}
+.stack-chip:hover { border-color: var(--ds-acento-linha); }
+.stack-chip:has(input:checked) {
+    background: var(--ds-acento); border-color: var(--ds-acento);
+    color: var(--ds-acento-contraste);
+}
+.stack-chip:has(input:focus-visible) { outline: 2px solid var(--ds-selo); outline-offset: 2px; }
+
+.escolha--ilustrada { align-items: center; gap: var(--ma-3); }
+.escolha--ilustrada input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.escolha-ico { display: flex; color: var(--ds-text-400); transition: color var(--ds-fast) ease; }
+.escolha-ico svg { width: 1.6rem; height: 1.6rem; }
+.escolha--ilustrada:has(input:checked) .escolha-ico { color: var(--ds-acento-tinta); }
+.escolha--ilustrada:has(input:focus-visible) { outline: 2px solid var(--ds-selo); outline-offset: 2px; }
+.escolha-texto { display: flex; flex-direction: column; gap: var(--ma-1); }
+.escolha-texto strong { font-weight: 600; }
+.escolha-texto span { font-size: 0.88rem; color: var(--ds-text-500); }
+
+/* A cota do título não desenha dentro de <legend>: o elemento tem layout
+ * próprio e ignora o flex. Um span dentro dele volta a ser uma caixa comum. */
+.grupo-legenda { display: block; width: 100%; padding: 0; }
+.grupo-legenda .secao-titulo { display: flex; }
+
+/* Projeto na lateral: título longo corta em reticências em vez de quebrar em
+ * duas linhas. A lista precisa manter o ritmo de uma linha por projeto. */
+.nav-link--projeto span {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+
+
+/* ---------------------------------------------------------------------------
+ * O CARIMBO
+ *
+ * A assinatura da interface. Um passo aprovado recebe 済 em vermelhão, torto
+ * como carimbo torto é. A mão que estampa nunca acerta o esquadro, e acertar
+ * seria a única forma de o gesto parecer falso.
+ *
+ * É também a razão de o resto da tela ser sumi e papel: se houvesse cor em
+ * mais algum lugar, o carimbo deixaria de ser um acontecimento.
+ * ------------------------------------------------------------------------- */
+.selo {
+    display: inline-grid; place-items: center; flex-shrink: 0;
+    width: 1.55rem; height: 1.55rem;
+    font-family: var(--ds-font-display); font-size: 0.86rem; line-height: 1;
+    color: var(--ds-selo);
+    border: 1.5px solid var(--ds-selo); border-radius: 2px;
+    transform: rotate(-5deg);
+    /* O vermelhão do shuniku é pastoso e sempre sai irregular: um pouco de
+     * transparência no traço lembra isso melhor do que qualquer textura. */
+    opacity: 0.92;
+}
+.selo--grande { width: 3.2rem; height: 3.2rem; font-size: 1.85rem; border-width: 2px; transform: rotate(-6deg); }
+
+/* A estampada: entra grande e assenta, como carimbo que encosta no papel.
+ * Uma vez, ao carregar a tela em que o passo acabou de ser aprovado. */
+.selo--estampa { animation: ds-estampa 340ms var(--ds-ease-out) both; }
+@keyframes ds-estampa {
+    0%   { opacity: 0; transform: rotate(-14deg) scale(1.5); }
+    60%  { opacity: 0.92; transform: rotate(-4deg) scale(0.96); }
+    100% { opacity: 0.92; transform: rotate(-5deg) scale(1); }
+}
+
+/* O veredito: o carimbo à esquerda e o nome do passo ao lado. */
+.veredito { display: flex; align-items: flex-start; gap: var(--ma-4); margin: var(--ma-1) 0 0; }
+.veredito-rotulo {
+    margin: var(--ma-1) 0 0;
+    font-family: var(--ds-font-mono); font-size: 0.75rem;
+    text-transform: uppercase; letter-spacing: 0.14em; color: var(--ds-text-500);
+}
+.veredito-rotulo--ok { color: var(--ds-selo); }
+/* No título do passo o carimbo acompanha a linha do texto, sem empurrar nada. */
+.ds-h2 .selo { vertical-align: middle; margin-left: var(--ma-2); }
+
+/* Lista de constatação, não de tarefa: o quadradinho vazio do checklist diria
+ * "isto ainda falta", que é o oposto do que "o que ficou bom" quer dizer. */
+.criterios--nota li::before {
+    top: 0.75rem; width: 0.5rem; height: 1px; border: 0;
+    background: var(--ds-ok); border-radius: 0;
+}
+
+/* A fila: o passo anterior e o seguinte, no pé da leitura. */
+.passo-fila {
+    display: flex; justify-content: space-between; gap: var(--ma-5);
+    padding-top: var(--ma-5); border-top: 1px solid var(--ds-line);
+}
+.passo-fila-link {
+    display: flex; align-items: center; gap: var(--ma-3);
+    text-decoration: none; color: inherit; max-width: 22rem;
+}
+.passo-fila-link--fim { text-align: right; margin-left: auto; }
+.passo-fila-link svg { width: 1.1rem; height: 1.1rem; flex-shrink: 0; color: var(--ds-text-400); }
+.passo-fila-link:hover svg { color: var(--ds-text-900); }
+.passo-fila-link span { display: block; }
+.passo-fila-link strong { display: block; font-weight: 500; }
+.passo-fila-link .ds-kicker { display: block; margin-bottom: var(--ma-1); }
+.passo-fila-link .ds-muted { font-size: 0.85rem; }
+
+/* O fecho do plano: o carimbo grande e o que fazer a seguir. */
+.fecho {
+    display: flex; align-items: flex-start; gap: var(--ma-4);
+    padding: var(--ma-5) var(--ma-5); border: 1px solid var(--ds-line-dash); border-radius: var(--ds-raio-folha);
+    background: var(--ds-surface);
+}
+.fecho p { margin: var(--ma-2) 0 0; max-width: 42rem; }
+
+
+/* Ações raras do plano: linha de texto no pé, não botões no topo. */
+.plano-acoes {
+    display: flex; flex-wrap: wrap; gap: var(--ma-5);
+    margin-top: var(--ma-6); font-size: 0.92rem;
+}
+.plano-acoes a { color: var(--ds-text-500); }
+.plano-acoes a:hover { color: var(--ds-text-900); }
+
+/* Aviso de passo fora da vez: fio à esquerda, sem tarja. É contexto, não erro. */
+.passo-aviso {
+    margin: calc(var(--ma-2) * -1) 0 0; padding-left: var(--ma-4);
+    border-left: 2px solid var(--ds-line-dash);
+    color: var(--ds-text-500); font-size: 0.95rem;
+}
+
+/* Ações que não se desfazem. O vermelhão aqui NÃO é o do carimbo: o carimbo
+ * aprova, e usar a mesma tinta para destruir embaralharia os dois sentidos. */
+.ds-btn--perigo { color: var(--ds-erro); border-color: var(--ds-erro); }
+.ds-btn--perigo:hover { color: var(--ds-acento-contraste); background: var(--ds-erro); border-color: var(--ds-erro); }
+
+.acoes-perigo { display: flex; flex-direction: column; }
+.acoes-perigo form, .acao-perigo {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--ma-5);
+    padding: var(--ma-4) 0; border-top: 1px solid var(--ds-line); margin: 0;
+}
+.acoes-perigo p { margin: var(--ma-1) 0 0; font-size: 0.9rem; max-width: 34rem; }
+
+/* Abas do painel: fio embaixo do ativo, nada de caixa. */
+.abas { display: flex; gap: var(--ma-5); border-bottom: 1px solid var(--ds-line); margin-bottom: calc(var(--ma-4) * -1); }
+.aba {
+    padding: 0 0 var(--ma-2); text-decoration: none; color: var(--ds-text-500);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.aba:hover { color: var(--ds-text-900); }
+.aba.is-active { color: var(--ds-text-900); font-weight: 500; border-bottom-color: var(--ds-selo); }
+.objeto-card h3 .selo { vertical-align: middle; margin-left: var(--ma-1); }
+
+/* EDIÇÃO DO PLANO: a tela em que o roteiro é corrigido à mão */
+.etapa-edicao + .etapa-edicao { margin-top: var(--ma-6); }
+.etapa-forma {
+    display: flex; align-items: flex-start; gap: var(--ma-3);
+    padding-bottom: var(--ma-4); border-bottom: 1px solid var(--ds-line); margin: 0 0 var(--ma-2);
+}
+.etapa-campos { flex: 1; display: flex; flex-direction: column; gap: var(--ma-2); min-width: 0; }
+.etapa-campos input {
+    width: 100%; padding: var(--ma-2) var(--ma-2); font: inherit;
+    border: 1px solid transparent; border-radius: var(--ds-raio);
+    background: none; color: var(--ds-text-900);
+}
+/* O campo só se revela ao ser tocado: em repouso a tela é o plano, não um
+ * formulário. Com borda o tempo todo, quinze passos viram uma parede de caixas. */
+.etapa-campos input:hover { border-color: var(--ds-line); }
+.etapa-campos input:focus { outline: none; border-color: var(--ds-text-900); background: var(--ds-surface); box-shadow: var(--ds-focus-ring); }
+.entrada-titulo { font-family: var(--ds-font-display); font-size: 1.05rem; font-weight: 600; }
+
+.passos-edicao { list-style: none; margin: 0; padding: 0; }
+.passo-edicao {
+    display: flex; align-items: flex-start; gap: var(--ma-3);
+    padding: var(--ma-3) var(--ma-1); border-bottom: 1px solid var(--ds-line);
+}
+.passo-edicao-corpo { flex: 1; display: flex; flex-direction: column; gap: var(--ma-1); min-width: 0; }
+.passo-edicao-corpo .ds-muted { font-size: 0.9rem; }
+.passo-edicao-meta { font-family: var(--ds-font-mono); font-size: 0.74rem; color: var(--ds-text-400); }
+.passo-edicao-acoes { display: flex; align-items: center; gap: var(--ma-1); }
+.passo-edicao-acoes form { margin: 0; }
+
+.linha-ico {
+    display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem;
+    padding: 0; cursor: pointer; color: var(--ds-text-400);
+    background: none; border: 1px solid transparent; border-radius: var(--ds-raio);
+    transition: color var(--ds-fast) ease, border-color var(--ds-fast) ease;
+}
+.linha-ico:hover { color: var(--ds-text-900); border-color: var(--ds-line); }
+.linha-ico[disabled] { opacity: 0.3; pointer-events: none; }
+.linha-ico svg { width: 1rem; height: 1rem; }
+.linha-ico--perigo:hover { color: var(--ds-erro); border-color: var(--ds-erro); }
+
+/* Briefing: as perguntas do mentor antes do plano. */
+.briefing { display: flex; flex-direction: column; gap: var(--ma-5); }
+.briefing-espera { display: flex; flex-direction: column; gap: var(--ma-2); max-width: 26rem; }
+.briefing-espera p { margin: 0; }
+.briefing-perguntas { display: flex; flex-direction: column; gap: var(--ma-5); }
+.briefing-perguntas label { font-family: var(--ds-font-sans); font-size: 0.95rem; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ds-text-900); }
+
+/* Histórico de revisões e paginação. */
+.revisoes-lista { list-style: none; margin: 0; padding: 0; }
+.revisao-linha {
+    display: flex; align-items: center; gap: var(--ma-4);
+    padding: var(--ma-3) 0; border-bottom: 1px solid var(--ds-line);
+}
+.revisao-linha a { flex: 1; }
+.revisao-linha .ds-kicker { white-space: nowrap; }
+.paginacao { display: flex; align-items: center; gap: var(--ma-4); margin-top: var(--ma-5); font-size: 0.92rem; }
+
+/* ---------------------------------------------------------------------------
+ * MOVIMENTO
+ *
+ * Um gesto só, repetido: tinta sendo depositada. Tudo o que se move aqui ou é
+ * traço sendo feito, ou é papel assentando. Nada pisca, nada desliza de lado,
+ * nada "aparece com estilo".
+ *
+ * Regra de segurança: os elementos NASCEM visíveis e a animação parte de um
+ * quadro invisível. Se o navegador não animar (ou se prefers-reduced-motion
+ * zerar a duração), o resultado é a tela pronta. Nunca uma tela em branco.
+ * ------------------------------------------------------------------------- */
+
+/* 1. O ensō sendo desenhado. É o gesto da marca, e acontece uma vez por
+ *    carregamento: o pincel entra, corre e sai seco, nessa ordem. */
+.app-brand-mark .mk-entrada { stroke-dasharray: 16; animation: ds-traco-1 340ms var(--ds-ease-out) 120ms both; }
+.app-brand-mark .mk-corpo   { stroke-dasharray: 33; animation: ds-traco-2 560ms var(--ds-ease-out) 380ms both; }
+.app-brand-mark .mk-saida   { stroke-dasharray: 11; animation: ds-traco-3 320ms var(--ds-ease-out) 860ms both; }
+@keyframes ds-traco-1 { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
+@keyframes ds-traco-2 { from { stroke-dashoffset: 33; } to { stroke-dashoffset: 0; } }
+@keyframes ds-traco-3 { from { stroke-dashoffset: 11; } to { stroke-dashoffset: 0; } }
+
+/* 2. A folha assentando. Os blocos da página sobem alguns pixels, em cascata
+ *    curta. O papel encostando na mesa, não um carrossel de entrada.
+ *    O escalonamento vai até o sexto filho: além disso a espera passa a ser
+ *    percebida como lentidão. */
+/* `.passo-tela` entra na lista porque a tela do passo não usa `.page`: ela
+ * tem o próprio layout de duas colunas, e sem isto seria a única tela do app
+ * sem a entrada. */
+.app-main > .page > *,
+.app-main > .passo-tela > * { animation: ds-assenta 560ms var(--ds-ease-out) both; }
+.app-main > .page > *:nth-child(2),
+.app-main > .passo-tela > *:nth-child(2) { animation-delay: 90ms; }
+.app-main > .page > *:nth-child(3) { animation-delay: 165ms; }
+.app-main > .page > *:nth-child(4) { animation-delay: 230ms; }
+.app-main > .page > *:nth-child(5) { animation-delay: 285ms; }
+.app-main > .page > *:nth-child(n + 6) { animation-delay: 330ms; }
+/* 18px de percurso, não 9: a 9 o olho registra "a página apareceu", não
+ * "a página assentou", e o gesto some no tempo de pintar as fontes. */
+@keyframes ds-assenta {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* 3. A régua da seção sendo puxada, junto com o bloco a que pertence. */
+.secao-titulo::after { transform-origin: left center; animation: ds-regua 760ms var(--ds-ease-out) 220ms both; }
+@keyframes ds-regua { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* 4. Mensagem nova no chat. Só as que chegam agora: animar o histórico inteiro
+ *    a cada carregamento faria vinte turnos desfilarem sem motivo. */
+.msg--nova { animation: ds-assenta 380ms var(--ds-ease-out) both; }
+
+/* 5. O passo em curso respira. Pulso lento no traço de vermelhão da margem.
+ *    É o único elemento da tela que se move sozinho depois da entrada, e marca
+ *    onde a prática está agora. */
+.passo-linha--disponivel::before { animation: ds-pulso 3.4s ease-in-out infinite; }
+@keyframes ds-pulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* Quem pediu menos movimento recebe a tela pronta: a regra global zera as
+ * durações, e como todo quadro final é o estado visível, nada some. O que
+ * precisa de desligamento explícito é o que anima em laço. */
+@media (prefers-reduced-motion: reduce) {
+    .passo-linha--disponivel::before, .msg.is-escrevendo .prosa p:last-child::after {
+        animation: none !important;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+ * A TELA DO PASSO
+ *
+ * Duas zonas, e a divisão é a estrutura da página: em cima o que se LÊ (a
+ * orientação do mentor), embaixo o que se FAZ (mandar para revisão). Antes era
+ * uma pilha de seções de mesmo peso, cada uma com título e régua próprios, e
+ * nada dizia por onde começar nem onde a leitura terminava.
+ * ------------------------------------------------------------------------- */
+
+.passo-cabeca { display: flex; flex-direction: column; gap: var(--ma-1); }
+.passo-meta { margin: var(--ma-1) 0 0; font-family: var(--ds-font-mono); font-size: 0.78rem; color: var(--ds-text-400); }
+
+/* As três camadas são uma coisa só, lida em ordem. Lista de definição com o
+ * rótulo na margem: o texto ganha uma coluna contínua, e os rótulos formam uma
+ * régua vertical que diz de relance em que parte da explicação você está. */
+.camadas { margin: 0; display: flex; flex-direction: column; gap: var(--ma-6); }
+.camada { display: grid; gap: var(--ma-1); }
+.camada dt {
+    font-family: var(--ds-font-mono); font-size: 0.72rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.16em; color: var(--ds-text-500);
+    padding-top: var(--ma-1);
+}
+.camada dd { margin: 0; }
+/* O primeiro parágrafo é a tarefa: entra maior, porque é o que a pessoa lê
+ * antes de decidir se continua lendo. */
+.camada-lead { font-size: 1.08rem; line-height: 1.65; }
+.camada--teoria dt { color: var(--ds-ai); }
+
+@media (min-width: 60rem) {
+    /* Em tela larga o rótulo sai da frente do texto e vai para a margem. */
+    .camada { grid-template-columns: 8.5rem minmax(0, 1fr); gap: 0 var(--ma-6); align-items: start; }
+    .camada dt { text-align: right; }
+}
+
+/* Critérios e armadilhas são consulta, não leitura corrida: viram fichas lado
+ * a lado, com fundo próprio, para o olho saber que pode voltar aqui depois. */
+.passo-fichas { display: grid; gap: var(--ma-4); grid-template-columns: 1fr; }
+@media (min-width: 52rem) {
+    .passo-fichas { grid-template-columns: 1fr 1fr; }
+}
+.ficha {
+    padding: var(--ma-4) var(--ma-4); border: 1px solid var(--ds-line); border-radius: var(--ds-raio-folha);
+    background: var(--ds-surface);
+}
+.ficha--alerta { border-color: color-mix(in srgb, var(--ds-atencao) 35%, var(--ds-line)); }
+.ficha-titulo {
+    margin: 0 0 var(--ma-3);
+    font-family: var(--ds-font-sans); font-weight: 700; font-size: 0.92rem;
+}
+
+/* A zona de ação: moldura, fundo de painel e o campo já grande. É o único
+ * lugar da tela em que se escreve. */
+.passo-acao {
+    padding: var(--ma-5) var(--ma-5) var(--ma-5);
+    border: 1px solid var(--ds-line-dash); border-radius: var(--ds-raio-folha);
+    background: var(--ds-panel);
+}
+.passo-acao > .ds-muted { margin: 0 0 var(--ma-4); max-width: 44rem; font-size: 0.92rem; }
+/* Mesmo princípio da faixa do chat: o painel já cerca a zona de ação, então o
+ * campo se distingue pelo fundo mais claro e só ganha traço ao receber foco. */
+.passo-acao .campo--codigo textarea { background: var(--ds-surface); min-height: 11rem; border-color: transparent; }
+.passo-acao .campo--codigo textarea:focus { border-color: var(--ds-text-900); }
+.passo-acao-pe { display: flex; justify-content: flex-end; margin-top: var(--ma-4); }
+.passo-acao .hist-revisoes { margin-top: var(--ma-5); }
+
+.passo-pular { display: flex; justify-content: center; margin-top: calc(var(--ma-3) * -1); }
+
+/* A porta de visita, na tela de entrada. Separada do formulário por um "ou"
+ * com fio dos dois lados: são dois caminhos, não uma sequência. */
+.auth-visita { margin-top: var(--ma-5); }
+.auth-ou {
+    display: flex; align-items: center; gap: var(--ma-3);
+    margin-bottom: var(--ma-4);
+    font-family: var(--ds-font-mono); font-size: 0.74rem;
+    text-transform: uppercase; letter-spacing: 0.16em; color: var(--ds-text-400);
+}
+.auth-ou::before, .auth-ou::after { content: ""; flex: 1; height: 1px; background: var(--ds-line); }
+.auth-visita .auth-submit { margin-top: 0; }
+.auth-nota {
+    margin: var(--ma-3) 0 0; text-align: center;
+    font-size: 0.85rem; line-height: 1.55; color: var(--ds-text-500);
+}
+
+/* O aviso de visita, no topo da conta. Mesma forma do fecho do plano: carimbo
+ * à esquerda, texto ao lado. */
+.aviso-visita {
+    display: flex; align-items: flex-start; gap: var(--ma-5);
+    padding: var(--ma-5); border: 1px solid var(--ds-line-dash);
+    border-radius: var(--ds-raio-folha); background: var(--ds-surface);
+}
+.aviso-visita p { margin: var(--ma-2) 0 0; max-width: 42rem; }
+.aviso-visita .form-actions { justify-content: flex-start; }

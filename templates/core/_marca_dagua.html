@@ -1,0 +1,12 @@
+{% load static %}
+{% comment %}
+Marca-d'água: em monitor largo sobra muito fundo abaixo do conteúdo. Bem
+apagada, ela dá matéria a esse vazio sem competir com nada.
+
+Entra nas telas de visão geral (painel, projeto) e fica fora das de leitura
+(passo, revisão, termos), ali o vazio da margem é o que segura a coluna de
+texto, e enfeitá-lo atrapalharia justamente quem está lendo.
+{% endcomment %}
+<div class="marca-dagua" aria-hidden="true">
+    <img src="{% static 'img/paisagem-tinta.png' %}" alt="">
+</div>

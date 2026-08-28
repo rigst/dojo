@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+db.sqlite3
+staticfiles/
+.env
+.pytest_cache/
+.coverage
+
+# Capturas de tela que divergiram da referência. As referências, essas sim,
+# são versionadas: sem elas não há com o que comparar.
+testes_navegador/diferencas/

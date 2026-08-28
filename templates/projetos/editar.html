@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Editar {{ projeto.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker"><a href="{{ projeto.get_absolute_url }}">{{ projeto.titulo }}</a></span>
+        <h1 class="ds-h1">Editar o projeto</h1>
+        <p class="page-sub">Mudar o objetivo aqui não regera o plano. Quando quiser um roteiro novo a partir do texto corrigido, use “Refazer o plano”.</p>
+    </div>
+
+    <form method="post" class="form-campos form-novo">
+        {% csrf_token %}
+        {% include "projetos/_form_projeto.html" %}
+
+        <div class="form-actions">
+            <a class="ds-btn ds-btn--discreto" href="{{ projeto.get_absolute_url }}">Cancelar</a>
+            <button type="submit" class="ds-btn ds-btn--solid">Salvar</button>
+        </div>
+    </form>
+
+    <section class="ds-card">
+        <h2 class="secao-titulo">Tirar da frente</h2>
+        <div class="acoes-perigo">
+            <form method="post" action="{% url 'projeto_arquivar' projeto.pk %}">
+                {% csrf_token %}
+                <div>
+                    <strong>{% if projeto.status == "arquivado" %}Desarquivar{% else %}Arquivar{% endif %}</strong>
+                    <p class="ds-muted">{% if projeto.status == "arquivado" %}Volta para o painel.{% else %}Sai do painel e continua guardado. Dá para voltar atrás.{% endif %}</p>
+                </div>
+                <button type="submit" class="ds-btn">{% if projeto.status == "arquivado" %}Desarquivar{% else %}Arquivar{% endif %}</button>
+            </form>
+
+            <div class="acao-perigo">
+                <div>
+                    <strong>Excluir</strong>
+                    <p class="ds-muted">Apaga o projeto, os planos, os passos, as notas e a conversa. Não dá para desfazer.</p>
+                </div>
+                <a class="ds-btn ds-btn--perigo" href="{% url 'projeto_excluir' projeto.pk %}">Excluir…</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

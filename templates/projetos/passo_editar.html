@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{% if passo %}Editar passo{% else %}Novo passo{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">
+            <a href="{% url 'plano_editar' projeto.pk %}">{{ projeto.titulo }} · plano</a>
+        </span>
+        <h1 class="ds-h1">{% if passo %}Editar o passo{% else %}Novo passo{% endif %}</h1>
+        <p class="page-sub">As três camadas aparecem nesta ordem para quem vai fazer o passo: a tarefa, o caminho e o motivo de ser assim. Um passo sem o “por quê” vira tutorial.</p>
+    </div>
+
+    <form method="post" class="form-campos">
+        {% csrf_token %}
+        {% for campo in formulario %}
+        <div class="campo">
+            <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+            {{ campo }}
+            {% if campo.help_text %}<span class="campo-ajuda">{{ campo.help_text }}</span>{% endif %}
+            {% if campo.errors %}<div class="campo-erro">{{ campo.errors }}</div>{% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <a class="ds-btn ds-btn--discreto" href="{% url 'plano_editar' projeto.pk %}">Cancelar</a>
+            <button type="submit" class="ds-btn ds-btn--solid">Salvar passo</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

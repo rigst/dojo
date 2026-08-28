@@ -1,0 +1,9 @@
+{% extends "usuarios/_auth_base.html" %}
+{% block title %}Senha trocada{% endblock %}
+{% block auth %}
+<div class="auth-header">
+    <h1>Senha trocada</h1>
+    <p>Pode entrar com ela agora.</p>
+</div>
+<p><a class="ds-btn ds-btn--solid auth-submit" href="{% url 'login' %}">Entrar</a></p>
+{% endblock %}

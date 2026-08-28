@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Revisões · {{ passo.titulo }}{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker"><a href="{{ passo.get_absolute_url }}">{{ projeto.titulo }} · passo {{ passo.numero }}</a></span>
+        <h1 class="ds-h2">Revisões deste passo</h1>
+        <p class="page-sub">Cada envio e o que o mentor respondeu. Serve para ver o que mudou entre uma tentativa e a seguinte.</p>
+    </div>
+
+    <ul class="revisoes-lista">
+        {% for submissao in pagina %}
+        <li class="revisao-linha">
+            <span class="ds-kicker num">{{ submissao.criado_em|date:"d/m H:i" }}</span>
+            {% if submissao.revisao %}
+            <a href="{% url 'revisao_detalhe' submissao.revisao.pk %}">{{ submissao.revisao.resumo|truncatechars:90 }}</a>
+            <span class="ds-badge {{ submissao.revisao.classe_badge }}">{{ submissao.revisao.get_veredito_display }}</span>
+            {% else %}
+            <a href="{% url 'revisao_aguardar' submissao.pk %}">Envio sem revisão</a>
+            <span class="ds-badge">pendente</span>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="ds-muted">Nenhum envio ainda.</li>
+        {% endfor %}
+    </ul>
+
+    {% if pagina.has_other_pages %}
+    <nav class="paginacao" aria-label="Páginas">
+        {% if pagina.has_previous %}<a href="?p={{ pagina.previous_page_number }}">Mais recentes</a>{% endif %}
+        <span class="ds-muted num">{{ pagina.number }} / {{ pagina.paginator.num_pages }}</span>
+        {% if pagina.has_next %}<a href="?p={{ pagina.next_page_number }}">Mais antigas</a>{% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

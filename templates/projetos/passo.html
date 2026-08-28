@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static prosa %}
+
+{% block title %}{{ passo.titulo }}{% endblock %}
+
+{% block content %}
+<div class="passo-tela" data-passo-tela
+     {% if anterior %}data-anterior="{{ anterior.get_absolute_url }}"{% endif %}
+     {% if proximo %}data-proximo="{{ proximo.get_absolute_url }}"{% endif %}>
+    <article class="passo-doc">
+
+        <header class="passo-cabeca">
+            <span class="ds-kicker">
+                <a href="{{ projeto.get_absolute_url }}">{{ projeto.titulo }}</a>
+                · passo <span class="num">{{ passo.posicao }}</span> de <span class="num">{{ passo.total_no_plano }}</span>
+            </span>
+            <h1 class="ds-h2">
+                {{ passo.titulo }}
+                {% if passo.status == "concluido" %}{% include "core/_selo.html" with rotulo="Passo concluído" %}{% endif %}
+            </h1>
+            {% if passo.estimativa_min %}
+            <p class="passo-meta"><span class="num">{{ passo.estimativa_min }}</span> min de trabalho, mais ou menos</p>
+            {% endif %}
+        </header>
+
+        {% if passo.status == "bloqueado" %}
+        <p class="passo-aviso">
+            Este passo ainda está na fila.
+            {% if anterior %}
+            Ele abre quando <a href="{{ anterior.get_absolute_url }}">{{ anterior.titulo }}</a> for concluído.
+            {% endif %}
+            Leia à vontade; a prática rende mais na ordem.
+        </p>
+        {% endif %}
+
+        {% comment %}
+        As três camadas em lista de definição, com o rótulo na margem: elas são
+        uma coisa só, lida em ordem, e não três seções independentes. Antes cada
+        uma vinha com título e régua próprios, e a página virava uma pilha de
+        blocos de mesmo peso onde nada guiava a leitura.
+        {% endcomment %}
+        <dl class="camadas">
+            <div class="camada">
+                <dt>O que fazer</dt>
+                <dd class="prosa camada-lead">{{ passo.o_que_fazer|prosa }}</dd>
+            </div>
+            <div class="camada">
+                <dt>Como fazer</dt>
+                <dd class="prosa">{{ passo.como_fazer|prosa }}</dd>
+            </div>
+            <div class="camada camada--teoria">
+                <dt>Por que é assim</dt>
+                <dd class="prosa">{{ passo.teoria|prosa }}</dd>
+            </div>
+        </dl>
+
+        {% if passo.criterios_aceite or passo.armadilhas %}
+        <div class="passo-fichas">
+            {% if passo.criterios_aceite %}
+            <section class="ficha">
+                <h2 class="ficha-titulo">Você terminou quando</h2>
+                <ul class="criterios">
+                    {% for criterio in passo.criterios_aceite %}<li>{{ criterio|prosa_curta }}</li>{% endfor %}
+                </ul>
+            </section>
+            {% endif %}
+
+            {% if passo.armadilhas %}
+            <section class="ficha ficha--alerta">
+                <h2 class="ficha-titulo">Onde costuma dar errado</h2>
+                <ul class="criterios criterios--alerta">
+                    {% for armadilha in passo.armadilhas %}<li>{{ armadilha|prosa_curta }}</li>{% endfor %}
+                </ul>
+            </section>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% comment %}
+        Daqui para baixo é o que se FAZ, e não o que se lê. A moldura separa as
+        duas zonas: acima, a orientação; aqui, a única ação da tela.
+        {% endcomment %}
+        <section class="passo-acao">
+            <h2 class="ficha-titulo">Mandar para revisão</h2>
+            <p class="ds-muted">Cole só o que este passo pediu. O mentor avalia critério por critério e aponta o que falta, sem reescrever o seu código.</p>
+
+            <form method="post" action="{% url 'revisao_submeter' passo.pk %}">
+                {% csrf_token %}
+                <div class="campo campo--codigo">
+                    <label class="ds-so-leitor" for="codigo">Seu código ou diff</label>
+                    <textarea id="codigo" name="conteudo" rows="10" spellcheck="false"
+                              placeholder="Cole aqui o código deste passo."></textarea>
+                </div>
+                <div class="passo-acao-pe">
+                    <button type="submit" class="ds-btn ds-btn--solid">Pedir revisão</button>
+                </div>
+            </form>
+
+            {% if revisoes %}
+            <ul class="hist-revisoes">
+                {% for submissao in revisoes %}
+                <li>
+                    {% if submissao.revisao %}
+                    <a href="{% url 'revisao_detalhe' submissao.revisao.pk %}">
+                        <span class="ds-badge {{ submissao.revisao.classe_badge }}">{{ submissao.revisao.get_veredito_display }}</span>
+                        <span class="ds-muted">{{ submissao.criado_em|date:"d/m H:i" }}</span>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'revisao_aguardar' submissao.pk %}"><span class="ds-badge">sem revisão</span></a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% if total_revisoes > 5 %}
+            <p class="ds-muted"><a href="{% url 'passo_revisoes' passo.pk %}">Ver os {{ total_revisoes }} envios</a></p>
+            {% endif %}
+            {% endif %}
+        </section>
+
+        {% if passo.status != "concluido" %}
+        <form method="post" action="{% url 'passo_concluir' passo.pk %}" class="passo-pular">
+            {% csrf_token %}
+            <button type="submit" class="ds-btn ds-btn--discreto"
+                    data-confirmar="Marcar como concluído sem revisão?">
+                Marcar como concluído sem revisão
+            </button>
+        </form>
+        {% endif %}
+
+        {% comment %}
+        Ir e voltar entre passos sem passar pelo plano. Num app que é uma fila,
+        não ter o "seguinte" à mão obriga a subir, clicar no projeto e procurar
+        a linha certa a cada passo.
+        {% endcomment %}
+        <nav class="passo-fila" aria-label="Navegação entre passos">
+            {% if anterior %}
+            <a class="passo-fila-link" href="{{ anterior.get_absolute_url }}" rel="prev"
+               title="Atalho: tecla K">
+                {% include "core/_ico.html" with ico="esquerda" %}
+                <span>
+                    <span class="ds-kicker">Anterior</span>
+                    <strong>{{ anterior.titulo }}</strong>
+                </span>
+            </a>
+            {% else %}<span></span>{% endif %}
+
+            {% if proximo %}
+            <a class="passo-fila-link passo-fila-link--fim" href="{{ proximo.get_absolute_url }}" rel="next"
+               title="Atalho: tecla J">
+                <span>
+                    <span class="ds-kicker">Próximo</span>
+                    <strong>{{ proximo.titulo }}</strong>
+                    {% if proximo.status == "bloqueado" %}<span class="ds-muted">abre quando este for concluído</span>{% endif %}
+                </span>
+                {% include "core/_ico.html" with ico="seta" %}
+            </a>
+            {% endif %}
+        </nav>
+    </article>
+
+    {% include "mentoria/_chat.html" with projeto=projeto passo=passo %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/chat.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endblock %}
