@@ -1,5 +1,7 @@
 # Dojo
 
+[![Licença: AGPL v3](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue.svg)](LICENSE)
+
 Mentoria de programação passo a passo. Você escolhe um projeto e uma stack; o
 mentor monta um plano em etapas e passos e vai guiando: **o que fazer, como
 fazer e por que é assim**, sem escrever o código por você.
@@ -261,3 +263,25 @@ O log vai para stderr, que sob systemd é o journal: `journalctl -u dojo -f`. E
 há uma sonda em `/saude/`, que toca o banco antes de responder, porque um
 processo de pé com a conexão perdida é o estado que uma sonda estática deixa
 passar.
+
+## Licença
+
+[**AGPL-3.0**](LICENSE) — Copyright (C) 2026 Rodrigo Caballero Stölben.
+
+Você pode usar, estudar, modificar e redistribuir. A cláusula que caracteriza a
+AGPL: se você rodar uma versão modificada como serviço acessível pela rede, os
+usuários desse serviço têm direito ao código-fonte correspondente.
+
+O uso da instância hospedada em dojo.stolben.com continua regido pelos Termos de
+Uso publicados lá — a licença cobre o software, não o serviço operado pelo autor.
+
+As bibliotecas de terceiros permanecem sob suas próprias licenças; o inventário está
+em [docs/LICENCAS-TERCEIROS.md](docs/LICENCAS-TERCEIROS.md), regenerável com:
+
+```bash
+./venv/bin/python scripts/licencas_terceiros.py
+```
+
+As fontes em `static/fonts/` (Zen Old Mincho, Zen Kaku Gothic New, M PLUS 1 Code,
+vendorizadas do Google Fonts — sem CDN, para não vazar o IP de quem visita) usam a
+SIL Open Font License 1.1 (`OFL.txt` junto aos arquivos).

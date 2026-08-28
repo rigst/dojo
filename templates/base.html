@@ -18,15 +18,15 @@
     <link rel="icon" href="{% static 'favicon-32.png' %}" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="{% static 'apple-touch-icon.png' %}">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     {% comment %}
-    Três famílias japonesas com latim próprio. A escolha não é enfeite: o latim
-    desenhado por uma fundição japonesa herda a proporção e o ritmo do desenho
-    dos kana, e é o que dá o sotaque sem precisar de nenhum ornamento oriental
-    por cima. O Zen Old Mincho ainda traz o kanji do carimbo (済).
+    Três famílias japonesas com latim próprio, vendorizadas em static/fonts/
+    (SIL OFL 1.1, ver OFL.txt) — sem CDN do Google, para não vazar o IP de quem
+    visita. O latim desenhado por uma fundição japonesa herda a proporção e o
+    ritmo do desenho dos kana, e é o que dá o sotaque sem precisar de nenhum
+    ornamento oriental por cima. O Zen Old Mincho ainda traz o kanji do carimbo
+    (済) e os outros três usados na interface (客, 場, 道).
     {% endcomment %}
-    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1+Code:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'fonts/fonts.css' %}">
 
     <link rel="stylesheet" href="{% static 'css/dojo.css' %}">
 
@@ -112,6 +112,7 @@
                 <div class="pe-legal">
                     <a href="{% url 'termos' %}">Termos</a>
                     <a href="{% url 'privacidade' %}">Privacidade</a>
+                    <a href="https://github.com/rigst/dojo" target="_blank" rel="noreferrer">Código-fonte (AGPL-3.0)</a>
                 </div>
                 <form method="post" action="{% url 'logout' %}" class="app-inline-form">
                     {% csrf_token %}

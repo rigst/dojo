@@ -334,8 +334,8 @@ ENABLE_CSP = env_bool("DJANGO_ENABLE_CSP", default=IS_PRODUCTION)
 CONTENT_SECURITY_POLICY = os.getenv(
     "DJANGO_CONTENT_SECURITY_POLICY",
     "default-src 'self'; img-src 'self' data:; script-src 'self' 'nonce-{nonce}'; "
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-    "font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "font-src 'self' data:; object-src 'none'; "
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 )
 
