@@ -443,7 +443,9 @@ a:hover { text-decoration-color: var(--ds-selo); }
 }
 .app-quota { display: flex; flex-direction: column; gap: var(--ma-1); font-size: 0.72rem; color: var(--ds-lateral-fraca); }
 .app-quota strong { color: var(--ds-lateral-tinta); font-weight: 500; }
-.app-side-rodape { display: flex; align-items: center; justify-content: space-between; gap: var(--ma-4); }
+/* Coluna, não linha: com três links legais mais o botão de sair, uma única
+ * linha não cabe nos 262px da lateral, e o "Sair" era empurrado pra fora. */
+.app-side-rodape { display: flex; flex-direction: column; align-items: flex-start; gap: var(--ma-3); }
 .app-inline-form { margin: 0; }
 .app-sair {
     display: flex; align-items: center; gap: var(--ma-2); background: none; border: 0;
@@ -452,7 +454,7 @@ a:hover { text-decoration-color: var(--ds-selo); }
 }
 .app-sair:hover { color: var(--ds-lateral-tinta); }
 .app-sair svg { width: 0.9rem; height: 0.9rem; }
-.pe-legal { display: flex; gap: var(--ma-3); font-size: 0.8rem; }
+.pe-legal { display: flex; flex-wrap: wrap; row-gap: var(--ma-1); column-gap: var(--ma-3); font-size: 0.8rem; }
 .pe-legal a { color: var(--ds-lateral-fraca); text-decoration: none; }
 .pe-legal a:hover { text-decoration: underline; }
 
@@ -999,14 +1001,29 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
     display: grid; min-height: 100vh; background: var(--ds-bg);
     grid-template-columns: 1fr;
 }
-.auth-arte { display: none; }
+/* Abaixo de 56rem o grid tem uma coluna só, então as duas linhas empilham na
+ * ordem do HTML: a arte vira um cabeçalho acima do formulário, em vez de
+ * sumir — o bambu de Hokusai é a mesma identidade da tela cheia, só que
+ * baixa. Altura em vh, não em rem: a imagem precisa de espaço proporcional
+ * à tela, e um valor fixo ficaria alto demais num celular baixo e curto
+ * demais num tablet em pé. */
+.auth-arte {
+    display: flex; flex-direction: column; justify-content: flex-end;
+    position: relative; overflow: hidden;
+    height: 34vh; min-height: 13rem;
+    padding: var(--ma-5); background: var(--ds-panel);
+    border-bottom: 1px solid var(--ds-line);
+}
+/* No cabeçalho baixo do mobile a citação fica perto do crédito, que é
+ * posicionado solto no canto (não participa do fluxo da coluna). Sem essa
+ * folga embaixo do texto os dois quase se tocam. */
+.auth-arte-texto { margin-bottom: var(--ma-4); }
 @media (min-width: 56rem) {
     .auth-shell { grid-template-columns: 1.05fr 1fr; }
     .auth-arte {
-        display: flex; flex-direction: column; justify-content: flex-end;
-        position: relative; overflow: hidden;
-        padding: var(--ma-7); background: var(--ds-panel);
-        border-right: 1px solid var(--ds-line);
+        height: auto; min-height: 0;
+        padding: var(--ma-7);
+        border-bottom: 0; border-right: 1px solid var(--ds-line);
     }
 }
 .auth-arte img {
