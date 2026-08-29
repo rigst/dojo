@@ -64,7 +64,8 @@ def test_criar_projeto_e_gerar_o_plano(autenticado, servidor):
     pagina = autenticado
     pagina.goto(f"{servidor}/projetos/novo/")
 
-    pagina.fill("#id_titulo", "Agenda de contatos")
+    # Sem campo de título na criação: o mentor escolhe o nome de verdade ao
+    # gerar o plano (ver projetos/views.py::novo e _form_projeto.html).
     pagina.fill("#id_objetivo", "Um CRUD de contatos em linha de comando, com busca por nome.")
     pagina.check("input[value=iniciante]")
     # Pelo texto, e não por `button[type=submit]`: o botão de sair da barra
@@ -75,9 +76,10 @@ def test_criar_projeto_e_gerar_o_plano(autenticado, servidor):
     pagina.click("[data-gerar]")
 
     # O motor falso responde na hora, mas o caminho é o mesmo do de verdade:
-    # abre o stream, recebe os eventos e redireciona ao terminar.
+    # abre o stream, recebe os eventos e redireciona ao terminar. O título é
+    # fixo no motor falso ("Lista de tarefas guiada"): não deriva do objetivo.
     pagina.wait_for_url("**/projetos/*/", timeout=60000)
-    pagina.wait_for_selector("text=Agenda de contatos")
+    pagina.wait_for_selector("text=Lista de tarefas guiada")
 
 
 def test_chat_responde_no_passo(autenticado, servidor):
@@ -121,11 +123,14 @@ def test_conta_mostra_o_limite_e_nao_pede_chave(autenticado, servidor):
 
 
 def test_tema_escuro_persiste_entre_paginas(autenticado, servidor):
+    """A seção de Aparência na conta foi removida (redundante com o botão do
+    cabeçalho); o alternador persiste no servidor via POST /conta/tema/, e é
+    esse round-trip que o teste verifica ao navegar sem o JS ainda ter rodado."""
     pagina = autenticado
-    pagina.goto(f"{servidor}/conta/")
-    pagina.check("input[name=tema][value=escuro]")
-    pagina.click("text=Salvar tema")
-    pagina.wait_for_selector("text=Aparência")
+    pagina.goto(f"{servidor}/")
+
+    with pagina.expect_response("**/conta/tema/"):
+        pagina.click("[data-tema-botao]")
 
     pagina.goto(f"{servidor}/")
     tema = pagina.get_attribute("html", "data-tema")
