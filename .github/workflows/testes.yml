@@ -33,7 +33,7 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Testes
-        run: python -m pytest -q -m "not ia_real"
+        run: python -m pytest -q -m "not ia_real and not e2e and not visual"
 
       - name: Navegador para os testes de ponta a ponta
         run: python -m playwright install --with-deps chromium
