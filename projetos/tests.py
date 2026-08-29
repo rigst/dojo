@@ -151,16 +151,32 @@ def test_passo_conhece_o_lugar_dele_na_fila(projeto):
     assert terceiro.proximo is None
 
 
-def test_tela_do_passo_oferece_o_seguinte(client, aluno, projeto):
+def test_tela_do_passo_oferece_o_seguinte_quando_ja_aberto(client, aluno, projeto):
     """Num app que é uma fila, não ter o 'próximo' à mão obriga a voltar ao
-    plano e procurar a linha certa a cada passo."""
+    plano e procurar a linha certa a cada passo — mas só quando ele já abriu."""
     salvar_plano(projeto, _gerado(), "fake")
     primeiro = Passo.objects.filter(etapa__plano__projeto=projeto).first()
+    segundo = primeiro.proximo
+    segundo.status = Passo.Status.DISPONIVEL
+    segundo.save(update_fields=["status"])
 
     client.force_login(aluno)
     conteudo = client.get(f"/projetos/passo/{primeiro.pk}/").content
     assert b"Pr\xc3\xb3ximo" in conteudo
-    assert f'href="/projetos/passo/{primeiro.proximo.pk}/"'.encode() in conteudo
+    assert f'href="/projetos/passo/{segundo.pk}/"'.encode() in conteudo
+
+
+def test_tela_do_passo_nao_linka_o_seguinte_bloqueado(client, aluno, projeto):
+    """O próximo passo ainda bloqueado aparece só como aviso, sem link: ele
+    continua inacessível até este passar na revisão."""
+    salvar_plano(projeto, _gerado(), "fake")
+    primeiro = Passo.objects.filter(etapa__plano__projeto=projeto).first()
+    assert primeiro.proximo.status == Passo.Status.BLOQUEADO
+
+    client.force_login(aluno)
+    conteudo = client.get(f"/projetos/passo/{primeiro.pk}/").content
+    assert f'href="/projetos/passo/{primeiro.proximo.pk}/"'.encode() not in conteudo
+    assert b"abre quando este passar na revis\xc3\xa3o" in conteudo
 
 
 def test_tela_do_projeto_destaca_o_passo_da_vez(client, aluno, projeto):
@@ -174,16 +190,17 @@ def test_tela_do_projeto_destaca_o_passo_da_vez(client, aluno, projeto):
     assert f'href="/projetos/passo/{primeiro.pk}/"'.encode() in conteudo
 
 
-def test_passo_na_fila_pode_ser_lido_com_aviso(client, aluno, projeto):
-    """Ler adiante é legítimo, o que a fila ordena é a prática, não a leitura."""
+def test_passo_bloqueado_e_inacessivel(client, aluno, projeto):
+    """Bloqueado é inacessível de verdade: a URL direta não mostra o conteúdo,
+    só manda de volta para o passo anterior."""
     salvar_plano(projeto, _gerado(), "fake")
-    bloqueado = Passo.objects.filter(etapa__plano__projeto=projeto)[1]
+    passos = list(Passo.objects.filter(etapa__plano__projeto=projeto))
+    bloqueado = passos[1]
     assert bloqueado.status == Passo.Status.BLOQUEADO
 
     client.force_login(aluno)
     resposta = client.get(f"/projetos/passo/{bloqueado.pk}/")
-    assert resposta.status_code == 200
-    assert b"ainda est\xc3\xa1 na fila" in resposta.content
+    assert resposta["Location"] == f"/projetos/passo/{passos[0].pk}/"
 
 
 def test_plano_concluido_fecha_a_tela_do_projeto(client, aluno, projeto):

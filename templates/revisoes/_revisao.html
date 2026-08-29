@@ -69,6 +69,13 @@
             {% endif %}
         {% else %}
         <button type="button" class="ds-btn" data-revisao-enviar-outro>Enviar outra versão</button>
+        <form method="post" action="{% url 'passo_concluir' passo.pk %}" class="revisao-seguir">
+            {% csrf_token %}
+            <button type="submit" class="ds-btn ds-btn--discreto"
+                    data-confirmar="Seguir mesmo sem resolver o que a revisão apontou?">
+                Seguir mesmo assim
+            </button>
+        </form>
         {% endif %}
     </div>
 </div>

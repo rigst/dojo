@@ -6,18 +6,32 @@ from projetos.models import Passo, Projeto
 
 
 class Conversa(models.Model):
-    """Um chat por projeto, com as mensagens ancoradas ao passo em foco.
+    """Um chat por passo, mais um chat geral por projeto.
 
-    Uma conversa por passo fragmentaria o histórico e faria o mentor esquecer o
-    que já explicou duas telas atrás; uma conversa global perderia o foco. A
-    âncora resolve os dois: o histórico é contínuo, o contexto é do passo.
+    Cada passo tem a própria conversa, separada das outras: abrir um passo
+    começa do zero, sem o histórico de passos anteriores para confundir o
+    contexto ou constranger uma pergunta "boba" na frente do que já foi dito
+    antes. O projeto também tem uma conversa geral (`passo=None`), para o que
+    não é sobre um passo específico.
     """
 
-    projeto = models.OneToOneField(Projeto, on_delete=models.CASCADE, related_name="conversa")
+    projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name="conversas")
+    passo = models.OneToOneField(
+        Passo, null=True, blank=True, on_delete=models.CASCADE, related_name="conversa"
+    )
     criado_em = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["projeto"],
+                condition=models.Q(passo__isnull=True),
+                name="uma_conversa_geral_por_projeto",
+            ),
+        ]
+
     def __str__(self):
-        return f"Conversa de {self.projeto}"
+        return f"Conversa de {self.passo}" if self.passo_id else f"Conversa geral de {self.projeto}"
 
 
 class Mensagem(models.Model):

@@ -5,7 +5,7 @@ from mentoria.models import Conversa, Mensagem
 
 @admin.register(Conversa)
 class ConversaAdmin(admin.ModelAdmin):
-    list_display = ("projeto", "criado_em")
+    list_display = ("projeto", "passo", "criado_em")
 
 
 @admin.register(Mensagem)

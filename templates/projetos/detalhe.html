@@ -72,15 +72,9 @@
                     {% for passo in etapa.passos.all %}
                     <li class="passo-linha passo-linha--{{ passo.status }}">
                         <span class="passo-num num">{{ passo.numero }}</span>
-                        {% comment %}
-                        Passo na fila continua clicável: ler adiante é legítimo
-                       , o que a fila ordena é a prática, não a leitura. Antes
-                        era texto inerte, e o link do rodapé do passo levava ao
-                        mesmo lugar, o que deixava as duas telas em desacordo.
-                        {% endcomment %}
                         {% if passo.status == "bloqueado" %}
-                        <a class="passo-titulo ds-muted" href="{{ passo.get_absolute_url }}">{{ passo.titulo }}</a>
-                        <span class="ds-badge" title="Abre quando o anterior for concluído. Você pode ler adiante.">na fila</span>
+                        <span class="passo-titulo ds-muted">{{ passo.titulo }}</span>
+                        <span class="ds-badge" title="Abre quando o anterior passar na revisão.">na fila</span>
                         {% else %}
                         <a class="passo-titulo" href="{{ passo.get_absolute_url }}">{{ passo.titulo }}</a>
                         {% if passo.status == "concluido" %}

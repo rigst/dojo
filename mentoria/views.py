@@ -20,7 +20,7 @@ MAX_PERGUNTA = 6000
 @login_required
 def chat(request, pk):
     projeto = obter_do_usuario(Projeto, request.user, pk=pk)
-    conversa = servicos.obter_conversa(projeto)
+    conversa = servicos.obter_conversa_geral(projeto)
     return render(
         request,
         "mentoria/chat.html",
@@ -44,14 +44,19 @@ async def stream(request, pk):
         return HttpResponseBadRequest("pergunta vazia")
 
     projeto = await sync_to_async(get_object_or_404)(Projeto, pk=pk, usuario=usuario)
-    conversa = await sync_to_async(servicos.obter_conversa)(projeto)
 
     passo = None
     passo_id = request.GET.get("passo")
     if passo_id:
         passo = await sync_to_async(
-            lambda: Passo.objects.do_usuario(usuario).filter(pk=passo_id).first()
+            lambda: Passo.objects.do_usuario(usuario).filter(pk=passo_id).select_related("etapa__plano__projeto").first()
         )()
+
+    # Cada passo tem a conversa dele, separada das outras; sem passo em foco, é
+    # a conversa geral do projeto (ver mentoria/models.py:Conversa).
+    conversa = await sync_to_async(
+        lambda: servicos.obter_conversa_do_passo(passo) if passo else servicos.obter_conversa_geral(projeto)
+    )()
 
     async def eventos():
         try:

@@ -142,6 +142,38 @@ def test_historico_respeita_a_janela(aluno, projeto, settings):
     assert historico[-1]["content"] == f"pergunta {servicos.JANELA_MENSAGENS + 4}"
 
 
+@pytest.mark.django_db(transaction=True)
+def test_cada_passo_tem_a_propria_conversa_separada(client, aluno, projeto):
+    """Um chat por passo: a pergunta feita num passo não aparece na conversa
+    de outro, nem na conversa geral do projeto."""
+    from projetos.models import Passo
+
+    primeiro = Passo.objects.filter(etapa__plano__projeto=projeto).first()
+    segundo = Passo.objects.create(
+        etapa=primeiro.etapa, ordem=2, titulo="Segundo passo", status=Passo.Status.DISPONIVEL
+    )
+
+    client.force_login(aluno)
+    _eventos(client.get(
+        f"/projetos/{projeto.pk}/chat/stream/",
+        {"pergunta": "dúvida do primeiro", "passo": primeiro.pk},
+    ))
+    _eventos(client.get(
+        f"/projetos/{projeto.pk}/chat/stream/",
+        {"pergunta": "dúvida do segundo", "passo": segundo.pk},
+    ))
+
+    conversa_1 = Conversa.objects.get(passo=primeiro)
+    conversa_2 = Conversa.objects.get(passo=segundo)
+    assert conversa_1.pk != conversa_2.pk
+    assert conversa_1.mensagens.first().conteudo == "dúvida do primeiro"
+    assert conversa_2.mensagens.first().conteudo == "dúvida do segundo"
+
+    # E nenhuma das duas é a conversa geral: aquela só existe quando alguém
+    # pergunta sem um passo em foco.
+    assert not Conversa.objects.filter(projeto=projeto, passo=None).exists()
+
+
 def test_resposta_interrompida_e_gravada_com_o_parcial(aluno, projeto):
     """O que já foi gerado foi cobrado. Não gravar o parcial faria o gasto
     sumir da tela sem sumir da fatura."""

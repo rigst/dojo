@@ -9,8 +9,19 @@ from mentoria.models import Conversa, Mensagem
 JANELA_MENSAGENS = 20
 
 
-def obter_conversa(projeto):
-    conversa, _ = Conversa.objects.get_or_create(projeto=projeto)
+def obter_conversa_geral(projeto):
+    """A conversa sobre o projeto como um todo, fora do foco de um passo."""
+    conversa, _ = Conversa.objects.get_or_create(projeto=projeto, passo=None)
+    return conversa
+
+
+def obter_conversa_do_passo(passo):
+    """A conversa deste passo, separada da de qualquer outro.
+
+    Nasce vazia na primeira pergunta feita ali: sem histórico de outro passo
+    para carregar, e sem o histórico deste vazar para o próximo.
+    """
+    conversa, _ = Conversa.objects.get_or_create(passo=passo, defaults={"projeto": passo.projeto})
     return conversa
 
 

@@ -81,6 +81,14 @@
         {% else %}
         <a class="ds-btn ds-btn--solid" href="{{ passo.projeto.get_absolute_url }}">Ver o plano completo</a>
         {% endif %}
+        {% else %}
+        <form method="post" action="{% url 'passo_concluir' passo.pk %}" class="revisao-seguir">
+            {% csrf_token %}
+            <button type="submit" class="ds-btn ds-btn--discreto"
+                    data-confirmar="Seguir mesmo sem resolver o que a revisão apontou?">
+                Seguir mesmo assim
+            </button>
+        </form>
         {% endif %}
     </div>
 </div>

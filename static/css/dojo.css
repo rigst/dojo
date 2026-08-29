@@ -132,6 +132,8 @@
 
     --ds-gap: var(--ma-7);
     --ds-lateral-larg: 262px;
+    /* Altura da barra de topo (padding 0.75rem × 2 + ícone 1.4rem + borda 1px). */
+    --ds-topo-alt: 2.9625rem;
     /* Quase reto: canto arredondado é simpatia de framework, e aqui o corte
      * limpo é que dá a precisão. */
     --ds-raio: 2px;
@@ -539,6 +541,7 @@ a.objeto-card:hover { border-color: var(--ds-text-700); }
 }
 
 .form-actions { display: flex; gap: var(--ma-2); justify-content: flex-end; margin-top: var(--ma-4); }
+.form-actions form { margin: 0; }
 
 /* FORMULÁRIOS */
 .form-campos { display: flex; flex-direction: column; gap: var(--ma-4); }
@@ -821,7 +824,11 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
     .passo-tela { grid-template-columns: minmax(0, 1fr) 29rem; }
     /* O chat acompanha a rolagem do documento: a pergunta costuma nascer no
      * meio da leitura, e ter de rolar de volta até ele quebra o raciocínio. */
-    .passo-tela .chat { position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); }
+    .passo-tela .chat {
+        position: sticky;
+        top: var(--ds-topo-alt);
+        height: calc(100vh - var(--ds-topo-alt));
+    }
 }
 .passo-doc { display: flex; flex-direction: column; gap: var(--ma-6); max-width: 44rem; }
 .passo-doc section { margin: 0; }
@@ -1374,6 +1381,7 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
     text-decoration: none; color: inherit; max-width: 22rem;
 }
 .passo-fila-link--fim { text-align: right; margin-left: auto; }
+.passo-fila-link--bloqueado { opacity: 0.6; cursor: default; }
 .passo-fila-link svg { width: 1.1rem; height: 1.1rem; flex-shrink: 0; color: var(--ds-text-400); }
 .passo-fila-link:hover svg { color: var(--ds-text-900); }
 .passo-fila-link span { display: block; }
@@ -1595,6 +1603,18 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 .camada--fazer dt { color: var(--ds-selo); }
 .camada--como { background: var(--ds-ok-veu); border-color: color-mix(in srgb, var(--ds-ok) 25%, var(--ds-line)); }
 .camada--como dt { color: var(--ds-ok); }
+/* Itens de "Como fazer" viram marcáveis por JS quando o texto é uma lista
+ * (ver static/js/como-fazer.js), no mesmo desenho de "Você terminou quando". */
+.como-marcavel { list-style: none; }
+.como-item { display: flex; align-items: flex-start; gap: var(--ma-3); cursor: pointer; }
+.como-item input {
+    margin: 0.3rem 0 0; width: 0.95rem; height: 0.95rem; flex-shrink: 0;
+    accent-color: var(--ds-ok);
+}
+.como-item-texto { flex: 1; }
+.como-item-texto > :first-child { margin-top: 0; }
+.como-item-texto > :last-child { margin-bottom: 0; }
+.como-item:has(input:checked) { color: var(--ds-text-500); text-decoration: line-through; text-decoration-color: var(--ds-line-dash); }
 .camada--teoria { background: var(--ds-ai-veu); border-color: color-mix(in srgb, var(--ds-ai) 25%, var(--ds-line)); }
 .camada--teoria dt { color: var(--ds-ai); }
 

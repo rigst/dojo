@@ -1,7 +1,9 @@
 {% load prosa %}
 {% comment %}
 O chat, servido em dois lugares: ao lado do passo e sozinho na tela do projeto.
-`passo` pode não existir, sem ele a conversa é sobre o projeto inteiro.
+`passo` pode não existir, sem ele é a conversa geral do projeto. Cada um tem a
+própria Conversa no banco (ver mentoria/models.py): abrir um passo começa do
+zero, sem o histórico de outro passo nem da conversa geral por perto.
 {% endcomment %}
 <aside class="chat{% if not passo %} chat--inteiro{% endif %}" data-chat
        data-stream="{% url 'chat_stream' projeto.pk %}"

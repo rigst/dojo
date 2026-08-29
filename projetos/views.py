@@ -547,9 +547,21 @@ def passo_detalhe(request, pk):
     passo = get_object_or_404(
         Passo.objects.do_usuario(request.user).select_related("etapa__plano__projeto"), pk=pk
     )
-    # O chat ao lado é o mesmo do projeto. Uma conversa só, ancorada no passo.
-    # Buscar aqui evita que o include apareça vazio quando já há histórico.
-    conversa = servicos_mentoria.obter_conversa(passo.projeto)
+
+    # Bloqueado é inacessível de verdade: nem o link nem a URL direta mostram o
+    # conteúdo. Só abre quando o anterior passar na revisão (atende ou
+    # atende_com_ressalvas contam, ver Revisao.aprovado), ou for concluído à
+    # mão. Passos são criados adiantados (ver passo_pre_gerar) só para não
+    # esperar o mentor no meio da fila, não para virarem leitura antecipada.
+    if passo.status == Passo.Status.BLOQUEADO:
+        messages.info(request, "Esse passo ainda está bloqueado. Termine o anterior para abri-lo.")
+        if passo.anterior:
+            return redirect("passo_detalhe", pk=passo.anterior.pk)
+        return redirect("projeto_detalhe", pk=passo.projeto.pk)
+
+    # O chat ao lado é o do próprio passo, separado dos demais. Buscar aqui
+    # evita que o include apareça vazio quando já há histórico.
+    conversa = servicos_mentoria.obter_conversa_do_passo(passo)
 
     projeto = passo.projeto
     plano = projeto.plano_ativo

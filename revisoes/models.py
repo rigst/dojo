@@ -50,7 +50,14 @@ class Revisao(models.Model):
 
     @property
     def aprovado(self):
-        return self.veredito == self.Veredito.ATENDE
+        """Passa o passo adiante.
+
+        Ressalva é aviso, não bloqueio: o veredito `atende_com_ressalvas` fica
+        registrado (e visível na tela, com o que ajustar) mas libera o próximo
+        passo do mesmo jeito que `atende`. Só `nao_atende` segura a fila, e
+        mesmo assim o aluno pode seguir manualmente pelo botão de conclusão.
+        """
+        return self.veredito in (self.Veredito.ATENDE, self.Veredito.RESSALVAS)
 
     @property
     def classe_badge(self):

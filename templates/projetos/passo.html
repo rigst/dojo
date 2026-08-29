@@ -6,7 +6,7 @@
 {% block content %}
 <div class="passo-tela" data-passo-tela
      {% if anterior %}data-anterior="{{ anterior.get_absolute_url }}"{% endif %}
-     {% if proximo %}data-proximo="{{ proximo.get_absolute_url }}"{% endif %}>
+     {% if proximo and proximo.status != "bloqueado" %}data-proximo="{{ proximo.get_absolute_url }}"{% endif %}>
     <article class="passo-doc">
 
         <header class="passo-cabeca">
@@ -23,16 +23,6 @@
             {% endif %}
         </header>
 
-        {% if passo.status == "bloqueado" %}
-        <p class="passo-aviso">
-            Este passo ainda está na fila.
-            {% if anterior %}
-            Ele abre quando <a href="{{ anterior.get_absolute_url }}">{{ anterior.titulo }}</a> for concluído.
-            {% endif %}
-            Leia à vontade; a prática rende mais na ordem.
-        </p>
-        {% endif %}
-
         {% comment %}
         As três camadas em lista de definição, com o rótulo na margem: elas são
         uma coisa só, lida em ordem, e não três seções independentes. Antes cada
@@ -46,7 +36,14 @@
             </div>
             <div class="camada camada--como">
                 <dt>Como fazer</dt>
-                <dd class="prosa">{{ passo.como_fazer|prosa }}</dd>
+                {% comment %}
+                Quando o mentor descreve uma sequência em lista, cada item vira
+                marcável, do mesmo jeito que "Você terminou quando": conferir o
+                que já foi feito no meio do trabalho, não só no final. A marca
+                é só do navegador (ver static/js/como-fazer.js), o servidor não
+                sabe disso.
+                {% endcomment %}
+                <dd class="prosa" data-como-fazer data-passo="{{ passo.pk }}">{{ passo.como_fazer|prosa }}</dd>
             </div>
             <div class="camada camada--teoria">
                 <dt>Por que é assim</dt>
@@ -186,13 +183,20 @@
             </a>
             {% else %}<span></span>{% endif %}
 
-            {% if proximo %}
+            {% if proximo.status == "bloqueado" %}
+            <span class="passo-fila-link passo-fila-link--fim passo-fila-link--bloqueado">
+                <span>
+                    <span class="ds-kicker">Próximo</span>
+                    <strong>{{ proximo.titulo }}</strong>
+                    <span class="ds-muted">abre quando este passar na revisão</span>
+                </span>
+            </span>
+            {% elif proximo %}
             <a class="passo-fila-link passo-fila-link--fim" href="{{ proximo.get_absolute_url }}" rel="next"
                title="Atalho: tecla J">
                 <span>
                     <span class="ds-kicker">Próximo</span>
                     <strong>{{ proximo.titulo }}</strong>
-                    {% if proximo.status == "bloqueado" %}<span class="ds-muted">abre quando este for concluído</span>{% endif %}
                 </span>
                 {% include "core/_ico.html" with ico="seta" %}
             </a>
@@ -217,6 +221,7 @@
 {% block extra_scripts %}
 <script src="{% static 'js/chat.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/criterios.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'js/como-fazer.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/anexos.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/revisao-inline.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% if pre_gerar_url %}

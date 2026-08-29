@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 
 from ia.contabilidade import uso_do_mes
+from mentoria.models import Mensagem
 from usuarios.forms import CadastroForm
 from usuarios.models import Usuario
 from usuarios.seguranca import bloqueado, ip_do_pedido, limpar, registrar_falha
@@ -198,12 +199,13 @@ def exportar_dados(request):
                     }
                     for plano in projeto.planos.all()
                 ],
+                # Todas as conversas do projeto juntas: a geral e a de cada
+                # passo, cada uma separada das outras dentro do app, mas aqui
+                # é tudo que a pessoa escreveu e recebeu, então sai junto.
                 "conversa": [
                     {"papel": m.papel, "conteudo": m.conteudo, "em": m.criado_em.isoformat()}
-                    for m in getattr(projeto, "conversa", None).mensagens.all()
-                ]
-                if hasattr(projeto, "conversa")
-                else [],
+                    for m in Mensagem.objects.filter(conversa__projeto=projeto).order_by("criado_em")
+                ],
             }
         )
 
