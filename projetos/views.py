@@ -143,6 +143,8 @@ def excluir(request, pk):
 @login_required
 def detalhe(request, pk):
     projeto = obter_do_usuario(Projeto, request.user, pk=pk)
+    if projeto.gerando:
+        return redirect("projeto_planejar", pk=projeto.pk)
     plano = projeto.plano_ativo
     if not plano:
         return redirect("projeto_planejar", pk=projeto.pk)
@@ -298,6 +300,42 @@ def passo_gerando(request, pk):
         return redirect("projeto_detalhe", pk=projeto.pk)
 
     return render(request, "projetos/passo_gerando.html", {"projeto": projeto})
+
+
+async def passo_pre_gerar(request, pk):
+    """Dispara a geração do próximo passo em background quando o aluno abre um passo.
+
+    Retorna 204 imediatamente; a geração corre como task asyncio independente.
+    Só dispara se não houver geração em curso e se ainda existir etapa pendente
+    sem passo bloqueado já materializado esperando.
+    """
+    if request.method != "POST":
+        return HttpResponse(status=405)
+    usuario = await request.auser()
+    if not usuario.is_authenticated:
+        return HttpResponse(status=204)
+
+    projeto = await sync_to_async(get_object_or_404)(Projeto, pk=pk, usuario=usuario)
+
+    if projeto.gerando:
+        return HttpResponse(status=204)
+
+    plano = await sync_to_async(lambda: projeto.plano_ativo)()
+    if not plano:
+        return HttpResponse(status=204)
+
+    tem_bloqueado = await sync_to_async(
+        lambda: Passo.objects.filter(etapa__plano=plano, status=Passo.Status.BLOQUEADO).exists()
+    )()
+    if tem_bloqueado:
+        return HttpResponse(status=204)
+
+    etapa = await sync_to_async(etapa_pendente)(plano)
+    if not etapa:
+        return HttpResponse(status=204)
+
+    asyncio.create_task(gerar_e_salvar_proximo_passo(projeto, usuario))
+    return HttpResponse(status=204)
 
 
 async def passo_gerar_stream(request, pk):
@@ -514,17 +552,31 @@ def passo_detalhe(request, pk):
     # Buscar aqui evita que o include apareça vazio quando já há histórico.
     conversa = servicos_mentoria.obter_conversa(passo.projeto)
 
+    projeto = passo.projeto
+    plano = projeto.plano_ativo
+    pre_gerar_url = None
+    if (
+        passo.status == Passo.Status.DISPONIVEL
+        and not projeto.gerando
+        and passo.proximo is None
+        and etapa_pendente(plano)
+        and not Passo.objects.filter(etapa__plano=plano, status=Passo.Status.BLOQUEADO).exists()
+    ):
+        from django.urls import reverse
+        pre_gerar_url = reverse("projeto_passo_pre_gerar", args=[projeto.pk])
+
     return render(
         request,
         "projetos/passo.html",
         {
             "passo": passo,
-            "projeto": passo.projeto,
+            "projeto": projeto,
             "revisoes": passo.submissoes.select_related("revisao")[:5],
             "total_revisoes": passo.submissoes.count(),
             "mensagens": conversa.mensagens.all(),
             "anterior": passo.anterior,
             "proximo": passo.proximo,
+            "pre_gerar_url": pre_gerar_url,
         },
     )
 

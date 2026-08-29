@@ -97,7 +97,7 @@
             <h2 class="ficha-titulo">Mandar para revisão</h2>
             <p class="ds-muted">O mentor avalia critério por critério e aponta o que falta, sem reescrever o seu código.</p>
             {% if passo.o_que_enviar %}
-            <p class="passo-acao-pedido"><strong>O que mandar:</strong> {{ passo.o_que_enviar }}</p>
+            <p class="passo-acao-pedido"><strong>O que mandar:</strong> {{ passo.o_que_enviar|prosa_curta }}</p>
             {% endif %}
 
             <form method="post" action="{% url 'revisao_submeter' passo.pk %}" enctype="multipart/form-data" data-forma-revisao>
@@ -215,4 +215,14 @@
 <script src="{% static 'js/chat.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/criterios.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/anexos.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% if pre_gerar_url %}
+<script nonce="{{ request.csp_nonce }}">
+(function(){
+    fetch("{{ pre_gerar_url }}", {
+        method: "POST",
+        headers: {"X-CSRFToken": "{{ csrf_token }}"}
+    }).catch(function(){});
+})();
+</script>
+{% endif %}
 {% endblock %}

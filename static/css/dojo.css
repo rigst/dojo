@@ -704,6 +704,7 @@ a.objeto-card:hover { border-color: var(--ds-text-700); }
  * especificidade, então quem vem depois vence, e a ordem invertida deixava o
  * botão do menu invisível justamente onde ele é a única saída. */
 .app-topo { display: none; align-items: center; gap: var(--ma-3); padding: var(--ma-3) var(--ma-4); border-bottom: 1px solid var(--ds-line); background: var(--ds-panel); position: sticky; top: 0; z-index: 15; }
+.app-topo .tema-botao { display: none; }
 
 /* RESPONSIVO: a lateral vira gaveta; o passo e o chat se empilham */
 @media (max-width: 60rem) {
@@ -720,6 +721,27 @@ a.objeto-card:hover { border-color: var(--ds-text-700); }
     .page-head-actions { flex-wrap: wrap; }
 }
 
+
+/* SIDEBAR RECOLHÍVEL — desktop: estende o mesmo mecanismo do mobile.
+ * Declarado DEPOIS de .app-topo { display:none } para vencer na cascata. */
+@media (min-width: 60.0625rem) {
+    .app-side { transition: transform var(--ds-mid) var(--ds-ease); }
+    .app-frame { transition: margin-left var(--ds-mid) var(--ds-ease); }
+
+    .nav-toggle:checked ~ .app-side { transform: translateX(-100%); box-shadow: none; }
+    .nav-toggle:checked ~ .app-frame { margin-left: 0; }
+
+    /* X do sidebar fica só no mobile; desktop usa só o ☰ da barra de topo */
+    .app-topo { display: flex; }
+    .app-topo .nav-burger { display: inline-flex; cursor: pointer; }
+    .nav-burger svg { width: 1.4rem; height: 1.4rem; }
+
+    /* Marca fica escondida na barra de topo quando sidebar visível */
+    .app-topo .app-brand { display: none; }
+
+    /* Sidebar recolhido: mostra só a marca na barra de topo (tema continua só no sidebar) */
+    .nav-toggle:checked ~ .app-frame .app-topo .app-brand { display: flex; }
+}
 
 /* MOVIMENTO REDUZIDO */
 @media (prefers-reduced-motion: reduce) {

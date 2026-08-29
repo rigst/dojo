@@ -159,9 +159,22 @@
         });
     }
 
+    /* Sidebar recolhível no desktop: persiste estado do checkbox no localStorage. */
+    function ladoDoSite() {
+        var toggle = document.getElementById("nav-toggle");
+        if (!toggle) return;
+        try {
+            if (localStorage.getItem("dojo-lado") === "recolhido") toggle.checked = true;
+        } catch (e) {}
+        toggle.addEventListener("change", function () {
+            try { localStorage.setItem("dojo-lado", toggle.checked ? "recolhido" : "aberto"); } catch (e) {}
+        });
+    }
+
     function iniciar() {
         preencherBarras();
         tema();
+        ladoDoSite();
         atalhosDePasso();
         marcarEnvio();
         avisos();
