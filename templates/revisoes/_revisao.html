@@ -1,27 +1,14 @@
-{% extends "base.html" %}
 {% load prosa %}
-
-{% block title %}Revisão · {{ passo.titulo }}{% endblock %}
-
-{% block content %}
-<div class="page page--leitura">
-    <div class="page-head">
-        <span class="ds-kicker">
-            <a href="{{ passo.get_absolute_url }}">{{ passo.projeto.titulo }} · passo {{ passo.numero }}</a>
-        </span>
-        <div class="veredito">
-            {% if revisao.aprovado %}
-            <span class="selo selo--grande selo--estampa" role="img"
-                  aria-label="Passo aprovado" title="Passo aprovado">済</span>
-            {% endif %}
-            <div>
-                <h1 class="ds-h2">{{ passo.titulo }}</h1>
-                <p class="veredito-rotulo{% if revisao.aprovado %} veredito-rotulo--ok{% endif %}">
-                    {{ revisao.get_veredito_display }}
-                </p>
-            </div>
+<div class="revisao-resultado">
+    <div class="veredito">
+        {% if revisao.aprovado %}
+        <span class="selo selo--grande selo--estampa" role="img"
+              aria-label="Passo aprovado" title="Passo aprovado">済</span>
+        {% endif %}
+        <div>
+            <h2 class="ds-h2">{{ revisao.get_veredito_display }}</h2>
+            <p class="page-sub">{{ revisao.resumo }}</p>
         </div>
-        <p class="page-sub">{{ revisao.resumo }}</p>
     </div>
 
     {% if revisao.criterios_avaliados %}
@@ -72,16 +59,16 @@
     {% endif %}
 
     <div class="form-actions">
-        <a class="ds-btn" href="{{ passo.get_absolute_url }}">Voltar ao passo</a>
         {% if revisao.aprovado %}
-        {% if passo.proximo %}
-        <a class="ds-btn ds-btn--solid" href="{{ passo.proximo.get_absolute_url }}">
-            Próximo passo: {{ passo.proximo.titulo|truncatechars:38 }}
-        </a>
+            {% if passo.proximo %}
+            <a class="ds-btn ds-btn--solid" href="{{ passo.proximo.get_absolute_url }}">
+                Próximo passo: {{ passo.proximo.titulo|truncatechars:38 }}
+            </a>
+            {% else %}
+            <a class="ds-btn ds-btn--solid" href="{{ passo.projeto.get_absolute_url }}">Ver o plano completo</a>
+            {% endif %}
         {% else %}
-        <a class="ds-btn ds-btn--solid" href="{{ passo.projeto.get_absolute_url }}">Ver o plano completo</a>
-        {% endif %}
+        <button type="button" class="ds-btn" data-revisao-enviar-outro>Enviar outra versão</button>
         {% endif %}
     </div>
 </div>
-{% endblock %}

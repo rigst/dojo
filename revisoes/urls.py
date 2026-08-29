@@ -7,4 +7,5 @@ urlpatterns = [
     path("aguardar/<int:pk>/", views.aguardar, name="revisao_aguardar"),
     path("aguardar/<int:pk>/stream/", views.revisar_stream, name="revisao_stream"),
     path("<int:pk>/", views.detalhe, name="revisao_detalhe"),
+    path("inline/<int:pk>/", views.detalhe_inline, name="revisao_inline"),
 ]

@@ -93,7 +93,8 @@
         Daqui para baixo é o que se FAZ, e não o que se lê. A moldura separa as
         duas zonas: acima, a orientação; aqui, a única ação da tela.
         {% endcomment %}
-        <section class="passo-acao">
+        <section class="passo-acao" data-revisao-secao
+                 data-revisao-inline-base="{% url 'revisao_inline' 0 %}">
             <h2 class="ficha-titulo">Mandar para revisão</h2>
             <p class="ds-muted">O mentor avalia critério por critério e aponta o que falta, sem reescrever o seu código.</p>
             {% if passo.o_que_enviar %}
@@ -134,6 +135,8 @@
                     </div>
                 </div>
             </form>
+
+            <div data-revisao-slot hidden></div>
 
             {% if revisoes %}
             <ul class="hist-revisoes">
@@ -215,6 +218,7 @@
 <script src="{% static 'js/chat.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/criterios.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/anexos.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'js/revisao-inline.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% if pre_gerar_url %}
 <script nonce="{{ request.csp_nonce }}">
 (function(){

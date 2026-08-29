@@ -3,8 +3,9 @@ import asyncio
 from asgiref.sync import sync_to_async
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from core import sse
 from ia.contabilidade import QuotaExcedida
@@ -41,17 +42,27 @@ def _texto_do_arquivo(arquivo):
 
 @login_required
 def submeter(request, pk):
-    """Recebe o código (colado, anexado, ou os dois) e devolve a tela de
-    espera da revisão."""
+    """Recebe o código (colado, anexado, ou os dois).
+
+    Quando Accept: application/json (inline mode), retorna JSON com a URL do
+    stream em vez de redirecionar para a tela de espera separada.
+    """
     passo = get_object_or_404(Passo.objects.do_usuario(request.user), pk=pk)
 
     if request.method != "POST":
         return redirect("passo_detalhe", pk=passo.pk)
 
+    inline = request.headers.get("Accept") == "application/json"
+
+    def _erro(msg):
+        if inline:
+            return JsonResponse({"erro": msg}, status=400)
+        messages.error(request, msg)
+        return redirect("passo_detalhe", pk=passo.pk)
+
     arquivos = request.FILES.getlist("arquivos")
     if len(arquivos) > MAX_ARQUIVOS:
-        messages.error(request, f"São muitos arquivos de uma vez. Envie até {MAX_ARQUIVOS}.")
-        return redirect("passo_detalhe", pk=passo.pk)
+        return _erro(f"São muitos arquivos de uma vez. Envie até {MAX_ARQUIVOS}.")
 
     partes = []
     texto_colado = (request.POST.get("conteudo") or "").strip()
@@ -61,11 +72,7 @@ def submeter(request, pk):
     for arquivo in arquivos:
         texto = _texto_do_arquivo(arquivo)
         if texto is None:
-            messages.error(
-                request,
-                f"“{arquivo.name}” não deu para ler como texto (grande demais ou não é código).",
-            )
-            return redirect("passo_detalhe", pk=passo.pk)
+            return _erro(f"“{arquivo.name}” não deu para ler como texto (grande demais ou não é código).")
         # O nome do arquivo faz parte da revisão: é o que diz ao mentor qual
         # arquivo é qual quando vem mais de um.
         partes.append(f"--- arquivo: {arquivo.name} ---\n{texto}")
@@ -73,18 +80,18 @@ def submeter(request, pk):
     conteudo = "\n\n".join(partes).strip()
 
     if not conteudo:
-        messages.error(request, "Cole o código ou anexe um arquivo antes de pedir a revisão.")
-        return redirect("passo_detalhe", pk=passo.pk)
+        return _erro("Cole o código ou anexe um arquivo antes de pedir a revisão.")
 
     if len(conteudo) > MAX_CARACTERES:
-        messages.error(
-            request,
-            "Isso é grande demais para uma revisão útil. Mande só os arquivos "
-            "que este passo pediu.",
-        )
-        return redirect("passo_detalhe", pk=passo.pk)
+        return _erro("Isso é grande demais para uma revisão útil. Mande só os arquivos que este passo pediu.")
 
     submissao = Submissao.objects.create(passo=passo, usuario=request.user, conteudo=conteudo)
+
+    if inline:
+        return JsonResponse({
+            "pk": submissao.pk,
+            "stream_url": reverse("revisao_stream", args=[submissao.pk]),
+        })
     return redirect("revisao_aguardar", pk=submissao.pk)
 
 
@@ -134,5 +141,18 @@ def detalhe(request, pk):
     return render(
         request,
         "revisoes/detalhe.html",
+        {"revisao": revisao, "passo": revisao.submissao.passo},
+    )
+
+
+@login_required
+def detalhe_inline(request, pk):
+    """Fragmento HTML da revisão para injeção inline no passo."""
+    from revisoes.models import Revisao
+
+    revisao = get_object_or_404(Revisao, pk=pk, submissao__usuario=request.user)
+    return render(
+        request,
+        "revisoes/_revisao.html",
         {"revisao": revisao, "passo": revisao.submissao.passo},
     )
