@@ -68,7 +68,15 @@ class Projeto(Registro):
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="projetos"
     )
-    titulo = models.CharField("título", max_length=120)
+    # Escrito pela pessoa só até o plano existir: o título e o subtítulo saem
+    # do que ela digita aqui, quase sempre de qualquer jeito ("app", "teste2").
+    # Assim que o mentor gera o plano, ele escolhe os dois de novo a partir do
+    # objetivo de verdade (ver `salvar_plano_inicial`), e são esses que ficam.
+    titulo = models.CharField("título", max_length=120, default="Novo projeto", blank=True)
+    subtitulo = models.CharField(
+        "subtítulo", max_length=200, blank=True,
+        help_text="Escrito pelo mentor ao gerar o plano. Fica em branco até lá.",
+    )
     objetivo = models.TextField(
         "o que você quer construir",
         help_text="Quanto mais concreto, melhor o plano. Diga o que o programa faz e para quem.",
@@ -80,6 +88,17 @@ class Projeto(Registro):
         "como você quer ser ensinado", max_length=10, choices=Didatica.choices, default=Didatica.SOCRATICO
     )
     status = models.CharField(max_length=13, choices=Status.choices, default=Status.RASCUNHO)
+
+    # O plano (e cada passo seguinte) é gerado aos poucos, e a chamada ao
+    # modelo leva segundos a minutos. Estes três campos são o que permite a
+    # tela de espera sobreviver a um F5: sem eles, recarregar a página não
+    # tem como saber que uma geração está em curso, e a pessoa cai de volta
+    # nas perguntas do briefing como se nada tivesse começado.
+    gerando = models.BooleanField(default=False)
+    erro_geracao = models.TextField(blank=True)
+    # Guardado para a tela de espera poder retomar a geração sozinha depois de
+    # um recarregamento, sem pedir para responder o briefing de novo.
+    briefing_pendente = models.TextField(blank=True)
 
     objects = ProjetoQuerySet.as_manager()
 
@@ -98,15 +117,22 @@ class Projeto(Registro):
         return ", ".join(s.nome for s in self.stacks.all()) or "sem stack definida"
 
     def progresso(self):
-        """(concluídos, total, percentual) do plano ativo."""
+        """(etapas concluídas, total de etapas, percentual) do plano ativo.
+
+        Por etapa, e não por passo: os passos de uma etapa nascem aos poucos, à
+        medida que o aluno avança (ver projetos/servicos.py:etapa_pendente), e
+        contar por passo faria o percentual cair toda vez que um passo novo
+        surgisse, mesmo com o aluno progredindo. As etapas, ao contrário, são
+        todas conhecidas desde o primeiro plano: contagem estável, que só sobe.
+        """
         plano = self.plano_ativo
         if not plano:
             return 0, 0, 0
-        passos = Passo.objects.filter(etapa__plano=plano)
-        total = passos.count()
+        etapas = list(plano.etapas.prefetch_related("passos"))
+        total = len(etapas)
         if not total:
             return 0, 0, 0
-        feitos = passos.filter(status=Passo.Status.CONCLUIDO).count()
+        feitos = sum(1 for etapa in etapas if etapa.concluida)
         return feitos, total, round(feitos * 100 / total)
 
     def __str__(self):
@@ -146,9 +172,20 @@ class Etapa(models.Model):
     ordem = models.PositiveSmallIntegerField(default=1)
     titulo = models.CharField("título", max_length=120)
     objetivo = models.TextField(blank=True)
+    # True quando o mentor já disse que esta etapa não precisa de mais passos.
+    # Enquanto falso, ela é candidata a receber o próximo passo gerado; uma
+    # etapa recém-criada pelo plano inicial nasce falsa mesmo sem passo nenhum.
+    passos_prontos = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["ordem"]
+
+    @property
+    def concluida(self):
+        """Já entregou o objetivo dela: não precisa de mais passo, e os que
+        tem estão todos concluídos. Usada por `Projeto.progresso`."""
+        passos = list(self.passos.all())
+        return bool(self.passos_prontos and passos and all(p.status == Passo.Status.CONCLUIDO for p in passos))
 
     def __str__(self):
         return f"{self.ordem}. {self.titulo}"
@@ -177,6 +214,11 @@ class Passo(models.Model):
     o_que_fazer = models.TextField(blank=True)
     como_fazer = models.TextField(blank=True)
     teoria = models.TextField("por que é assim", blank=True)
+    # O que colar na revisão, específico deste passo — "o método save() do
+    # modelo Tarefa", não "o código deste passo". Sem isto, quem chega na
+    # zona de ação da tela não sabe se manda o arquivo inteiro, uma função
+    # ou um trecho de configuração.
+    o_que_enviar = models.CharField("o que enviar para revisão", max_length=240, blank=True)
 
     criterios_aceite = models.JSONField(default=list, blank=True)
     armadilhas = models.JSONField(default=list, blank=True)

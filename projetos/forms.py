@@ -4,20 +4,38 @@ from projetos.models import Etapa, Passo, Projeto, Stack
 
 
 class ProjetoForm(forms.ModelForm):
+    """Serve a criação e a edição.
+
+    Título e subtítulo só aparecem no formulário quando o projeto já existe
+    (`instance.pk`): na criação, ninguém digita título, o mentor escolhe um ao
+    gerar o plano. Na edição, ficam como correção manual, para quando o mentor
+    escolhe mal — mas replanejar escolhe de novo e apaga a correção.
+    """
+
     class Meta:
         model = Projeto
-        fields = ("titulo", "objetivo", "stacks", "nivel", "horas_por_semana", "preferencia_didatica")
+        # Sem `horas_por_semana` nem `preferencia_didatica`: perguntar os dois
+        # só adiava a tela seguinte por dado que raramente mudava a resposta.
+        # O estilo é sempre socrático agora (ver `Projeto.preferencia_didatica`
+        # e `ia/prompts.py:DIDATICA`), e o tempo disponível fica no padrão do
+        # campo do modelo.
+        fields = ("titulo", "subtitulo", "objetivo", "stacks", "nivel")
         widgets = {
             "objetivo": forms.Textarea(attrs={"rows": 5, "placeholder": "Ex.: um app de lista de tarefas com login, para eu usar de verdade no dia a dia."}),
             "nivel": forms.RadioSelect,
-            "preferencia_didatica": forms.RadioSelect,
             "stacks": forms.CheckboxSelectMultiple,
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["stacks"].queryset = Stack.objects.all()
-        self.fields["horas_por_semana"].help_text = "Serve para dimensionar os passos, não para cobrar ritmo."
+        # Sem instância ainda (criação): o campo nem aparece no template, e
+        # marcá-lo obrigatório travaria o envio de um formulário que não pode
+        # preenchê-lo. Com instância (edição), continua exigindo texto: um
+        # título em branco quebraria toda tela que mostra o nome do projeto.
+        if not self.instance.pk:
+            self.fields["titulo"].required = False
+        self.fields["subtitulo"].required = False
 
     def stacks_por_categoria(self):
         """As opções de stack agrupadas, na ordem das categorias.
@@ -70,7 +88,7 @@ class PassoForm(forms.ModelForm):
 
     class Meta:
         model = Passo
-        fields = ("titulo", "o_que_fazer", "como_fazer", "teoria", "estimativa_min")
+        fields = ("titulo", "o_que_fazer", "como_fazer", "teoria", "o_que_enviar", "estimativa_min")
         widgets = {
             "o_que_fazer": forms.Textarea(attrs={"rows": 3}),
             "como_fazer": forms.Textarea(attrs={"rows": 4}),
@@ -80,6 +98,8 @@ class PassoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["estimativa_min"].label = "Estimativa (minutos)"
+        self.fields["o_que_enviar"].label = "O que mandar para a revisão"
+        self.fields["o_que_enviar"].help_text = "Uma frase: qual arquivo, função ou trecho."
         if self.instance and self.instance.pk:
             self.fields["criterios_aceite"].initial = "\n".join(self.instance.criterios_aceite or [])
             self.fields["armadilhas"].initial = "\n".join(self.instance.armadilhas or [])

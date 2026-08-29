@@ -60,12 +60,12 @@
                 {{ projeto.titulo }}
                 {% if projeto.status == "concluido" %}{% include "core/_selo.html" with rotulo="Plano concluído" %}{% endif %}
             </h3>
-            <p>{{ projeto.objetivo|truncatechars:110 }}</p>
+            <p>{{ projeto.subtitulo|default:projeto.objetivo|truncatechars:110 }}</p>
             <div class="objeto-card-pe">
                 <div class="ds-progress" aria-hidden="true">
                     <span class="ds-progress-fill" data-pct="{{ progresso.2 }}"></span>
                 </div>
-                <span class="ds-muted num">{{ progresso.0 }}/{{ progresso.1 }} passos</span>
+                <span class="ds-muted num">{{ progresso.0 }}/{{ progresso.1 }} etapas</span>
             </div>
         </a>
         {% endwith %}

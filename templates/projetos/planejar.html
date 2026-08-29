@@ -27,16 +27,23 @@
 
     <section class="ds-card" data-planejar
              data-stream="{% url 'projeto_planejar_stream' projeto.pk %}"
-             data-briefing="{% url 'projeto_briefing_stream' projeto.pk %}">
+             data-briefing="{% url 'projeto_briefing_stream' projeto.pk %}"
+             {% if gerando %}data-gerando="1" data-briefing-pendente="{{ briefing_pendente }}"{% endif %}>
         {% comment %}
         O briefing entra aqui, e não numa tela antes: perguntar o que falta e
         gerar o plano são a mesma espera, e separá-las em dois passos só
         adiciona um clique entre a pessoa e o plano.
 
         As perguntas são geradas pelo mentor ao abrir a tela. Se essa chamada
-        falhar, resta o campo livre embaixo. O briefing é um extra, e não pode
-        impedir alguém de planejar.
+        falhar, resta o botão liberado direto. O briefing é um extra, e não
+        pode impedir alguém de planejar.
+
+        Se uma geração já está em curso (`gerando`), inclusive porque a pessoa
+        recarregou a página no meio dela, este bloco todo fica escondido: as
+        perguntas já foram respondidas uma vez, e não têm por que aparecer de
+        novo. A tela pula direto para a espera logo abaixo.
         {% endcomment %}
+        {% if not gerando %}
         <div class="briefing" data-briefing-campo>
             <div class="briefing-espera" data-briefing-espera>
                 <p class="ds-muted">O mentor está vendo o que falta perguntar…</p>
@@ -56,18 +63,24 @@
             {% if plano_atual %}
             <a class="ds-btn ds-btn--discreto" href="{{ projeto.get_absolute_url }}">Cancelar</a>
             {% endif %}
-            <button type="button" class="ds-btn ds-btn--solid" data-gerar>
+            {% comment %}
+            Começa travado: só libera quando as perguntas chegarem (ou
+            desistirem de chegar). Clicar antes disso manda um briefing pela
+            metade, e o plano sai pior sem a pessoa saber por quê.
+            {% endcomment %}
+            <button type="button" class="ds-btn ds-btn--solid" data-gerar disabled>
                 {% if plano_atual %}Refazer o plano{% else %}Gerar o plano{% endif %}
             </button>
         </div>
 
-        <div class="espera ds-oculto" data-espera hidden>
+        <p class="auth-erro {% if not erro_geracao %}ds-oculto{% endif %}" data-erro {% if not erro_geracao %}hidden{% endif %}>{{ erro_geracao }}</p>
+        {% endif %}
+
+        <div class="espera {% if not gerando %}ds-oculto{% endif %}" data-espera {% if not gerando %}hidden{% endif %}>
             <p class="espera-estado" role="status" aria-live="polite" data-estado>Conversando com o mentor…</p>
             <div class="ds-progress"><span class="ds-progress-fill espera-barra"></span></div>
             <p class="ds-muted" data-decorrido></p>
         </div>
-
-        <p class="auth-erro ds-oculto" data-erro hidden></p>
     </section>
 </div>
 {% endblock %}

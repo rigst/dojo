@@ -15,9 +15,12 @@ from projetos.forms import EtapaForm, PassoForm, ProjetoForm
 from projetos.models import Etapa, Passo, Projeto
 from projetos.servicos import (
     atualizar_status_do_projeto,
+    etapa_pendente,
     gerar_briefing,
     gerar_e_salvar_plano,
+    gerar_e_salvar_proximo_passo,
     normalizar_fila,
+    passo_atual,
 )
 
 
@@ -66,6 +69,9 @@ def novo(request):
     if request.method == "POST" and formulario.is_valid():
         projeto = formulario.save(commit=False)
         projeto.usuario = request.user
+        # Sem campo de título na criação (ver _form_projeto.html), fica um
+        # nome provisório até o mentor gerar o plano e escolher o de verdade.
+        projeto.titulo = projeto.titulo.strip() or "Novo projeto"
         projeto.save()
         formulario.save_m2m()
         return redirect("projeto_planejar", pk=projeto.pk)
@@ -147,11 +153,13 @@ def detalhe(request, pk):
     # O passo em aberto. É ele que vira o botão principal da tela: sem isso, a
     # ação central do app fica escondida numa linha de lista, e quem chega aqui
     # depois de gerar o plano não sabe por onde começar.
-    atual = (
-        Passo.objects.filter(etapa__plano=plano)
-        .exclude(status__in=[Passo.Status.CONCLUIDO, Passo.Status.BLOQUEADO])
-        .first()
-    )
+    atual = passo_atual(plano)
+
+    # Sem passo aberto mas o plano ainda não acabou: o mentor está gerando o
+    # próximo (ou precisa gerar), e a tela certa é a de espera, não esta com o
+    # botão principal faltando.
+    if atual is None and (projeto.gerando or etapa_pendente(plano)):
+        return redirect("projeto_passo_gerando", pk=projeto.pk)
 
     return render(
         request,
@@ -173,12 +181,23 @@ def planejar(request, pk):
     Serve os dois casos, o primeiro plano e o replanejamento, e é por isso
     que o plano atual vai no contexto: refazer descarta o roteiro em curso, e a
     tela precisa dizer isso antes, não depois.
+
+    Se `projeto.gerando` estiver marcado, uma geração já está em curso (ou
+    ficou em curso até a última vez que a aba desta pessoa esteve aberta): a
+    tela pula direto para a espera e retoma sozinha, em vez de perguntar de
+    novo o que já foi respondido.
     """
     projeto = obter_do_usuario(Projeto, request.user, pk=pk)
     return render(
         request,
         "projetos/planejar.html",
-        {"projeto": projeto, "plano_atual": projeto.plano_ativo},
+        {
+            "projeto": projeto,
+            "plano_atual": projeto.plano_ativo,
+            "gerando": projeto.gerando,
+            "briefing_pendente": projeto.briefing_pendente,
+            "erro_geracao": projeto.erro_geracao,
+        },
     )
 
 
@@ -258,6 +277,63 @@ async def planejar_stream(request, pk):
         except Exception as erro:  # noqa: BLE001
             tarefa.cancel()
             yield sse.quadro("erro", {"mensagem": f"Não deu para gerar o plano: {erro}"})
+
+    return sse.resposta(eventos())
+
+
+@login_required
+def passo_gerando(request, pk):
+    """Tela de espera enquanto o mentor prepara o próximo passo.
+
+    Mesmo papel que `planejar` tem para o plano: se `projeto.gerando` estiver
+    marcado (inclusive depois de um F5), a tela retoma sozinha em vez de
+    mandar a pessoa de volta para o projeto sem passo nenhum aberto.
+    """
+    projeto = obter_do_usuario(Projeto, request.user, pk=pk)
+    plano = projeto.plano_ativo
+
+    # Nada para gerar: nem está gerando, nem sobrou etapa pendente. Só chega
+    # aqui por um link direto ou um F5 tardio; o lugar certo é o projeto.
+    if not projeto.gerando and not etapa_pendente(plano):
+        return redirect("projeto_detalhe", pk=projeto.pk)
+
+    return render(request, "projetos/passo_gerando.html", {"projeto": projeto})
+
+
+async def passo_gerar_stream(request, pk):
+    """Gera o próximo passo e informa o progresso, no mesmo padrão do plano."""
+    usuario = await request.auser()
+    if not usuario.is_authenticated:
+        raise Http404
+
+    projeto = await sync_to_async(get_object_or_404)(Projeto, pk=pk, usuario=usuario)
+
+    async def eventos():
+        tarefa = asyncio.create_task(gerar_e_salvar_proximo_passo(projeto, usuario))
+        try:
+            while True:
+                pronto, _ = await asyncio.wait({tarefa}, timeout=sse.INTERVALO_BATIMENTO)
+                if pronto:
+                    break
+                yield sse.comentario("pensando")
+
+            passo, _uso = tarefa.result()
+            if passo is None:
+                # A etapa pendente foi fechada por outra requisição enquanto
+                # esta rodava (duas abas, por exemplo): nada a abrir, volta
+                # para o projeto, que decide o que mostrar a partir daí.
+                url = await sync_to_async(lambda: projeto.get_absolute_url())()
+            else:
+                url = passo.get_absolute_url()
+            yield sse.quadro("fim", {"url": url})
+        except QuotaExcedida as erro:
+            yield sse.quadro("erro", {"mensagem": str(erro)})
+        except asyncio.CancelledError:
+            tarefa.cancel()
+            raise
+        except Exception as erro:  # noqa: BLE001
+            tarefa.cancel()
+            yield sse.quadro("erro", {"mensagem": f"Não deu para preparar o próximo passo: {erro}"})
 
     return sse.resposta(eventos())
 
@@ -477,6 +553,12 @@ def passo_concluir(request, pk):
             messages.success(request, f"Passo concluído. Liberado: {proximo.titulo}.")
             return redirect("passo_detalhe", pk=proximo.pk)
 
+        # Sem passo já materializado esperando: se o plano ainda tem etapa em
+        # aberto, é hora do mentor preparar o próximo, um de cada vez.
+        if etapa_pendente(passo.etapa.plano):
+            messages.success(request, "Passo concluído. Preparando o próximo…")
+            return redirect("projeto_passo_gerando", pk=passo.projeto.pk)
+
         messages.success(request, "Passo concluído. Era o último da fila.")
     return redirect("projeto_detalhe", pk=passo.projeto.pk)
 
@@ -506,6 +588,8 @@ def exportar_markdown(request, pk):
             linhas += [f"  - O que fazer: {passo.o_que_fazer}"]
             linhas += [f"  - Como fazer: {passo.como_fazer}"]
             linhas += [f"  - Por quê: {passo.teoria}"]
+            if passo.o_que_enviar:
+                linhas += [f"  - O que mandar para revisão: {passo.o_que_enviar}"]
             for criterio in passo.criterios_aceite:
                 linhas.append(f"  - [ ] {criterio}")
             linhas.append("")

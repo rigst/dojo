@@ -15,10 +15,11 @@ from ia.contabilidade import Uso
 from ia.schemas import (
     BriefingGerado,
     CriterioAvaliado,
-    EtapaGerada,
+    EtapaEsboco,
     PassoGerado,
+    PassoSeguinteGerado,
     PerguntaBriefing,
-    PlanoGerado,
+    PlanoInicialGerado,
     ProblemaEncontrado,
     RevisaoCodigo,
 )
@@ -61,14 +62,17 @@ async def gerar_briefing(pedido):
                 PerguntaBriefing(
                     pergunta="Os dados ficam só na sua máquina ou precisam ir para um servidor?",
                     porque="Muda se o plano inclui deploy e banco de verdade desde cedo.",
+                    opcoes=["Só na minha máquina", "Precisa ir para um servidor", "Ainda não sei"],
                 ),
                 PerguntaBriefing(
                     pergunta="Você já usou um ORM antes, ou seria a primeira vez?",
                     porque="Define se o passo do modelo de dados vira um passo ou três.",
+                    opcoes=["Já usei", "Seria a primeira vez", "Usei um pouco, sem confiança"],
                 ),
                 PerguntaBriefing(
                     pergunta="Tem alguma tecnologia que você quer evitar neste projeto?",
                     porque="Evita um plano inteiro em cima de algo que você não quer aprender agora.",
+                    opcoes=["Não, pode usar o que fizer sentido", "Sim, tem uma ou mais para evitar"],
                 ),
             ]
         ),
@@ -76,9 +80,55 @@ async def gerar_briefing(pedido):
     )
 
 
+def _primeiro_passo():
+    return PassoGerado(
+        titulo="Subir o projeto vazio",
+        o_que_fazer=(
+            "Crie o projeto com o comando de scaffold da stack e faça a "
+            "página inicial responder no navegador. Nada de modelo, nada "
+            "de formulário: só o servidor de pé."
+        ),
+        como_fazer=(
+            "Em ordem:\n\n"
+            "1. Rode o comando que cria o esqueleto do projeto.\n"
+            "2. Logo em seguida, suba o **servidor de desenvolvimento**.\n"
+            "3. Abra o endereço que ele imprimir no terminal.\n\n"
+            "Se a porta padrão estiver ocupada, passe outra em vez de matar o "
+            "processo que está lá. Antes de seguir, abra os arquivos gerados e "
+            "leia os nomes: você vai voltar a eles em todos os passos "
+            "seguintes."
+        ),
+        teoria=(
+            "Um esqueleto que roda é um ponto de retorno. A partir daqui, "
+            "sempre que algo quebrar você consegue responder à pergunta "
+            "mais útil da depuração: o que mudou desde a última vez que "
+            "funcionou? Quem começa escrevendo a funcionalidade primeiro "
+            "perde essa referência e passa a depurar duas coisas ao mesmo "
+            "tempo, o próprio código e a montagem do projeto."
+        ),
+        o_que_enviar="O arquivo principal do projeto, com a rota da página inicial.",
+        criterios_aceite=[
+            "O servidor sobe sem erro no terminal.",
+            "A página inicial responde 200 em localhost.",
+            "Você consegue parar e subir o servidor de novo sem consultar nada.",
+        ],
+        armadilhas=[
+            "Rodar o comando dentro da pasta errada e criar um projeto aninhado dentro do outro.",
+            "Confundir a porta ocupada com erro do projeto; a mensagem diz qual é o caso.",
+        ],
+        estimativa_min=45,
+    )
+
+
 async def gerar_plano(pedido):
     return (
-        PlanoGerado(
+        PlanoInicialGerado(
+            # Fixo e não derivado de `pedido.titulo_projeto`: esse campo, na
+            # geração de verdade, ainda carrega o nome provisório da criação
+            # ("Novo projeto"), e ecoá-lo aqui esconderia que o mentor é quem
+            # escolhe o nome de verdade a partir do objetivo.
+            titulo="Lista de tarefas guiada",
+            subtitulo="Do esqueleto que roda até uma versão que você usa de verdade.",
             resumo=(
                 f"O plano leva {pedido.titulo_projeto} de um esqueleto que roda até uma "
                 "versão que você usa de verdade. A primeira etapa existe para você ter um "
@@ -86,83 +136,62 @@ async def gerar_plano(pedido):
                 "acrescentam uma ideia nova por vez."
             ),
             etapas=[
-                EtapaGerada(
+                EtapaEsboco(
                     titulo="Esqueleto que roda",
                     objetivo=(
                         "Ter o projeto de pé, servindo uma página, antes de escrever "
                         "qualquer regra de negócio."
                     ),
-                    passos=[
-                        PassoGerado(
-                            titulo="Subir o projeto vazio",
-                            o_que_fazer=(
-                                "Crie o projeto com o comando de scaffold da stack e faça a "
-                                "página inicial responder no navegador. Nada de modelo, nada "
-                                "de formulário: só o servidor de pé."
-                            ),
-                            como_fazer=(
-                                "Rode o comando que cria o esqueleto do projeto e, logo em "
-                                "seguida, o servidor de desenvolvimento. Abra o endereço que "
-                                "ele imprimir. Se a porta padrão estiver ocupada, passe outra "
-                                "em vez de matar o processo que está lá. Antes de seguir, "
-                                "abra os arquivos gerados e leia os nomes: você vai voltar a "
-                                "eles em todos os passos seguintes."
-                            ),
-                            teoria=(
-                                "Um esqueleto que roda é um ponto de retorno. A partir daqui, "
-                                "sempre que algo quebrar você consegue responder à pergunta "
-                                "mais útil da depuração: o que mudou desde a última vez que "
-                                "funcionou? Quem começa escrevendo a funcionalidade primeiro "
-                                "perde essa referência e passa a depurar duas coisas ao mesmo "
-                                "tempo, o próprio código e a montagem do projeto."
-                            ),
-                            criterios_aceite=[
-                                "O servidor sobe sem erro no terminal.",
-                                "A página inicial responde 200 em localhost.",
-                                "Você consegue parar e subir o servidor de novo sem consultar nada.",
-                            ],
-                            armadilhas=[
-                                "Rodar o comando dentro da pasta errada e criar um projeto aninhado dentro do outro.",
-                                "Confundir a porta ocupada com erro do projeto; a mensagem diz qual é o caso.",
-                            ],
-                            estimativa_min=45,
-                        ),
-                        PassoGerado(
-                            titulo="Primeiro modelo de dados",
-                            o_que_fazer=(
-                                "Modele a entidade central do projeto com os campos mínimos "
-                                "para ela existir, gere a migration e aplique."
-                            ),
-                            como_fazer=(
-                                "Declare a classe no arquivo de modelos do app, com os campos "
-                                "que você não consegue descrever a entidade sem eles. Gere a "
-                                "migration e abra o arquivo gerado antes de aplicar: ele é "
-                                "legível, e é ali que dá para ver se o que você escreveu virou "
-                                "o que você queria. Depois registre o modelo no admin para "
-                                "conseguir criar registros sem escrever formulário nenhum."
-                            ),
-                            teoria=(
-                                "A migration é o registro versionado do schema. Ela existe "
-                                "para que o banco de produção chegue ao mesmo estado que o "
-                                "seu, na mesma ordem, sem ninguém rodar SQL à mão. Olhar o "
-                                "arquivo gerado antes de aplicar é o hábito que evita "
-                                "descobrir uma coluna errada só no deploy, quando corrigir "
-                                "custa uma migration de correção em vez de uma tecla."
-                            ),
-                            criterios_aceite=[
-                                "A migration aplica sem erro.",
-                                "O admin lista o modelo e permite criar um registro.",
-                                "Você sabe dizer o que cada campo guarda e por que ele existe.",
-                            ],
-                            armadilhas=[
-                                "Colocar todos os campos que talvez sejam úteis um dia; campo sem uso hoje é dívida.",
-                                "Aplicar a migration sem ler o arquivo gerado.",
-                            ],
-                            estimativa_min=60,
-                        ),
-                    ],
-                )
+                ),
+                EtapaEsboco(
+                    titulo="Primeiro modelo de dados",
+                    objetivo="Ter a entidade central do projeto persistida e visível no admin.",
+                ),
             ],
+            primeiro_passo=_primeiro_passo(),
+        ),
+        _uso(),
+    )
+
+
+async def gerar_proximo_passo(pedido):
+    return (
+        PassoSeguinteGerado(
+            passo=PassoGerado(
+                titulo="Primeiro modelo de dados",
+                o_que_fazer=(
+                    "Modele a entidade central do projeto com os campos mínimos "
+                    "para ela existir, gere a migration e aplique."
+                ),
+                como_fazer=(
+                    "Declare a classe no arquivo de modelos do app, com os campos "
+                    "que você não consegue descrever a entidade sem eles. Gere a "
+                    "migration e abra o arquivo gerado antes de aplicar: ele é "
+                    "legível, e é ali que dá para ver se o que você escreveu virou "
+                    "o que você queria. Depois registre o modelo no admin para "
+                    "conseguir criar registros sem escrever formulário nenhum."
+                ),
+                teoria=(
+                    "A migration é o registro versionado do schema. Ela existe "
+                    "para que o banco de produção chegue ao mesmo estado que o "
+                    "seu, na mesma ordem, sem ninguém rodar SQL à mão. Olhar o "
+                    "arquivo gerado antes de aplicar é o hábito que evita "
+                    "descobrir uma coluna errada só no deploy, quando corrigir "
+                    "custa uma migration de correção em vez de uma tecla."
+                ),
+                o_que_enviar="O arquivo de modelos com a classe nova e a migration gerada.",
+                criterios_aceite=[
+                    "A migration aplica sem erro.",
+                    "O admin lista o modelo e permite criar um registro.",
+                    "Você sabe dizer o que cada campo guarda e por que ele existe.",
+                ],
+                armadilhas=[
+                    "Colocar todos os campos que talvez sejam úteis um dia; campo sem uso hoje é dívida.",
+                    "Aplicar a migration sem ler o arquivo gerado.",
+                ],
+                estimativa_min=60,
+            ),
+            etapa_concluida=True,
         ),
         _uso(),
     )

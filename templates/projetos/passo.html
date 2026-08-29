@@ -40,11 +40,11 @@
         blocos de mesmo peso onde nada guiava a leitura.
         {% endcomment %}
         <dl class="camadas">
-            <div class="camada">
+            <div class="camada camada--fazer">
                 <dt>O que fazer</dt>
                 <dd class="prosa camada-lead">{{ passo.o_que_fazer|prosa }}</dd>
             </div>
-            <div class="camada">
+            <div class="camada camada--como">
                 <dt>Como fazer</dt>
                 <dd class="prosa">{{ passo.como_fazer|prosa }}</dd>
             </div>
@@ -57,10 +57,23 @@
         {% if passo.criterios_aceite or passo.armadilhas %}
         <div class="passo-fichas">
             {% if passo.criterios_aceite %}
-            <section class="ficha">
+            <section class="ficha ficha--sucesso">
                 <h2 class="ficha-titulo">Você terminou quando</h2>
-                <ul class="criterios">
-                    {% for criterio in passo.criterios_aceite %}<li>{{ criterio|prosa_curta }}</li>{% endfor %}
+                {% comment %}
+                Marcável, e não só leitura: são critérios que a pessoa confere
+                nela mesma, um a um, então precisa poder ir riscando. Fica
+                salvo no navegador (ver static/js/criterios.js) — não é
+                progresso do passo, é só a marcação de quem está conferindo.
+                {% endcomment %}
+                <ul class="criterios criterios--marcaveis" data-criterios data-passo="{{ passo.pk }}">
+                    {% for criterio in passo.criterios_aceite %}
+                    <li>
+                        <label class="criterio-item">
+                            <input type="checkbox" data-criterio="{{ forloop.counter0 }}">
+                            <span>{{ criterio|prosa_curta }}</span>
+                        </label>
+                    </li>
+                    {% endfor %}
                 </ul>
             </section>
             {% endif %}
@@ -82,17 +95,43 @@
         {% endcomment %}
         <section class="passo-acao">
             <h2 class="ficha-titulo">Mandar para revisão</h2>
-            <p class="ds-muted">Cole só o que este passo pediu. O mentor avalia critério por critério e aponta o que falta, sem reescrever o seu código.</p>
+            <p class="ds-muted">O mentor avalia critério por critério e aponta o que falta, sem reescrever o seu código.</p>
+            {% if passo.o_que_enviar %}
+            <p class="passo-acao-pedido"><strong>O que mandar:</strong> {{ passo.o_que_enviar }}</p>
+            {% endif %}
 
-            <form method="post" action="{% url 'revisao_submeter' passo.pk %}">
+            <form method="post" action="{% url 'revisao_submeter' passo.pk %}" enctype="multipart/form-data" data-forma-revisao>
                 {% csrf_token %}
                 <div class="campo campo--codigo">
                     <label class="ds-so-leitor" for="codigo">Seu código ou diff</label>
                     <textarea id="codigo" name="conteudo" rows="10" spellcheck="false"
-                              placeholder="Cole aqui o código deste passo."></textarea>
+                              placeholder="{{ passo.o_que_enviar|default:'Cole aqui o código deste passo.' }}"></textarea>
                 </div>
-                <div class="passo-acao-pe">
-                    <button type="submit" class="ds-btn ds-btn--solid">Pedir revisão</button>
+
+                {% comment %}
+                Cola OU anexa, e os dois juntos também funcionam: quem tem o
+                arquivo à mão não devia precisar abrir e copiar o conteúdo à
+                mão só para colar aqui.
+
+                A lista de anexos fica acima do botão que anexa, e não abaixo:
+                cada arquivo novo empilha numa linha ali, o botão que os traz
+                fica sempre no mesmo lugar por baixo deles, junto do botão que
+                manda — as duas ações da barra, lado a lado e justificadas nas
+                pontas, e não uma solta em cima da outra.
+                {% endcomment %}
+                <div class="anexo">
+                    <ul class="anexo-lista" data-anexo-lista hidden></ul>
+
+                    <div class="anexo-barra">
+                        <label class="anexo-botao" for="arquivos">
+                            {% include "core/_ico.html" with ico="anexo" %}
+                            <span>Anexar arquivo(s)</span>
+                        </label>
+                        <input type="file" id="arquivos" name="arquivos" multiple hidden
+                               accept=".py,.js,.jsx,.ts,.tsx,.html,.htm,.css,.scss,.json,.md,.txt,.sql,.yml,.yaml,.toml,.env,.sh,.go,.rs,.java,.rb,.php,.c,.h,.cpp,.cs,.kt,.swift,.dart">
+
+                        <button type="submit" class="ds-btn ds-btn--solid">Pedir revisão</button>
+                    </div>
                 </div>
             </form>
 
@@ -159,9 +198,21 @@
     </article>
 
     {% include "mentoria/_chat.html" with projeto=projeto passo=passo %}
+
+    {% comment %}
+    Só aparece no celular (CSS): ao lado do passo o chat já está na tela, mas
+    empilhado ele viraria uma segunda página inteira para rolar antes de
+    chegar nele. O botão abre o mesmo chat como um modal de tela cheia, com
+    rolagem própria, em vez disso.
+    {% endcomment %}
+    <button type="button" class="chat-abrir-movel" data-chat-abrir aria-label="Conversar com o mentor">
+        {% include "core/_ico.html" with ico="chat" %}
+    </button>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="{% static 'js/chat.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'js/criterios.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'js/anexos.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% endblock %}

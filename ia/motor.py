@@ -30,6 +30,10 @@ async def gerar_plano(pedido):
     return await _motor().gerar_plano(pedido)
 
 
+async def gerar_proximo_passo(pedido):
+    return await _motor().gerar_proximo_passo(pedido)
+
+
 async def revisar(pedido):
     return await _motor().revisar(pedido)
 

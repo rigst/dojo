@@ -72,23 +72,6 @@
     {% endif %}
 
     <section class="ds-card">
-        <h2 class="secao-titulo">Aparência</h2>
-        <form method="post" class="form-campos">
-            {% csrf_token %}
-            <input type="hidden" name="acao" value="tema">
-            <div class="escolhas">
-                {% for valor, rotulo in user.Tema.choices %}
-                <label class="escolha">
-                    <input type="radio" name="tema" value="{{ valor }}" {% if user.tema == valor %}checked{% endif %}>
-                    <span><strong>{{ rotulo }}</strong></span>
-                </label>
-                {% endfor %}
-            </div>
-            <div class="form-actions"><button class="ds-btn">Salvar tema</button></div>
-        </form>
-    </section>
-
-    <section class="ds-card">
         <h2 class="secao-titulo">Seus dados</h2>
         <p class="ds-muted">Projetos, planos, passos e conversas são seus. Leve embora quando quiser.</p>
         <p><a class="ds-btn" href="{% url 'exportar_dados' %}">Baixar tudo em JSON</a></p>

@@ -1,12 +1,25 @@
 {% comment %}
 Os campos do projeto, iguais na criação e na edição. Ter duas cópias garantiria
 que uma delas ficasse para trás na primeira mudança.
+
+Título e subtítulo só aparecem depois que o projeto já existe: na criação
+(`formulario.instance.pk` vazio) ninguém digita nome de projeto, o mentor
+escolhe um ao gerar o plano.
 {% endcomment %}
+{% if formulario.instance.pk %}
 <div class="campo">
     <label for="{{ formulario.titulo.id_for_label }}">{{ formulario.titulo.label }}</label>
     {{ formulario.titulo }}
     {% if formulario.titulo.errors %}<div class="campo-erro">{{ formulario.titulo.errors }}</div>{% endif %}
 </div>
+
+<div class="campo">
+    <label for="{{ formulario.subtitulo.id_for_label }}">{{ formulario.subtitulo.label }}</label>
+    {{ formulario.subtitulo }}
+    <span class="campo-ajuda">Some se você replanejar: o mentor escolhe de novo a partir do objetivo.</span>
+    {% if formulario.subtitulo.errors %}<div class="campo-erro">{{ formulario.subtitulo.errors }}</div>{% endif %}
+</div>
+{% endif %}
 
 <div class="campo">
     <label for="{{ formulario.objetivo.id_for_label }}">{{ formulario.objetivo.label }}</label>
@@ -56,31 +69,3 @@ que uma delas ficasse para trás na primeira mudança.
         {% endfor %}
     </div>
 </fieldset>
-
-<fieldset class="grupo">
-    <legend class="grupo-legenda"><span class="secao-titulo">Como quer ser ensinado</span></legend>
-    <div class="escolhas">
-        {% for opcao in formulario.preferencia_didatica %}
-        <label class="escolha escolha--ilustrada">
-            {{ opcao.tag }}
-            <span class="escolha-ico">
-                {% if opcao.data.value == "socratico" %}{% include "core/_ico.html" with ico="socratico" %}
-                {% else %}{% include "core/_ico.html" with ico="direto" %}{% endif %}
-            </span>
-            <span class="escolha-texto">
-                <strong>{{ opcao.choice_label }}</strong>
-                <span>
-                    {% if opcao.data.value == "socratico" %}Ele pergunta antes de responder.
-                    {% else %}Ele responde e você segue.{% endif %}
-                </span>
-            </span>
-        </label>
-        {% endfor %}
-    </div>
-</fieldset>
-
-<div class="campo campo--curto">
-    <label for="{{ formulario.horas_por_semana.id_for_label }}">{{ formulario.horas_por_semana.label }}</label>
-    {{ formulario.horas_por_semana }}
-    <span class="campo-ajuda">{{ formulario.horas_por_semana.help_text }}</span>
-</div>

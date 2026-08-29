@@ -14,7 +14,7 @@ from django.conf import settings
 
 from ia import ferramentas
 from ia.contabilidade import Uso
-from ia.schemas import BriefingGerado, PlanoGerado, RevisaoCodigo
+from ia.schemas import BriefingGerado, PassoSeguinteGerado, PlanoInicialGerado, RevisaoCodigo
 
 # Plano e revisão têm resposta estruturada e limitada; o teto alto do settings é
 # para a conversa, que streama.
@@ -66,7 +66,11 @@ async def gerar_briefing(pedido):
 
 
 async def gerar_plano(pedido):
-    return await _estruturado(pedido, PlanoGerado)
+    return await _estruturado(pedido, PlanoInicialGerado)
+
+
+async def gerar_proximo_passo(pedido):
+    return await _estruturado(pedido, PassoSeguinteGerado)
 
 
 async def revisar(pedido):

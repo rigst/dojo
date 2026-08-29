@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Preparando o próximo passo{% endblock %}
+
+{% block content %}
+<div class="page page--leitura">
+    <div class="page-head">
+        <span class="ds-kicker">{{ projeto.titulo }}</span>
+        <h1 class="ds-h1">Preparando o próximo passo</h1>
+        <p class="page-sub">
+            O mentor olha o que você já fez nesta etapa e monta o passo
+            seguinte. Leva alguns segundos, e você acompanha por aqui.
+        </p>
+    </div>
+
+    <section class="ds-card" data-passo-gerando
+             data-stream="{% url 'projeto_passo_gerar_stream' projeto.pk %}"
+             data-projeto="{% url 'projeto_detalhe' projeto.pk %}">
+        <div class="espera" data-espera>
+            <p class="espera-estado" role="status" aria-live="polite" data-estado>Conversando com o mentor…</p>
+            <div class="ds-progress"><span class="ds-progress-fill espera-barra"></span></div>
+            <p class="ds-muted" data-decorrido></p>
+        </div>
+
+        <p class="auth-erro ds-oculto" data-erro hidden></p>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/passo_gerando.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{% endblock %}

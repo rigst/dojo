@@ -65,12 +65,31 @@ def _sistema(projeto, extra="", passo=None):
 
 
 def para_plano(projeto, usuario, respostas_briefing=""):
-    pedido = "Monte o plano deste projeto."
+    pedido = (
+        "Monte o plano deste projeto. O título que aparece em CONTEXTO DO PROJETO "
+        "é só um rascunho (às vezes nem isso); escolha o título e o subtítulo de "
+        "verdade a partir do objetivo."
+    )
     if respostas_briefing:
         pedido += "\n\nO aluno respondeu ao briefing:\n" + respostas_briefing
 
     return Pedido(
         sistema=_sistema(projeto, extra=prompts.PLANEJADOR),
+        mensagens=[{"role": "user", "content": pedido}],
+        chave_api=_chave(usuario),
+        titulo_projeto=projeto.titulo,
+    )
+
+
+def para_proximo_passo(projeto, etapa, usuario):
+    pedido = (
+        f"Gere o próximo passo da etapa {etapa.ordem} ({etapa.titulo}). O contexto "
+        "do projeto já mostra quais passos essa etapa tem até agora; não repita "
+        "nenhum. Diga também se, depois deste passo, a etapa já entrega o "
+        "objetivo dela."
+    )
+    return Pedido(
+        sistema=_sistema(projeto, extra=prompts.PLANEJADOR_PASSO),
         mensagens=[{"role": "user", "content": pedido}],
         chave_api=_chave(usuario),
         titulo_projeto=projeto.titulo,

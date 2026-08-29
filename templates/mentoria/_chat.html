@@ -17,6 +17,16 @@ O chat, servido em dois lugares: ao lado do passo e sozinho na tela do projeto.
             <span class="chat-head-sub">o projeto como um todo</span>
             {% endif %}
         </div>
+        {% if passo %}
+        {% comment %}
+        Só existe (e só aparece, por CSS) quando o chat está embutido na
+        página do passo: é o botão que fecha o modal no celular. Na tela
+        dedicada não há modal para fechar.
+        {% endcomment %}
+        <button type="button" class="chat-fechar-movel" data-chat-fechar aria-label="Fechar conversa">
+            {% include "core/_ico.html" with ico="fechar" %}
+        </button>
+        {% endif %}
     </header>
 
     {% comment %}

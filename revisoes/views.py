@@ -17,18 +17,63 @@ from revisoes.servicos import SubmissaoGrandeDemais, revisar_submissao
 # chamada, em revisoes/servicos.py.
 MAX_CARACTERES = 60000
 
+# Tetos do anexo, separados do teto de caracteres acima: aquele é sobre o
+# conteúdo já lido, estes são sobre o que aceitar ler antes de sequer tentar.
+# Sem eles, um arquivo de 50MB (uma imagem batizada de ".py", por exemplo)
+# travaria a requisição decodificando bytes que nunca iam virar texto.
+MAX_ARQUIVOS = 6
+MAX_BYTES_POR_ARQUIVO = 300_000
+
+
+def _texto_do_arquivo(arquivo):
+    """O conteúdo do arquivo enviado, ou None se ele não serve para revisão.
+
+    Só texto: um binário decodificado errado não vira erro aqui, vira lixo que
+    o mentor tentaria revisar como se fosse código.
+    """
+    if arquivo.size > MAX_BYTES_POR_ARQUIVO:
+        return None
+    try:
+        return arquivo.read().decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+
 
 @login_required
 def submeter(request, pk):
-    """Recebe o código e devolve a tela de espera da revisão."""
+    """Recebe o código (colado, anexado, ou os dois) e devolve a tela de
+    espera da revisão."""
     passo = get_object_or_404(Passo.objects.do_usuario(request.user), pk=pk)
 
     if request.method != "POST":
         return redirect("passo_detalhe", pk=passo.pk)
 
-    conteudo = (request.POST.get("conteudo") or "").strip()
+    arquivos = request.FILES.getlist("arquivos")
+    if len(arquivos) > MAX_ARQUIVOS:
+        messages.error(request, f"São muitos arquivos de uma vez. Envie até {MAX_ARQUIVOS}.")
+        return redirect("passo_detalhe", pk=passo.pk)
+
+    partes = []
+    texto_colado = (request.POST.get("conteudo") or "").strip()
+    if texto_colado:
+        partes.append(texto_colado)
+
+    for arquivo in arquivos:
+        texto = _texto_do_arquivo(arquivo)
+        if texto is None:
+            messages.error(
+                request,
+                f"“{arquivo.name}” não deu para ler como texto (grande demais ou não é código).",
+            )
+            return redirect("passo_detalhe", pk=passo.pk)
+        # O nome do arquivo faz parte da revisão: é o que diz ao mentor qual
+        # arquivo é qual quando vem mais de um.
+        partes.append(f"--- arquivo: {arquivo.name} ---\n{texto}")
+
+    conteudo = "\n\n".join(partes).strip()
+
     if not conteudo:
-        messages.error(request, "Cole o código antes de pedir a revisão.")
+        messages.error(request, "Cole o código ou anexe um arquivo antes de pedir a revisão.")
         return redirect("passo_detalhe", pk=passo.pk)
 
     if len(conteudo) > MAX_CARACTERES:

@@ -349,7 +349,11 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 # testes: teste que depende de chave de API não roda no CI de ninguém.
 IA_BACKEND = os.getenv("DOJO_IA_BACKEND", "fake" if IS_TEST else "anthropic").strip()
 
-IA_MODELO = os.getenv("DOJO_IA_MODELO", "claude-opus-5").strip()
+# Sonnet, sempre e para tudo (briefing, plano, próximo passo, revisão e
+# conversa passam todos por `settings.IA_MODELO`, ver ia/motores/anthropic_motor.py):
+# é o modelo de custo-benefício da família para orientação passo a passo, e um
+# só modelo mantém o cache de prompt (ia/preparo.py) útil entre as chamadas.
+IA_MODELO = os.getenv("DOJO_IA_MODELO", "claude-sonnet-5").strip()
 
 # Teto de tokens por resposta. Alto de propósito: a orientação de um passo
 # costuma ser longa, e resposta cortada no meio custa uma rodada inteira.

@@ -12,7 +12,7 @@ do usuário, nunca aqui.
 # Sobe quando o texto muda. Fica gravado na Mensagem: sem isso, uma resposta
 # esquisita de três semanas atrás não tem como ser atribuída à versão do prompt
 # que a produziu.
-VERSAO_PROMPT = 2
+VERSAO_PROMPT = 5
 
 MENTOR = """\
 Você é o mentor do Dojo. Alguém está construindo um projeto de software para \
@@ -90,22 +90,70 @@ DIDATICA = {
     ),
 }
 
-PLANEJADOR = """\
-Sua tarefa agora é montar o plano de aprendizado do projeto.
+# Compartilhado entre PLANEJADOR e PLANEJADOR_PASSO: as duas geram passo, e um
+# passo sem formatação vira um parágrafo só, difícil de escanear numa tela
+# onde a pessoa está no meio de uma tarefa, não lendo com calma.
+FORMATO_CAMADAS = """\
+`o_que_fazer`, `como_fazer` e `teoria` usam markdown, não texto corrido: \
+parágrafos separados por linha em branco quando a explicação tiver mais de uma \
+ideia, **negrito** em nome de arquivo, comando, função ou termo-chave, lista \
+numerada ou com marcadores quando descrever uma sequência de ações ou um \
+conjunto de opções. O objetivo é dar para escanear a tela, não só ler de cima a \
+baixo."""
+
+PLANEJADOR = f"""\
+Sua tarefa agora é batizar o projeto e montar o roteiro geral dele, mais o \
+primeiro passo.
+
+Um título de projeto ruim é genérico ou pomposo: "Sistema de Gerenciamento de \
+Tarefas", "TaskMaster Pro". Um bom título é curto e concreto, do jeito que a \
+própria pessoa diria numa frase: "Lista de tarefas com login". O subtítulo \
+complementa em uma frase o que o título não disse, sem repetir palavra dele. \
+Não use aspas, ponto final nem emoji em nenhum dos dois.
 
 Um bom plano no Dojo:
 - vai do esqueleto que roda até o produto, nunca do "capítulo 1 da linguagem";
-- tem entre 4 e 7 etapas, cada uma com 2 a 5 passos;
-- cada passo cabe numa sessão de trabalho (30 a 120 minutos) e termina com algo \
-que a pessoa consegue rodar e ver funcionando;
-- cada passo carrega as três camadas (o que / como / por quê) e critérios de \
-aceite verificáveis, do tipo "o endpoint devolve 404 para id inexistente" e não \
-"o código está bom";
-- respeita o nível declarado: para iniciante, um passo é uma ideia nova por vez;
-- não escreve o código de nada. Os campos descrevem o caminho, não a solução.
+- tem entre 4 e 7 etapas, cada uma com um objetivo claro em uma frase;
+- respeita o nível declarado: para iniciante, um passo é uma ideia nova por vez.
+
+Você gera só o esqueleto agora: o título e subtítulo do projeto, o resumo, e o \
+título e objetivo de cada etapa, sem os passos. Os passos vêm depois, um de \
+cada vez, à medida que o aluno avança, e é por isso que só o PRIMEIRO passo (o \
+da primeira etapa) entra nesta resposta, completo.
+
+Esse primeiro passo cabe numa sessão de trabalho (30 a 120 minutos) e termina \
+com algo que a pessoa consegue rodar e ver funcionando. Carrega as três camadas \
+(o que / como / por quê) e critérios de aceite verificáveis, do tipo "o endpoint \
+devolve 404 para id inexistente" e não "o código está bom". Não escreve o código \
+de nada: os campos descrevem o caminho, não a solução.
 
 Em `armadilhas`, ponha o erro que essa pessoa provavelmente vai cometer neste \
-passo, e como ela vai perceber que cometeu.\
+passo, e como ela vai perceber que cometeu. Em `o_que_enviar`, diga exatamente o \
+que ela vai colar na hora de pedir revisão deste passo específico: qual arquivo, \
+função ou trecho, nunca "o código do passo".
+
+{FORMATO_CAMADAS}\
+"""
+
+PLANEJADOR_PASSO = f"""\
+Sua tarefa agora é gerar só o PRÓXIMO passo do plano, não o plano inteiro.
+
+O contexto do projeto já traz todas as etapas e os passos criados até aqui, com \
+o que está concluído marcado. O pedido diz qual etapa está em aberto: gere o \
+passo seguinte dela, coerente com os que já existem e com o objetivo da etapa.
+
+Mesmas regras de sempre: o passo cabe numa sessão de trabalho (30 a 120 \
+minutos), termina com algo que a pessoa consegue rodar e ver funcionando, carrega \
+as três camadas (o que / como / por quê) e critérios de aceite verificáveis. Não \
+escreve o código de nada. Em `o_que_enviar`, diga exatamente o que ela vai colar \
+na hora de pedir revisão deste passo: qual arquivo, função ou trecho.
+
+{FORMATO_CAMADAS}
+
+Diga também se, depois deste passo, a etapa já entrega o objetivo dela e não \
+precisa de mais passos. Não alongue a etapa artificialmente só para preencher um \
+número: feche assim que o objetivo estiver coberto, mesmo que tenha sido só com \
+dois ou três passos.\
 """
 
 ENTREVISTADOR = """\
@@ -118,7 +166,11 @@ sobre restrição real ("isso precisa rodar em algum lugar específico?").
 
 Não pergunte o que o objetivo já respondeu, não peça detalhe de implementação
 (é você quem vai propor o caminho) e não faça pergunta que só sirva para
-confirmar o que você já decidiu. Cada uma deve caber numa frase de resposta.\
+confirmar o que você já decidiu. Cada uma deve caber numa frase de resposta.
+
+Cada pergunta vem com 3 a 5 alternativas curtas para escolher, e não um campo de \
+texto livre: cubra os caminhos prováveis, da mais comum à mais rara, com \
+palavras que quem não conhece o termo técnico ainda reconhece.\
 """
 
 REVISOR = """\

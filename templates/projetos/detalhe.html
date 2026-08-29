@@ -8,7 +8,7 @@
         <div>
             <span class="ds-kicker">{{ projeto.stacks_texto }}</span>
             <h1 class="ds-h1">{{ projeto.titulo }}</h1>
-            <p class="page-sub">{{ projeto.objetivo }}</p>
+            <p class="page-sub">{{ projeto.subtitulo|default:projeto.objetivo }}</p>
         </div>
         {% comment %}
         Só o que se usa toda vez fica aqui. Exportar e refazer o plano moram no
@@ -38,12 +38,8 @@
             <span class="stat-valor num">{{ pct }}%</span>
         </div>
         <div class="stat">
-            <span class="stat-label">Passos</span>
+            <span class="stat-label">Etapas</span>
             <span class="stat-valor num">{{ feitos }}/{{ total }}</span>
-        </div>
-        <div class="stat">
-            <span class="stat-label">Plano</span>
-            <span class="stat-valor num">v{{ plano.versao }}</span>
         </div>
     </div>
 
@@ -97,6 +93,17 @@
                         {% endif %}
                     </li>
                     {% endfor %}
+                    {% if not etapa.passos_prontos %}
+                    {% comment %}
+                    Etapa gerada aos poucos (ver projetos/servicos.py:etapa_pendente):
+                    o mentor só cria o passo seguinte quando o aluno chega nele.
+                    Sem esta linha, a etapa parecia ter menos passos do que vai ter.
+                    {% endcomment %}
+                    <li class="passo-linha passo-linha--pendente">
+                        <span class="passo-num num">…</span>
+                        <span class="passo-pendente-texto">Próximos passos ainda não preparados</span>
+                    </li>
+                    {% endif %}
                 </ul>
             </li>
             {% endfor %}

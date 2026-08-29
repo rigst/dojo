@@ -159,23 +159,27 @@
  * explícita de tema claro vencer a preferência do sistema. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-tema="claro"]) {
-        --ds-bg: #131412;
-        --ds-panel: #0d0e0c;
-        --ds-surface: #1b1d19;
-        --ds-line: #2b2d28;
-        --ds-line-dash: #3d403a;
+        /* Fundo um pouco mais claro e tinta um pouco mais escura que o
+         * primeiro escuro que fiz: ~16:1 de contraste lia bem no medidor, mas
+         * cansava na leitura longa. Por volta de 11:1 ainda passa folgado do
+         * mínimo AAA (7:1) e segura o texto do jeito que pretendia sem doer. */
+        --ds-bg: #191a17;
+        --ds-panel: #101110;
+        --ds-surface: #202220;
+        --ds-line: #2f312c;
+        --ds-line-dash: #41443d;
 
-        --ds-text-900: #edeee8;
+        --ds-text-900: #d7d8d1;
         --ds-text-700: #c9cbc3;
         --ds-text-500: #a2a49b;
         --ds-text-400: #83857c;
 
-        --ds-acento: #edeee8;
+        --ds-acento: #d7d8d1;
         --ds-acento-claro: #ffffff;
         --ds-acento-escuro: #c9cbc3;
         --ds-acento-veu: #202220;
         --ds-acento-linha: #3d403a;
-        --ds-acento-tinta: #edeee8;
+        --ds-acento-tinta: #d7d8d1;
         --ds-acento-contraste: #131412;
 
         --ds-selo: #e87658;
@@ -207,23 +211,25 @@
 }
 
 :root[data-tema="escuro"] {
-    --ds-bg: #131412;
-    --ds-panel: #0d0e0c;
-    --ds-surface: #1b1d19;
-    --ds-line: #2b2d28;
-    --ds-line-dash: #3d403a;
+    /* Mesmo ajuste do bloco de `prefers-color-scheme` acima — os dois têm
+     * de ficar iguais, ver o comentário lá. */
+    --ds-bg: #191a17;
+    --ds-panel: #101110;
+    --ds-surface: #202220;
+    --ds-line: #2f312c;
+    --ds-line-dash: #41443d;
 
-    --ds-text-900: #edeee8;
+    --ds-text-900: #d7d8d1;
     --ds-text-700: #c9cbc3;
     --ds-text-500: #a2a49b;
     --ds-text-400: #83857c;
 
-    --ds-acento: #edeee8;
+    --ds-acento: #d7d8d1;
     --ds-acento-claro: #ffffff;
     --ds-acento-escuro: #c9cbc3;
     --ds-acento-veu: #202220;
     --ds-acento-linha: #3d403a;
-    --ds-acento-tinta: #edeee8;
+    --ds-acento-tinta: #d7d8d1;
     --ds-acento-contraste: #131412;
 
     --ds-selo: #e87658;
@@ -587,8 +593,32 @@ a.objeto-card:hover { border-color: var(--ds-text-700); }
 .ds-progress-fill { height: 100%; width: 0; border-radius: 0; background: linear-gradient(90deg, var(--ds-acento-escuro), var(--ds-acento-claro)); transition: width 800ms var(--ds-ease-out); }
 
 /* INDICADORES */
-.stats { display: flex; flex-wrap: wrap; gap: 1px; background: var(--ds-line); }
-.stat { flex: 1 1 9rem; padding: var(--ma-3) var(--ma-4); background: var(--ds-panel); }
+/* `flex: 0 1 9rem` e não `1 1`: com poucos indicadores (dois, três), deixar
+ * crescer espalhava a linha de ponta a ponta do card, cada um com um vazio
+ * em volta do número. Sem crescer, o grupo fica do tamanho do conteúdo e o
+ * `justify-content: center` centraliza esse bloco no card.
+ *
+ * O fio de `--ds-line` que enchia o vazio ao redor virava uma barra cinza
+ * feia assim que os indicadores pararam de esticar. No lugar, a mesma
+ * paisagem em tinta da marca-d'água, bem apagada, com as pontas dissolvidas
+ * — matéria discreta no vazio, não uma tarja. */
+.stats { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--ma-4); padding: var(--ma-2) 0; }
+.stats::before {
+    content: ""; position: absolute; inset: 0; z-index: 0;
+    /* 90%: a faixa baixa da paisagem, onde a pedra vira névoa sobre a água,
+     * é a que melhor lê como uma vista horizontal — as outras alturas do
+     * arquivo são mato ou galho, que num recorte baixo e largo viram borrão. */
+    background: url("../img/paisagem-tinta.png") center 90% / cover no-repeat;
+    filter: var(--ds-arte-filtro); opacity: 0.1;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 20%, #000 80%, transparent);
+    pointer-events: none;
+}
+.stat {
+    position: relative; z-index: 1;
+    flex: 0 1 9rem; padding: var(--ma-3) var(--ma-4); background: var(--ds-panel);
+    border-radius: var(--ds-raio-folha); text-align: center;
+}
 .stat-valor { display: block; font-size: 1.3rem; font-weight: 600; margin-top: var(--ma-1); }
 
 /* TABELAS: impressas na folha, sem caixa */
@@ -707,7 +737,7 @@ a.objeto-card:hover { border-color: var(--ds-text-700); }
  * cabeçalho da etapa respirando do bloco de passos (ma-4), e as linhas de
  * passo próximas entre si. É a hierarquia que faz o olho ver primeiro as
  * etapas e só depois os passos de cada uma. */
-.etapas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ma-7); }
+.etapas { list-style: none; margin: var(--ma-5) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--ma-7); }
 .etapa-head { display: flex; gap: var(--ma-3); align-items: baseline; margin-bottom: var(--ma-4); }
 .etapa-head h3 { margin: 0; font-family: var(--ds-font-display); font-size: 1.05rem; }
 .etapa-head p { margin: var(--ma-1) 0 0; font-size: 0.95rem; }
@@ -737,6 +767,16 @@ a.objeto-card:hover { border-color: var(--ds-text-700); }
 .passo-linha .ds-badge, .passo-linha .selo { margin-left: var(--ma-2); }
 a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline; }
 .passo-linha--concluido .passo-titulo { color: var(--ds-text-500); }
+/* Duas classes, não uma: `.passo-titulo` sozinho vem depois de `.ds-muted` na
+ * folha e ganharia da cor cinza por ordem de declaração, não por
+ * especificidade. O passo bloqueado ("na fila") usa essa combinação e ficava
+ * escuro apesar do `.ds-muted`. */
+.passo-titulo.ds-muted { color: var(--ds-text-500); }
+
+/* Linha de placeholder da etapa ainda em geração: mais apagada que qualquer
+ * passo de verdade, para não competir com eles. */
+.passo-linha--pendente { opacity: 0.6; }
+.passo-pendente-texto { color: var(--ds-text-400); font-style: italic; }
 /* O passo em curso não é uma faixa colorida: é um traço de vermelhão na
  * margem, do mesmo pote de tinta do carimbo. Marca sem tingir. */
 /* Só o traço, sem faixa. A faixa atravessava a linha inteira enquanto o texto
@@ -754,9 +794,9 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 }
 
 /* A tela do passo: leitura à esquerda, mentor à direita. */
-.passo-tela { display: grid; gap: var(--ma-6); grid-template-columns: minmax(0, 1fr); align-items: start; width: 100%; max-width: 74rem; margin-inline: auto; }
+.passo-tela { display: grid; gap: var(--ma-6); grid-template-columns: minmax(0, 1fr); align-items: start; width: 100%; max-width: 82rem; margin-inline: auto; }
 @media (min-width: 64rem) {
-    .passo-tela { grid-template-columns: minmax(0, 1fr) 23rem; }
+    .passo-tela { grid-template-columns: minmax(0, 1fr) 29rem; }
     /* O chat acompanha a rolagem do documento: a pergunta costuma nascer no
      * meio da leitura, e ter de rolar de volta até ele quebra o raciocínio. */
     .passo-tela .chat { position: sticky; top: 1.5rem; max-height: calc(100vh - 3rem); }
@@ -776,6 +816,18 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
     width: 0.55rem; height: 0.55rem; border: 1px solid var(--ds-line-dash); border-radius: 2px;
 }
 .criterios--alerta li::before { border-color: var(--ds-atencao); background: var(--ds-atencao-veu); }
+/* "Você terminou quando" é a única lista marcável: as armadilhas são para
+ * ler, não para riscar. Some com o quadradinho decorativo (a caixa de
+ * verdade faz esse papel) e desenha o item como rótulo clicável por
+ * inteiro, não só a caixinha. */
+.criterios--marcaveis li { padding-left: 0; }
+.criterios--marcaveis li::before { display: none; }
+.criterio-item { display: flex; align-items: flex-start; gap: var(--ma-3); cursor: pointer; }
+.criterio-item input {
+    margin: 0.25rem 0 0; width: 0.95rem; height: 0.95rem; flex-shrink: 0;
+    accent-color: var(--ds-ok);
+}
+.criterio-item:has(input:checked) span { color: var(--ds-text-500); text-decoration: line-through; text-decoration-color: var(--ds-line-dash); }
 .criterios--avaliados li { display: flex; gap: var(--ma-2); align-items: flex-start; padding-left: 0; }
 .criterios--avaliados li::before { display: none; }
 .criterio-marca svg { width: 1.1rem; height: 1.1rem; margin-top: var(--ma-1); }
@@ -813,6 +865,64 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 .tela-conversa .page { flex: 1; min-height: 0; }
 .tela-conversa .page--leitura { display: flex; flex-direction: column; }
 .chat--inteiro { flex: 1; min-height: 18rem; }
+
+/* O chat embutido na página do passo, no celular.
+ *
+ * Ao lado do passo (`min-width: 64rem`, ver .passo-tela) o chat já mora fixo
+ * na coluna da direita. Empilhado embaixo do documento, do jeito que o grid
+ * de uma coluna só faz abaixo desse tamanho, ele virava uma segunda folha
+ * inteira para rolar até chegar nele — e ainda sem rolagem própria, porque a
+ * altura só é travada no breakpoint largo. Abaixo de 64rem ele nasce fora da
+ * tela (`translateY(100%)`) e vira modal de tela cheia com o mesmo miolo
+ * (cabeçalho, fluxo que rola, compositor), aberto pelo botão flutuante e
+ * fechado pelo × do cabeçalho. */
+.chat-abrir-movel, .chat-fechar-movel { display: none; }
+@media (max-width: 63.9375rem) {
+    .chat-abrir-movel {
+        display: flex; align-items: center; justify-content: center;
+        position: fixed; right: var(--ma-4); bottom: var(--ma-4); z-index: 30;
+        width: 3.25rem; height: 3.25rem; padding: 0;
+        border: 1px solid var(--ds-line); border-radius: 50%;
+        background: var(--ds-acento); color: var(--ds-acento-contraste);
+        box-shadow: var(--ds-shadow-soft); cursor: pointer;
+    }
+    .chat-abrir-movel svg { width: 1.4rem; height: 1.4rem; }
+
+    .passo-tela .chat:not(.chat--inteiro) {
+        position: fixed; inset: 0; z-index: 45;
+        height: 100dvh; max-height: none;
+        border: 0; border-radius: 0;
+        transform: translateY(100%);
+        transition: transform var(--ds-mid) var(--ds-ease-out);
+        /* `.app-main > .passo-tela > *` (a animação de entrada da página)
+         * também mira este elemento, e termina em `transform: none` com
+         * `fill-mode: both` — que persiste e vence o `translateY(100%)` acima
+         * pela cascata comum, porque o valor de uma animação em andamento
+         * (ou presa pelo fill-mode) tem prioridade sobre a declaração
+         * estática. Sem isto o chat "escondido" ficava exatamente em cima da
+         * tela, sob o documento. */
+        animation: none;
+    }
+    .passo-tela .chat.is-aberto { transform: translateY(0); }
+
+    .chat-fechar-movel {
+        display: flex; align-items: center; justify-content: center;
+        margin-left: auto; width: 2rem; height: 2rem; padding: 0;
+        border: 0; background: none; color: var(--ds-text-500); cursor: pointer;
+    }
+    .chat-fechar-movel svg { width: 1.1rem; height: 1.1rem; }
+
+    /* Trava o fundo enquanto o modal está aberto: sem isto, dava para
+     * arrastar o documento por trás enquanto o chat cobre a tela. */
+    body.chat-travado { overflow: hidden; }
+    /* `.app-topo` (a barra de cima do celular) mora fora de `.app-main`, com
+     * z-index 15 próprio, e `.app-main` só vale 1 (ver `.app-side, .app-frame,
+     * .app-main, .ds-avisos`). Sem isto o chat, que é filho de `.app-main`,
+     * nunca sobe acima da barra por mais alto que seja o z-index dele: a
+     * comparação com um irmão de `.app-main` acontece pelo z-index de
+     * `.app-main`, não pelo do neto. */
+    body.chat-travado .app-main { z-index: 46; }
+}
 
 .chat-head {
     display: flex; align-items: center; gap: var(--ma-3);
@@ -1335,12 +1445,15 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 .linha-ico svg { width: 1rem; height: 1rem; }
 .linha-ico--perigo:hover { color: var(--ds-erro); border-color: var(--ds-erro); }
 
-/* Briefing: as perguntas do mentor antes do plano. */
+/* Briefing: as perguntas do mentor antes do plano. Cada uma é um fieldset com
+ * alternativas prontas para escolher, não um campo de texto livre: quem
+ * responde escolhe a que mais se encaixa. */
 .briefing { display: flex; flex-direction: column; gap: var(--ma-5); }
 .briefing-espera { display: flex; flex-direction: column; gap: var(--ma-2); max-width: 26rem; }
 .briefing-espera p { margin: 0; }
 .briefing-perguntas { display: flex; flex-direction: column; gap: var(--ma-5); }
-.briefing-perguntas label { font-family: var(--ds-font-sans); font-size: 0.95rem; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ds-text-900); }
+.briefing-perguntas legend { font-family: var(--ds-font-sans); font-size: 0.95rem; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--ds-text-900); padding: 0; margin-bottom: var(--ma-2); }
+.briefing-perguntas .escolhas { margin-bottom: var(--ma-1); }
 
 /* Histórico de revisões e paginação. */
 .revisoes-lista { list-style: none; margin: 0; padding: 0; }
@@ -1365,10 +1478,17 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
  * ------------------------------------------------------------------------- */
 
 /* 1. O ensō sendo desenhado. É o gesto da marca, e acontece uma vez por
- *    carregamento: o pincel entra, corre e sai seco, nessa ordem. */
-.app-brand-mark .mk-entrada { stroke-dasharray: 16; animation: ds-traco-1 340ms var(--ds-ease-out) 120ms both; }
-.app-brand-mark .mk-corpo   { stroke-dasharray: 33; animation: ds-traco-2 560ms var(--ds-ease-out) 380ms both; }
-.app-brand-mark .mk-saida   { stroke-dasharray: 11; animation: ds-traco-3 320ms var(--ds-ease-out) 860ms both; }
+ *    carregamento — o que, num app de página cheia e não uma SPA, é uma vez
+ *    por clique em qualquer link. Na duração original (1,18s do início do
+ *    primeiro traço ao fim do terceiro) isso parava de ler como gesto e
+ *    passava a ler como "a marca ainda está carregando" toda vez que a
+ *    lateral remontava. Cortado para menos de meio segundo, no mesmo teto das
+ *    outras animações de entrada do app (`ds-assenta`, `ds-sobe`). O
+ *    `will-change` evita que o navegador recalcule o traçado do zero a cada
+ *    quadro — é isso que fazia o gesto engasgar, não só a duração. */
+.app-brand-mark .mk-entrada { stroke-dasharray: 16; will-change: stroke-dashoffset; animation: ds-traco-1 130ms var(--ds-ease-out) 40ms both; }
+.app-brand-mark .mk-corpo   { stroke-dasharray: 33; will-change: stroke-dashoffset; animation: ds-traco-2 190ms var(--ds-ease-out) 140ms both; }
+.app-brand-mark .mk-saida   { stroke-dasharray: 11; will-change: stroke-dashoffset; animation: ds-traco-3 120ms var(--ds-ease-out) 300ms both; }
 @keyframes ds-traco-1 { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
 @keyframes ds-traco-2 { from { stroke-dashoffset: 33; } to { stroke-dashoffset: 0; } }
 @keyframes ds-traco-3 { from { stroke-dashoffset: 11; } to { stroke-dashoffset: 0; } }
@@ -1430,27 +1550,31 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 .passo-cabeca { display: flex; flex-direction: column; gap: var(--ma-1); }
 .passo-meta { margin: var(--ma-1) 0 0; font-family: var(--ds-font-mono); font-size: 0.78rem; color: var(--ds-text-400); }
 
-/* As três camadas são uma coisa só, lida em ordem. Lista de definição com o
- * rótulo na margem: o texto ganha uma coluna contínua, e os rótulos formam uma
- * régua vertical que diz de relance em que parte da explicação você está. */
-.camadas { margin: 0; display: flex; flex-direction: column; gap: var(--ma-6); }
-.camada { display: grid; gap: var(--ma-1); }
+/* As três camadas são uma coisa só, lida em ordem, mas cada uma em sua
+ * própria folha — como três notas soltas, não um bloco corrido. Cada uma com
+ * a cor dela (a mesma que já marca "ação", vermelhão, e "teoria", índigo, no
+ * resto do app), num véu de fundo bem claro, do jeito que um papel colorido
+ * é claro. */
+.camadas { margin: 0; display: flex; flex-direction: column; gap: var(--ma-4); }
+.camada {
+    display: flex; flex-direction: column; gap: var(--ma-2);
+    padding: var(--ma-4) var(--ma-5); border: 1px solid var(--ds-line);
+    border-radius: var(--ds-raio-folha); background: var(--ds-surface);
+}
 .camada dt {
     font-family: var(--ds-font-mono); font-size: 0.72rem; font-weight: 500;
     text-transform: uppercase; letter-spacing: 0.16em; color: var(--ds-text-500);
-    padding-top: var(--ma-1);
 }
 .camada dd { margin: 0; }
 /* O primeiro parágrafo é a tarefa: entra maior, porque é o que a pessoa lê
  * antes de decidir se continua lendo. */
 .camada-lead { font-size: 1.08rem; line-height: 1.65; }
+.camada--fazer { background: var(--ds-selo-veu); border-color: color-mix(in srgb, var(--ds-selo) 25%, var(--ds-line)); }
+.camada--fazer dt { color: var(--ds-selo); }
+.camada--como { background: var(--ds-ok-veu); border-color: color-mix(in srgb, var(--ds-ok) 25%, var(--ds-line)); }
+.camada--como dt { color: var(--ds-ok); }
+.camada--teoria { background: var(--ds-ai-veu); border-color: color-mix(in srgb, var(--ds-ai) 25%, var(--ds-line)); }
 .camada--teoria dt { color: var(--ds-ai); }
-
-@media (min-width: 60rem) {
-    /* Em tela larga o rótulo sai da frente do texto e vai para a margem. */
-    .camada { grid-template-columns: 8.5rem minmax(0, 1fr); gap: 0 var(--ma-6); align-items: start; }
-    .camada dt { text-align: right; }
-}
 
 /* Critérios e armadilhas são consulta, não leitura corrida: viram fichas lado
  * a lado, com fundo próprio, para o olho saber que pode voltar aqui depois. */
@@ -1459,14 +1583,17 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
     .passo-fichas { grid-template-columns: 1fr 1fr; }
 }
 .ficha {
-    padding: var(--ma-4) var(--ma-4); border: 1px solid var(--ds-line); border-radius: var(--ds-raio-folha);
-    background: var(--ds-surface);
+    padding: var(--ma-4) var(--ma-4); border: 1px solid var(--ds-line);
+    border-radius: var(--ds-raio-folha); background: var(--ds-surface);
 }
 .ficha--alerta { border-color: color-mix(in srgb, var(--ds-atencao) 35%, var(--ds-line)); }
+.ficha--sucesso { border-color: color-mix(in srgb, var(--ds-ok) 35%, var(--ds-line)); }
 .ficha-titulo {
     margin: 0 0 var(--ma-3);
     font-family: var(--ds-font-sans); font-weight: 700; font-size: 0.92rem;
 }
+.ficha--alerta .ficha-titulo { color: var(--ds-atencao); }
+.ficha--sucesso .ficha-titulo { color: var(--ds-ok); }
 
 /* A zona de ação: moldura, fundo de painel e o campo já grande. É o único
  * lugar da tela em que se escreve. */
@@ -1475,12 +1602,64 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
     border: 1px solid var(--ds-line-dash); border-radius: var(--ds-raio-folha);
     background: var(--ds-panel);
 }
-.passo-acao > .ds-muted { margin: 0 0 var(--ma-4); max-width: 44rem; font-size: 0.92rem; }
+.passo-acao > .ds-muted { margin: 0 0 var(--ma-1); max-width: 44rem; font-size: 0.92rem; }
+/* O que mandar, específico deste passo: sem isto a pessoa não sabe se cola o
+ * arquivo inteiro, uma função ou um trecho de config. A cor é a mesma da
+ * camada "o que fazer" — é a mesma pergunta, respondida de novo na hora de
+ * agir. */
+.passo-acao-pedido {
+    margin: 0 0 var(--ma-4); max-width: 44rem; font-size: 0.92rem;
+    color: var(--ds-text-700); background: var(--ds-selo-veu);
+    border-radius: var(--ds-raio); padding: var(--ma-2) var(--ma-3);
+}
+.passo-acao-pedido strong { color: var(--ds-selo); }
 /* Mesmo princípio da faixa do chat: o painel já cerca a zona de ação, então o
  * campo se distingue pelo fundo mais claro e só ganha traço ao receber foco. */
 .passo-acao .campo--codigo textarea { background: var(--ds-surface); min-height: 11rem; border-color: transparent; }
 .passo-acao .campo--codigo textarea:focus { border-color: var(--ds-text-900); }
-.passo-acao-pe { display: flex; justify-content: flex-end; margin-top: var(--ma-4); }
+
+/* Anexar em vez de colar: mesmo chip da Stack (borda fina, muda no hover),
+ * porque os dois são "escolha discreta". Quem manda a revisão continua sendo
+ * o botão preto — só que agora ele mora ao lado do que anexa, não solto numa
+ * linha própria: são as duas ações desta barra, e uma pedindo mais destaque
+ * que a outra sem justificativa (uma centralizada, outra sozinha à direita)
+ * fazia elas parecerem duas telas em vez de um formulário só.
+ *
+ * A lista vem ANTES do botão que anexa, não depois: cada arquivo novo empilha
+ * numa linha ali em cima, e o botão fica sempre no mesmo lugar por baixo
+ * deles — a barra de ação não anda para baixo da tela a cada arquivo que
+ * entra, só a lista cresce por cima dela. */
+.anexo { margin-top: var(--ma-3); display: flex; flex-direction: column; gap: var(--ma-2); }
+.anexo-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--ma-3); }
+.anexo-botao {
+    display: inline-flex; align-items: center; gap: var(--ma-2); cursor: pointer;
+    padding: var(--ma-2) var(--ma-3); border-radius: var(--ds-raio);
+    border: 1px solid var(--ds-line-dash); background: var(--ds-surface);
+    font-size: 0.88rem; color: var(--ds-text-700);
+    transition: border-color var(--ds-fast) ease, color var(--ds-fast) ease;
+}
+.anexo-botao:hover { border-color: var(--ds-acento-linha); color: var(--ds-text-900); }
+.anexo-botao svg { width: 1rem; height: 1rem; }
+/* Foco chega pelo input escondido, não pelo label: sem isto o teclado nunca
+ * mostra onde o foco está neste controle. */
+.anexo:has(#arquivos:focus-visible) .anexo-botao { outline: 2px solid var(--ds-selo); outline-offset: 2px; }
+
+.anexo-lista {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: var(--ma-1);
+}
+.anexo-item {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--ma-3);
+    padding: var(--ma-1) var(--ma-1) var(--ma-1) var(--ma-3);
+    font-family: var(--ds-font-mono); font-size: 0.82rem; color: var(--ds-text-700);
+    background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: var(--ds-raio);
+}
+.anexo-remover {
+    border: 0; background: none; color: var(--ds-text-400); cursor: pointer;
+    width: 1.6rem; height: 1.6rem; border-radius: var(--ds-raio); font-size: 1rem; line-height: 1;
+}
+.anexo-remover:hover { color: var(--ds-erro); background: var(--ds-erro-veu); }
+
 .passo-acao .hist-revisoes { margin-top: var(--ma-5); }
 
 .passo-pular { display: flex; justify-content: center; margin-top: calc(var(--ma-3) * -1); }

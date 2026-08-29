@@ -64,6 +64,7 @@ ETAPAS = [
                     "sua primeira tabela de despacho: o Flask guarda o par caminho/função e, "
                     "quando chega uma requisição, procura nessa tabela quem responde."
                 ),
+                o_que_enviar="O app.py com a rota / e o requirements.txt.",
                 criterios_aceite=[
                     "`python -m flask --version` funciona dentro do ambiente ativado.",
                     "Abrir http://127.0.0.1:5000/ no navegador mostra o texto da sua rota.",
@@ -101,6 +102,7 @@ ETAPAS = [
                     "consegue chamar o que estiver acessível pela aplicação, e não por variáveis "
                     "globais espalhadas."
                 ),
+                o_que_enviar="O arquivo tests/test_app.py com o teste e a fixture do cliente.",
                 criterios_aceite=[
                     "`pytest -q` roda e passa, sem o servidor estar no ar.",
                     "O teste verifica o status 200 e algo do corpo da resposta.",
@@ -143,6 +145,7 @@ ETAPAS = [
                     "único ponto que vê as duas escritas, e por isso é o único lugar onde a "
                     "garantia realmente se sustenta."
                 ),
+                o_que_enviar="O schema.sql e as funções que abrem a conexão e criam o esquema.",
                 criterios_aceite=[
                     "O arquivo do banco é criado por um comando seu, não à mão.",
                     "Rodar a criação duas vezes não quebra nem duplica tabela.",
@@ -182,6 +185,7 @@ ETAPAS = [
                     "'criei um recurso novo', e é o que cliente, proxy e navegador leem para "
                     "decidir o que fazer sem entender nada do seu domínio."
                 ),
+                o_que_enviar="A rota POST que recebe a URL, valida e grava no banco.",
                 criterios_aceite=[
                     "Enviar uma URL válida devolve 201 com o link curto no corpo.",
                     "Enviar `nao-e-url` ou `javascript:alert(1)` devolve 400 e não grava nada.",
@@ -220,6 +224,7 @@ ETAPAS = [
                     "desapareceu. Esse padrão tem nome, atualização perdida, e você vai reencontrá-lo "
                     "em saldo de conta, estoque e curtida."
                 ),
+                o_que_enviar="A rota GET /<codigo> com o redirecionamento e o incremento do contador.",
                 criterios_aceite=[
                     "Abrir o link curto leva à URL original.",
                     "O contador sobe exatamente um por acesso.",
@@ -264,6 +269,7 @@ ETAPAS = [
                     "template escapa por padrão, e é justamente por isso que o `|safe` merece "
                     "desconfiança sempre que aparecer."
                 ),
+                o_que_enviar="O template da página inicial com o formulário e a listagem.",
                 criterios_aceite=[
                     "A página inicial tem o formulário e funciona sem JavaScript.",
                     "Depois de encurtar, o link curto aparece na tela.",
@@ -302,6 +308,7 @@ ETAPAS = [
                     "de injeção de dependência que você vai encontrar em qualquer framework "
                     "maior, só que sem o nome pomposo."
                 ),
+                o_que_enviar="A função create_app(), o .env.example e o README.",
                 criterios_aceite=[
                     "Nenhum caminho, chave ou domínio fixo sobrou no código.",
                     "O `.env.example` está versionado e o `.env` de verdade está ignorado.",

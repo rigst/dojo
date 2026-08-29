@@ -25,14 +25,20 @@ def do_projeto(projeto):
 
     linhas += ["", f"PLANO (versão {plano.versao})", plano.resumo, ""]
     for etapa in plano.etapas.prefetch_related("passos"):
-        linhas.append(f"Etapa {etapa.ordem}: {etapa.titulo}")
-        for passo in etapa.passos.all():
+        linhas.append(f"Etapa {etapa.ordem}: {etapa.titulo}" + (f" — {etapa.objetivo}" if etapa.objetivo else ""))
+        passos = list(etapa.passos.all())
+        for passo in passos:
             marca = {
                 Passo.Status.CONCLUIDO: "[x]",
                 Passo.Status.EM_ANDAMENTO: "[>]",
                 Passo.Status.EM_REVISAO: "[?]",
             }.get(passo.status, "[ ]")
             linhas.append(f"  {marca} {passo.numero} {passo.titulo} (id={passo.pk})")
+        if not etapa.passos_prontos:
+            # Etapa gerada aos poucos: o passo aberto do momento é o último da
+            # lista, e o modelo precisa saber que ainda pode vir mais aqui, para
+            # não tratar como se a etapa já tivesse acabado.
+            linhas.append("  (passos desta etapa ainda em geração, um de cada vez)")
     return "\n".join(linhas)
 
 

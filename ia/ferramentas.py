@@ -51,9 +51,13 @@ DEFINICOES = [
                             "o_que_fazer": {"type": "string"},
                             "como_fazer": {"type": "string"},
                             "teoria": {"type": "string"},
+                            "o_que_enviar": {
+                                "type": "string",
+                                "description": "O que colar na revisão deste subpasso: qual arquivo, função ou trecho.",
+                            },
                             "criterios_aceite": {"type": "array", "items": {"type": "string"}},
                         },
-                        "required": ["titulo", "o_que_fazer", "como_fazer", "teoria"],
+                        "required": ["titulo", "o_que_fazer", "como_fazer", "teoria", "o_que_enviar"],
                         "additionalProperties": False,
                     },
                 },
@@ -96,6 +100,17 @@ def _concluir_passo(usuario, entrada):
         proximo.status = Passo.Status.DISPONIVEL
         proximo.save(update_fields=["status"])
         return f"Passo {passo.numero} concluído. Liberado: {proximo.numero} {proximo.titulo}."
+
+    # Sem passo pronto na fila: pode ser mesmo o fim do plano, ou a próxima
+    # etapa ainda não teve o passo dela gerado (os passos nascem um de cada
+    # vez). O chat não gera: quem faz isso é a tela do projeto.
+    from projetos.servicos import etapa_pendente
+
+    if etapa_pendente(passo.etapa.plano):
+        return (
+            f"Passo {passo.numero} concluído. O próximo ainda não foi preparado; "
+            "diga ao aluno para voltar à página do projeto, que o prepara agora."
+        )
     return f"Passo {passo.numero} concluído. Era o último da fila."
 
 
@@ -127,6 +142,7 @@ def _quebrar_passo(usuario, entrada):
                 o_que_fazer=dados.get("o_que_fazer", ""),
                 como_fazer=dados.get("como_fazer", ""),
                 teoria=dados.get("teoria", ""),
+                o_que_enviar=dados.get("o_que_enviar", "")[:240],
                 criterios_aceite=dados.get("criterios_aceite", []),
                 status=Passo.Status.DISPONIVEL if i == 0 else Passo.Status.BLOQUEADO,
             )

@@ -4,6 +4,11 @@
  * eles não geram evento nenhum. A única coisa que a tela precisa saber é que a
  * conexão continua viva, e isso o próprio EventSource já garante ao não
  * disparar `error`. O contador de tempo existe para a espera não parecer travada.
+ *
+ * Se a página carrega com `data-gerando`, uma geração já está em curso (o
+ * projeto foi marcado como "gerando" no servidor, ver projetos/views.py) e a
+ * tela pula direto para a espera e retoma sozinha: isso é o que faz um F5 no
+ * meio da geração não voltar para as perguntas do briefing.
  */
 (function () {
     "use strict";
@@ -17,21 +22,31 @@
     var erro = caixa.querySelector("[data-erro]");
     var campo = caixa.querySelector("[data-briefing-campo]");
     var acoes = caixa.querySelector("[data-briefing-acoes]");
+    var botaoGerar = caixa.querySelector("[data-gerar]");
 
     function mostrarErro(mensagem) {
         espera.hidden = true;
+        // Numa retomada (F5 no meio da geração), o briefing nem está na
+        // página: o jeito mais simples de voltar a um estado consistente é
+        // recarregar. O servidor já marcou `erro_geracao`, então a tela que
+        // volta mostra o erro e libera o botão de novo.
+        if (!campo) {
+            window.location.reload();
+            return;
+        }
         erro.hidden = false;
         erro.textContent = mensagem;
         acoes.hidden = false;
         campo.hidden = false;
+        botaoGerar.disabled = false;
     }
 
     /* As perguntas do mentor, carregadas ao abrir a tela.
      *
-     * Se a chamada falhar, a seção some e sobra o campo livre: o briefing
+     * Se a chamada falhar, a seção some e o botão libera direto: o briefing
      * melhora o plano, mas não pode ser condição para existir um. */
-    var esperaBriefing = caixa.querySelector("[data-briefing-espera]");
-    var listaPerguntas = caixa.querySelector("[data-briefing-perguntas]");
+    var esperaBriefing = campo && caixa.querySelector("[data-briefing-espera]");
+    var listaPerguntas = campo && caixa.querySelector("[data-briefing-perguntas]");
 
     function carregarPerguntas() {
         var fonte = new EventSource(caixa.dataset.briefing);
@@ -40,38 +55,54 @@
             fonte.close();
             esperaBriefing.hidden = true;
             var perguntas = JSON.parse(e.data).perguntas || [];
-            if (!perguntas.length) return;
+            if (perguntas.length) {
+                perguntas.forEach(function (p, i) {
+                    var grupo = document.createElement("fieldset");
+                    grupo.className = "grupo";
 
-            perguntas.forEach(function (p, i) {
-                var campo = document.createElement("div");
-                campo.className = "campo";
+                    var legenda = document.createElement("legend");
+                    legenda.textContent = p.pergunta;
+                    grupo.appendChild(legenda);
 
-                var id = "pergunta-" + i;
-                var rotulo = document.createElement("label");
-                rotulo.setAttribute("for", id);
-                rotulo.textContent = p.pergunta;
-                campo.appendChild(rotulo);
+                    var opcoes = document.createElement("div");
+                    opcoes.className = "escolhas";
 
-                var entrada = document.createElement("input");
-                entrada.id = id;
-                entrada.dataset.resposta = p.pergunta;
-                entrada.placeholder = "Uma frase basta";
-                campo.appendChild(entrada);
+                    (p.opcoes || []).forEach(function (texto) {
+                        var rotulo = document.createElement("label");
+                        rotulo.className = "escolha escolha--compacta";
 
-                if (p.porque) {
-                    var ajuda = document.createElement("span");
-                    ajuda.className = "campo-ajuda";
-                    ajuda.textContent = p.porque;
-                    campo.appendChild(ajuda);
-                }
-                listaPerguntas.appendChild(campo);
-            });
-            listaPerguntas.hidden = false;
+                        var entrada = document.createElement("input");
+                        entrada.type = "radio";
+                        entrada.name = "pergunta-" + i;
+                        entrada.value = texto;
+                        entrada.dataset.pergunta = p.pergunta;
+                        rotulo.appendChild(entrada);
+
+                        var span = document.createElement("span");
+                        span.textContent = texto;
+                        rotulo.appendChild(span);
+
+                        opcoes.appendChild(rotulo);
+                    });
+                    grupo.appendChild(opcoes);
+
+                    if (p.porque) {
+                        var ajuda = document.createElement("span");
+                        ajuda.className = "campo-ajuda";
+                        ajuda.textContent = p.porque;
+                        grupo.appendChild(ajuda);
+                    }
+                    listaPerguntas.appendChild(grupo);
+                });
+                listaPerguntas.hidden = false;
+            }
+            botaoGerar.disabled = false;
         });
 
         function desistir() {
             fonte.close();
             esperaBriefing.hidden = true;
+            botaoGerar.disabled = false;
         }
         fonte.addEventListener("erro", desistir);
         fonte.onerror = function () {
@@ -79,27 +110,25 @@
         };
     }
 
-    carregarPerguntas();
-
-    /* O que vai para o mentor: cada pergunta com a resposta ao lado, mais o
-     * texto livre. Mandar só as respostas soltas obrigaria o modelo a adivinhar
-     * a qual pergunta cada uma pertence. */
+    /* O que vai para o mentor: cada pergunta com a alternativa escolhida ao
+     * lado, mais o texto livre. Mandar só a resposta solta obrigaria o modelo
+     * a adivinhar a qual pergunta ela pertence. */
     function montarBriefing() {
         var partes = [];
-        listaPerguntas.querySelectorAll("[data-resposta]").forEach(function (entrada) {
-            var resposta = (entrada.value || "").trim();
-            if (resposta) partes.push(entrada.dataset.resposta + "\n" + resposta);
-        });
-        var livre = (caixa.querySelector("#briefing").value || "").trim();
+        if (listaPerguntas) {
+            listaPerguntas.querySelectorAll("input[type=radio]:checked").forEach(function (entrada) {
+                partes.push(entrada.dataset.pergunta + "\n" + entrada.value);
+            });
+        }
+        var livre = campo && (caixa.querySelector("#briefing").value || "").trim();
         if (livre) partes.push("Observações do aluno:\n" + livre);
         return partes.join("\n\n");
     }
 
-    caixa.querySelector("[data-gerar]").addEventListener("click", function () {
-        var briefing = montarBriefing();
-        campo.hidden = true;
-        acoes.hidden = true;
-        erro.hidden = true;
+    function iniciarStream(briefing) {
+        campo && (campo.hidden = true);
+        acoes && (acoes.hidden = true);
+        erro && (erro.hidden = true);
         espera.hidden = false;
 
         var inicio = Date.now();
@@ -132,5 +161,16 @@
                 mostrarErro("A conexão caiu antes de o plano ficar pronto. Tente de novo.");
             }
         };
-    });
+    }
+
+    if (caixa.dataset.gerando) {
+        // Retomada depois de um F5: nada para perguntar, o briefing já foi
+        // enviado da vez anterior e está guardado no servidor.
+        iniciarStream(caixa.dataset.briefingPendente || "");
+    } else {
+        carregarPerguntas();
+        botaoGerar.addEventListener("click", function () {
+            iniciarStream(montarBriefing());
+        });
+    }
 })();

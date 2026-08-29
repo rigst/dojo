@@ -31,6 +31,7 @@ def passos(aluno):
                             o_que_fazer="faça",
                             como_fazer="assim",
                             teoria="porque",
+                            o_que_enviar="o trecho",
                             criterios_aceite=["o teste passa"],
                         )
                         for i in (1, 2)
@@ -122,6 +123,100 @@ def test_codigo_grande_demais_e_recusado_com_orientacao(client, aluno, passos):
     )
     assert Submissao.objects.count() == 0
     assert any("grande demais" in str(m) for m in resposta.context["messages"])
+
+
+# --- anexo de arquivo -------------------------------------------------------
+#
+# "Mandar para revisão" aceita colar OU anexar, e os dois juntos também. Quem
+# tem o arquivo à mão não devia precisar abrir e copiar o conteúdo à mão.
+
+
+def test_arquivo_anexado_vira_submissao_com_nome_marcado(client, aluno, passos):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    client.force_login(aluno)
+    arquivo = SimpleUploadedFile("models.py", b"class Tarefa:\n    pass\n")
+    client.post(f"/revisoes/passo/{passos[0].pk}/submeter/", {"arquivos": [arquivo]})
+
+    submissao = Submissao.objects.get()
+    assert "models.py" in submissao.conteudo
+    assert "class Tarefa" in submissao.conteudo
+
+
+def test_texto_colado_e_arquivo_anexado_vao_juntos(client, aluno, passos):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    client.force_login(aluno)
+    arquivo = SimpleUploadedFile("app.py", b"print('oi')\n")
+    client.post(
+        f"/revisoes/passo/{passos[0].pk}/submeter/",
+        {"conteudo": "Isso é o texto colado.", "arquivos": [arquivo]},
+    )
+
+    submissao = Submissao.objects.get()
+    assert "Isso é o texto colado." in submissao.conteudo
+    assert "app.py" in submissao.conteudo
+    assert "print('oi')" in submissao.conteudo
+
+
+def test_varios_arquivos_ficam_cada_um_com_o_proprio_nome(client, aluno, passos):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    client.force_login(aluno)
+    arquivos = [
+        SimpleUploadedFile("um.py", b"a = 1\n"),
+        SimpleUploadedFile("dois.py", b"b = 2\n"),
+    ]
+    client.post(f"/revisoes/passo/{passos[0].pk}/submeter/", {"arquivos": arquivos})
+
+    submissao = Submissao.objects.get()
+    assert "um.py" in submissao.conteudo and "a = 1" in submissao.conteudo
+    assert "dois.py" in submissao.conteudo and "b = 2" in submissao.conteudo
+
+
+def test_arquivo_binario_e_recusado_com_orientacao(client, aluno, passos):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    client.force_login(aluno)
+    binario = SimpleUploadedFile("foto.png", bytes([0xFF, 0xD8, 0xFF, 0x00, 0x80, 0x81]))
+    resposta = client.post(
+        f"/revisoes/passo/{passos[0].pk}/submeter/", {"arquivos": [binario]}, follow=True
+    )
+
+    assert Submissao.objects.count() == 0
+    assert any("não deu para ler" in str(m) for m in resposta.context["messages"])
+
+
+def test_arquivo_grande_demais_e_recusado_sem_criar_submissao(client, aluno, passos, settings):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from revisoes import views as revisoes_views
+
+    settings_bkp = revisoes_views.MAX_BYTES_POR_ARQUIVO
+    revisoes_views.MAX_BYTES_POR_ARQUIVO = 10
+    try:
+        client.force_login(aluno)
+        grande = SimpleUploadedFile("grande.py", b"x = 'mais de dez bytes aqui'\n")
+        resposta = client.post(
+            f"/revisoes/passo/{passos[0].pk}/submeter/", {"arquivos": [grande]}, follow=True
+        )
+        assert Submissao.objects.count() == 0
+        assert any("não deu para ler" in str(m) for m in resposta.context["messages"])
+    finally:
+        revisoes_views.MAX_BYTES_POR_ARQUIVO = settings_bkp
+
+
+def test_arquivos_demais_sao_recusados_de_uma_vez(client, aluno, passos):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from revisoes.views import MAX_ARQUIVOS
+
+    client.force_login(aluno)
+    arquivos = [SimpleUploadedFile(f"a{i}.py", b"x = 1") for i in range(MAX_ARQUIVOS + 1)]
+    resposta = client.post(
+        f"/revisoes/passo/{passos[0].pk}/submeter/", {"arquivos": arquivos}, follow=True
+    )
+
+    assert Submissao.objects.count() == 0
+    assert any("muitos arquivos" in str(m) for m in resposta.context["messages"])
 
 
 def test_revisao_de_outro_usuario_devolve_404(client, aluno, passos, db):

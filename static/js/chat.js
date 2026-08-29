@@ -91,6 +91,7 @@
         var resposta = turno.prosa;
         turno.bolha.classList.add("is-escrevendo");
         var acumulado = "";
+        var chegouTexto = false;
         ocupado(true);
         rodape.textContent = "";
         rolarParaOFim();
@@ -103,20 +104,29 @@
         fonte.addEventListener("delta", function (e) {
             acumulado += JSON.parse(e.data).texto;
             pintar(resposta, acumulado);
-            rolarParaOFim();
+            /* Só a primeira vez: no instante do envio a bolha do mentor ainda
+             * está vazia, então rolar então não mostra nada. Rolar de novo no
+             * primeiro pedaço de texto garante que pelo menos o começo da
+             * resposta apareça, sem perseguir o texto a cada pedaço seguinte
+             * (a pessoa fica onde quiser depois disso). */
+            if (!chegouTexto) {
+                chegouTexto = true;
+                rolarParaOFim();
+            }
         });
 
         fonte.addEventListener("ferramenta", function (e) {
             rodape.textContent = "ajustando o plano (" + JSON.parse(e.data).nome + ")…";
         });
 
-        fonte.addEventListener("fim", function (e) {
-            var dados = JSON.parse(e.data);
+        fonte.addEventListener("fim", function () {
             fonte.close();
             fonte = null;
             turno.bolha.classList.remove("is-escrevendo");
             ocupado(false);
-            rodape.textContent = "US$ " + dados.custo;
+            // O custo em dólar não é informação para quem está aprendendo;
+            // quem cuida da conta olha a página de conta, não o rodapé do chat.
+            rodape.textContent = "";
             campo.focus();
         });
 
@@ -188,6 +198,28 @@
     window.addEventListener("pagehide", function () {
         if (fonte) fonte.close();
     });
+
+    /* Modal do chat no celular: abre em tela cheia, fecha sem navegar. O
+     * botão que abre fica fora de `caixa` (é botão flutuante da página do
+     * passo, não do chat em si); o que fecha mora dentro do cabeçalho do
+     * chat. Nenhum dos dois existe na tela dedicada (ver mentoria/_chat.html),
+     * então checar a presença antes de ligar o clique. */
+    var abrirMovel = document.querySelector("[data-chat-abrir]");
+    var fecharMovel = caixa.querySelector("[data-chat-fechar]");
+    if (abrirMovel) {
+        abrirMovel.addEventListener("click", function () {
+            caixa.classList.add("is-aberto");
+            document.body.classList.add("chat-travado");
+            campo.focus();
+            rolarParaOFim();
+        });
+    }
+    if (fecharMovel) {
+        fecharMovel.addEventListener("click", function () {
+            caixa.classList.remove("is-aberto");
+            document.body.classList.remove("chat-travado");
+        });
+    }
 
     rolarParaOFim();
 })();

@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from projetos.models import Passo, Plano, Projeto, Stack
+from projetos.models import Etapa, Passo, Plano, Projeto, Stack
 from projetos.servicos import salvar_plano
 from ia.schemas import EtapaGerada, PassoGerado, PlanoGerado
 
@@ -36,6 +36,7 @@ def _gerado(qtd_passos=3):
                         o_que_fazer="faça",
                         como_fazer="assim",
                         teoria="porque",
+                        o_que_enviar="o trecho",
                         criterios_aceite=[f"critério {i}"],
                     )
                     for i in range(1, qtd_passos + 1)
@@ -65,14 +66,27 @@ def test_replanejar_versiona_em_vez_de_sobrescrever(projeto):
     assert Plano.objects.filter(projeto=projeto, ativo=True).count() == 1
 
 
-def test_progresso_conta_so_o_plano_ativo(projeto):
-    salvar_plano(projeto, _gerado(), "fake")
-    passo = Passo.objects.filter(etapa__plano=projeto.plano_ativo).first()
-    passo.status = Passo.Status.CONCLUIDO
-    passo.save()
+def test_progresso_conta_etapas_concluidas_e_nao_passos_soltos(projeto):
+    """Por etapa, e não por passo: os passos de uma etapa nascem aos poucos, à
+    medida que o aluno avança (geração incremental), e contar por passo faria
+    o percentual cair sempre que um passo novo aparecesse. As etapas, ao
+    contrário, são todas conhecidas desde o primeiro plano."""
+    plano = Plano.objects.create(projeto=projeto, versao=1, resumo="r", ativo=True)
+    etapa1 = Etapa.objects.create(plano=plano, ordem=1, titulo="Etapa 1", passos_prontos=True)
+    etapa2 = Etapa.objects.create(plano=plano, ordem=2, titulo="Etapa 2", passos_prontos=True)
+    Passo.objects.create(etapa=etapa1, ordem=1, titulo="p1", status=Passo.Status.CONCLUIDO)
+    Passo.objects.create(etapa=etapa2, ordem=1, titulo="p2", status=Passo.Status.DISPONIVEL)
 
+    # Uma etapa concluída de duas: 50%, mesmo que a segunda ainda ganhe mais
+    # passos depois.
     feitos, total, pct = projeto.progresso()
-    assert (feitos, total, pct) == (1, 3, 33)
+    assert (feitos, total, pct) == (1, 2, 50)
+
+    Passo.objects.create(etapa=etapa1, ordem=2, titulo="p1b", status=Passo.Status.DISPONIVEL)
+    # A etapa 1 ganhou um passo novo, ainda não feito: ela deixa de contar
+    # como concluída até esse também terminar.
+    feitos, total, pct = projeto.progresso()
+    assert (feitos, total, pct) == (0, 2, 0)
 
 
 def test_projeto_de_outro_usuario_devolve_404(client, projeto, outro):
@@ -107,19 +121,22 @@ def test_concluir_manualmente_libera_o_proximo(client, aluno, projeto):
 
 
 def test_criar_projeto_leva_para_o_planejamento(client, aluno):
+    """A criação não pede título (ver _form_projeto.html): só o objetivo. O
+    mentor é quem batiza o projeto, ao gerar o plano."""
     client.force_login(aluno)
     resposta = client.post(
         "/projetos/novo/",
         {
-            "titulo": "API de receitas",
             "objetivo": "Uma API para guardar receitas.",
             "nivel": "iniciante",
             "horas_por_semana": 5,
             "preferencia_didatica": "socratico",
         },
     )
-    projeto = Projeto.objects.get(titulo="API de receitas")
+    projeto = Projeto.objects.get(objetivo="Uma API para guardar receitas.")
     assert projeto.usuario == aluno
+    # Nasce com um nome provisório até o plano existir.
+    assert projeto.titulo == "Novo projeto"
     assert resposta["Location"] == f"/projetos/{projeto.pk}/planejar/"
 
 
@@ -412,3 +429,92 @@ def test_historico_de_revisoes_pagina(client, aluno, projeto):
 
     segunda = client.get(f"/projetos/passo/{passo.pk}/revisoes/?p=2")
     assert len(segunda.context["pagina"].object_list) == 2
+
+
+# --- geração incremental do plano --------------------------------------------
+#
+# A geração cheia (todas as etapas com todos os passos numa resposta só)
+# estourava o limite de tokens da resposta estruturada em planos grandes, e o
+# JSON cortado no meio virava erro de validação. Agora a primeira chamada gera
+# só o roteiro (títulos e objetivos das etapas) e o primeiro passo; os demais
+# passos vêm um de cada vez, à medida que o aluno avança.
+
+
+def test_plano_inicial_gera_esqueleto_e_so_o_primeiro_passo(aluno, projeto):
+    from asgiref.sync import async_to_sync
+
+    from projetos.servicos import gerar_e_salvar_plano
+
+    plano, _uso = async_to_sync(gerar_e_salvar_plano)(projeto, aluno, "")
+
+    etapas = list(plano.etapas.order_by("ordem").prefetch_related("passos"))
+    assert len(etapas) >= 2
+
+    primeira = etapas[0]
+    assert primeira.passos.count() == 1
+    assert primeira.passos.first().status == Passo.Status.DISPONIVEL
+    # A primeira etapa pode precisar de mais passos além do primeiro: só o
+    # mentor decide isso na geração seguinte, não a chamada inicial.
+    assert primeira.passos_prontos is False
+
+    for etapa in etapas[1:]:
+        assert etapa.passos.count() == 0
+        assert etapa.passos_prontos is False
+
+    projeto.refresh_from_db()
+    assert projeto.gerando is False
+    assert projeto.erro_geracao == ""
+    assert projeto.briefing_pendente == ""
+    # O mentor escolhe título e subtítulo ao gerar o plano; o subtítulo não
+    # existia antes disso (a criação não pede um).
+    assert projeto.titulo
+    assert projeto.subtitulo
+
+
+def test_f5_no_meio_da_geracao_nao_mostra_perguntas_de_novo(client, aluno, projeto):
+    """Um recarregamento no meio da geração tem de cair na tela de espera, não
+    de volta nas perguntas do briefing (já respondidas da primeira vez)."""
+    from projetos.servicos import _iniciar_geracao
+
+    _iniciar_geracao(projeto.pk, "respostas do briefing de antes")
+
+    client.force_login(aluno)
+    conteudo = client.get(f"/projetos/{projeto.pk}/planejar/").content
+    assert b'data-gerando="1"' in conteudo
+    assert b"data-briefing-perguntas" not in conteudo
+
+
+def test_gerar_proximo_passo_fecha_a_etapa_quando_o_mentor_diz_que_acabou(aluno, projeto):
+    from asgiref.sync import async_to_sync
+
+    from projetos.servicos import gerar_e_salvar_plano, gerar_e_salvar_proximo_passo
+
+    plano, _ = async_to_sync(gerar_e_salvar_plano)(projeto, aluno, "")
+    primeira_etapa = plano.etapas.order_by("ordem").first()
+
+    passo, _ = async_to_sync(gerar_e_salvar_proximo_passo)(projeto, aluno)
+
+    primeira_etapa.refresh_from_db()
+    assert passo.etapa_id == primeira_etapa.pk
+    assert passo.ordem == 2
+    # O dublê sempre fecha a etapa no passo seguinte (ver fake_motor).
+    assert primeira_etapa.passos_prontos is True
+
+    projeto.refresh_from_db()
+    assert projeto.gerando is False
+
+
+def test_concluir_passo_sem_fila_pronta_manda_preparar_o_proximo(client, aluno, projeto):
+    """Sem passo já materializado esperando na fila, e com etapa ainda em
+    aberto, a tela certa é a de espera, não o projeto sem ação nenhuma."""
+    from asgiref.sync import async_to_sync
+
+    from projetos.servicos import gerar_e_salvar_plano
+
+    plano, _ = async_to_sync(gerar_e_salvar_plano)(projeto, aluno, "")
+    passo = plano.etapas.first().passos.first()
+
+    client.force_login(aluno)
+    resposta = client.post(f"/projetos/passo/{passo.pk}/concluir/")
+
+    assert resposta["Location"] == f"/projetos/{projeto.pk}/planejar/passo/"
