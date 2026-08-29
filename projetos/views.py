@@ -143,10 +143,9 @@ def excluir(request, pk):
 @login_required
 def detalhe(request, pk):
     projeto = obter_do_usuario(Projeto, request.user, pk=pk)
-    if projeto.gerando:
-        return redirect("projeto_planejar", pk=projeto.pk)
     plano = projeto.plano_ativo
     if not plano:
+        # Sem plano: pode estar gerando o inicial ou re-planejando
         return redirect("projeto_planejar", pk=projeto.pk)
 
     feitos, total, pct = projeto.progresso()
