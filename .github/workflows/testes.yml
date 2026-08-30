@@ -54,3 +54,25 @@ jobs:
           # o `!` faz o passo falhar quando sobra qualquer outra coisa.
           ! pyflakes core usuarios projetos mentoria revisoes ia legal config \
             | grep -v "/migrations/" | grep .
+
+  sonar:
+    name: SonarQube Cloud
+    needs: [pytest]
+    if: always() && needs.pytest.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      # O Sonar usa o blame do git para atribuir "código novo" — precisa do
+      # histórico inteiro, senão toda linha vira responsabilidade do último commit.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan
+        uses: SonarSource/sonarqube-scan-action@v8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=rigst_dojo
+            -Dsonar.organization=rigst
+            -Dsonar.exclusions=**/migrations/**,**/staticfiles/**,**/node_modules/**,**/venv/**,**/.venv/**,**/*.jpg,**/*.jpeg,**/*.png,**/*.gif,**/*.ico,**/*.webp,**/*.pdf,**/*.woff,**/*.woff2,**/*.ttf,**/*.eot
