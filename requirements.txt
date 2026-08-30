@@ -14,7 +14,7 @@ psycopg[binary]==3.2.12
 # Cliente do cache compartilhado. O backend de cache do Django é dele, e sem
 # este pacote produção não sobe: é no cache que moram as travas de força bruta
 # da entrada e de criação de contas de visitante.
-redis==7.1.0
+redis==8.1.0
 
 # Mentoria: cliente oficial da Anthropic e validação dos retornos estruturados
 # (plano e revisão de código voltam como JSON schema, não como texto solto).
