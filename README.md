@@ -238,6 +238,12 @@ arquivos prontos ao lado:
 | `deploy/dojo-limpar-visitantes.{service,timer}` | a limpeza diária das contas de visitante |
 | `deploy/nginx.conf.exemplo` | o server block |
 | `scripts/atualizar.sh` | atualização (código, migrations, estáticos, reinício) |
+| `deploy/cd-deploy.sh` | o que o CD roda automaticamente a cada push em `main` que passar no CI |
+
+**Desde que o CD (`.github/workflows/deploy.yml`) foi ligado**, a atualização
+de rotina acontece sozinha — `deploy/cd-deploy.sh` é disparado por SSH pelo
+workflow reutilizável `deploy-django.yml` do `rigst/ci` (RUNBOOK.md seção 7).
+`scripts/atualizar.sh` continua valendo pra rodar à mão fora desse fluxo.
 
 Quatro coisas quebram o app se forem esquecidas, e as quatro estão explicadas no
 provisionamento:
