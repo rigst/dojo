@@ -241,8 +241,11 @@ arquivos prontos ao lado:
 | `deploy/cd-deploy.sh` | o que o CD roda automaticamente a cada push em `main` que passar no CI |
 
 **Desde que o CD (`.github/workflows/deploy.yml`) foi ligado**, a atualização
-de rotina acontece sozinha — `deploy/cd-deploy.sh` é disparado por SSH pelo
-workflow reutilizável `deploy-django.yml` do `rigst/ci` (RUNBOOK.md seção 7).
+de rotina acontece sozinha a cada PR mesclado em `main` que passar no CI —
+`deploy/cd-deploy.sh` é disparado por SSH pelo workflow reutilizável
+`deploy-django.yml` do `rigst/ci` (RUNBOOK.md seção 7). A branch `main` tem
+proteção ativa (checks obrigatórios, sem push direto nem pra admin); mudanças
+sempre entram por PR, sem exigir aprovação de terceiros.
 `scripts/atualizar.sh` continua valendo pra rodar à mão fora desse fluxo.
 
 Quatro coisas quebram o app se forem esquecidas, e as quatro estão explicadas no
