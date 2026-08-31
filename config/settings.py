@@ -208,7 +208,9 @@ elif IS_PRODUCTION:
         "`manage.py createcachetable`."
     )
 else:
-    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "dojo"}}
+    CACHES = {
+        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "dojo"}
+    }
 
 # ---------------------------------------------------------------------------
 # Log
@@ -296,8 +298,12 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 # HSTS e redirect: ligados por padrão em produção, desligados fora dela. Deixar
 # o valor fixo aqui quebraria o desenvolvimento em http; deixar de fora faria o
 # `check --deploy` reclamar para sempre e ninguém mais olharia a saída dele.
-SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000" if IS_PRODUCTION else "0"))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=IS_PRODUCTION)
+SECURE_HSTS_SECONDS = int(
+    os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000" if IS_PRODUCTION else "0")
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
+    "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=IS_PRODUCTION
+)
 SECURE_HSTS_PRELOAD = env_bool("DJANGO_SECURE_HSTS_PRELOAD", default=False)
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", default=IS_PRODUCTION)
 
