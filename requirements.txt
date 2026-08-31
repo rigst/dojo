@@ -28,3 +28,6 @@ nh3==0.3.7
 
 # Cifra a chave de API que o usuário guarda no perfil (BYOK).
 cryptography==50.0.1
+
+# Monitoramento de erros (ativo só com SENTRY_DSN definido)
+sentry-sdk==2.67.1

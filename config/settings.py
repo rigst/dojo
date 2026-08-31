@@ -394,3 +394,30 @@ VISITANTE_TTL_HORAS = int(os.getenv("DOJO_VISITANTE_TTL_HORAS", "48"))
 # usuários e torra a cota do provedor, com cota nova a cada conta.
 VISITANTE_LIMITE_POR_JANELA = int(os.getenv("DOJO_VISITANTE_LIMITE", "5"))
 VISITANTE_JANELA_SEGUNDOS = int(os.getenv("DOJO_VISITANTE_JANELA_SEGUNDOS", "900"))
+
+# ==============================================================================
+# Monitoramento de erros (Sentry) — ativo só quando SENTRY_DSN está definido.
+# ==============================================================================
+
+SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.celery import CeleryIntegration
+        from sentry_sdk.integrations.django import DjangoIntegration
+
+        from django.core.exceptions import DisallowedHost
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration(), CeleryIntegration()],
+            environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+            release=os.getenv("SENTRY_RELEASE") or None,
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
+            send_default_pii=False,
+            ignore_errors=[DisallowedHost],
+        )
+    except Exception:
+        # Pacote ausente ou integração indisponível (ex.: Celery não instalado):
+        # seguimos sem monitoramento, sem quebrar o app.
+        pass
