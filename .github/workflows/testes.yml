@@ -72,7 +72,18 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
+          # `args` é escalar dobrado (>): tudo aqui dentro vira uma linha só
+          # passada ao scanner, então comentário indentado aqui dentro chega
+          # como argumento e o sonar-scanner morre com "Unrecognized option: #".
+          #
+          # O job de pytest acima não gera relatório de cobertura, e sem
+          # relatório o Sonar marca toda linha nova como descoberta (0%) — o
+          # Quality Gate reprova qualquer PR com código Python. Enquanto não
+          # houver relatório, ao menos configuração fica de fora: `settings.py`
+          # é a forma de arquivo do `**/settings/**` que os outros projetos já
+          # excluem, e o glob de pacote não casa com settings em arquivo único.
           args: >
             -Dsonar.projectKey=rigst_dojo
             -Dsonar.organization=rigst
             -Dsonar.exclusions=**/migrations/**,**/staticfiles/**,**/node_modules/**,**/venv/**,**/.venv/**,**/*.jpg,**/*.jpeg,**/*.png,**/*.gif,**/*.ico,**/*.webp,**/*.pdf,**/*.woff,**/*.woff2,**/*.ttf,**/*.eot
+            -Dsonar.coverage.exclusions=**/migrations/**,**/tests.py,**/tests_*.py,**/test_*.py,**/tests/**,**/conftest.py,**/settings/**,**/settings.py,**/manage.py,**/wsgi.py,**/asgi.py,scripts/**

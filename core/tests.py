@@ -117,3 +117,14 @@ def test_saude_denuncia_banco_fora(client, monkeypatch):
     monkeypatch.setattr(connection, "cursor", explodir)
 
     assert client.get("/saude/").status_code == 503
+
+
+def test_sentry_nao_inicializa_durante_a_suite():
+    """O .env da raiz é lido em qualquer execução local e traz o SENTRY_DSN de
+    produção; sem a guarda IS_TEST, rodar a suíte na máquina mandava evento de
+    verdade para o projeto do Sentry. Na CI isso não aparece — lá não há .env."""
+    import sentry_sdk
+    from django.conf import settings
+
+    assert settings.IS_TEST
+    assert not sentry_sdk.get_client().is_active()

@@ -208,7 +208,9 @@ elif IS_PRODUCTION:
         "`manage.py createcachetable`."
     )
 else:
-    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "dojo"}}
+    CACHES = {
+        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "dojo"}
+    }
 
 # ---------------------------------------------------------------------------
 # Log
@@ -296,8 +298,12 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 # HSTS e redirect: ligados por padrão em produção, desligados fora dela. Deixar
 # o valor fixo aqui quebraria o desenvolvimento em http; deixar de fora faria o
 # `check --deploy` reclamar para sempre e ninguém mais olharia a saída dele.
-SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000" if IS_PRODUCTION else "0"))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=IS_PRODUCTION)
+SECURE_HSTS_SECONDS = int(
+    os.getenv("DJANGO_SECURE_HSTS_SECONDS", "31536000" if IS_PRODUCTION else "0")
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
+    "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=IS_PRODUCTION
+)
 SECURE_HSTS_PRELOAD = env_bool("DJANGO_SECURE_HSTS_PRELOAD", default=False)
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", default=IS_PRODUCTION)
 
@@ -394,3 +400,34 @@ VISITANTE_TTL_HORAS = int(os.getenv("DOJO_VISITANTE_TTL_HORAS", "48"))
 # usuários e torra a cota do provedor, com cota nova a cada conta.
 VISITANTE_LIMITE_POR_JANELA = int(os.getenv("DOJO_VISITANTE_LIMITE", "5"))
 VISITANTE_JANELA_SEGUNDOS = int(os.getenv("DOJO_VISITANTE_JANELA_SEGUNDOS", "900"))
+
+# ==============================================================================
+# Monitoramento de erros (Sentry) — ativo só quando SENTRY_DSN está definido.
+# ==============================================================================
+
+SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
+# `not IS_TEST` porque o .env da raiz é lido em qualquer execução local,
+# inclusive a da suíte, e traz o DSN de produção: sem isso, rodar os testes na
+# máquina manda evento de verdade para o projeto do Sentry. Na CI não aparece
+# — lá o .env não existe — o que torna o problema invisível justamente para
+# quem não roda local.
+if SENTRY_DSN and not IS_TEST:
+    try:
+        import sentry_sdk
+        from django.core.exceptions import DisallowedHost
+        from sentry_sdk.integrations.celery import CeleryIntegration
+        from sentry_sdk.integrations.django import DjangoIntegration
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            integrations=[DjangoIntegration(), CeleryIntegration()],
+            environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+            release=os.getenv("SENTRY_RELEASE") or None,
+            traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
+            send_default_pii=False,
+            ignore_errors=[DisallowedHost],
+        )
+    except Exception:
+        # Pacote ausente ou integração indisponível (ex.: Celery não instalado):
+        # seguimos sem monitoramento, sem quebrar o app.
+        pass
