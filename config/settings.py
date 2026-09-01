@@ -406,7 +406,12 @@ VISITANTE_JANELA_SEGUNDOS = int(os.getenv("DOJO_VISITANTE_JANELA_SEGUNDOS", "900
 # ==============================================================================
 
 SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
-if SENTRY_DSN:
+# `not IS_TEST` porque o .env da raiz é lido em qualquer execução local,
+# inclusive a da suíte, e traz o DSN de produção: sem isso, rodar os testes na
+# máquina manda evento de verdade para o projeto do Sentry. Na CI não aparece
+# — lá o .env não existe — o que torna o problema invisível justamente para
+# quem não roda local.
+if SENTRY_DSN and not IS_TEST:
     try:
         import sentry_sdk
         from django.core.exceptions import DisallowedHost
