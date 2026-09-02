@@ -33,7 +33,18 @@ jobs:
         run: python manage.py makemigrations --check --dry-run
 
       - name: Testes
-        run: python -m pytest -q -m "not ia_real and not e2e and not visual"
+        run: |
+          python -m pytest -q -m "not ia_real and not e2e and not visual" \
+            --cov --cov-report=xml:coverage.xml --cov-report=term-missing
+
+      # O Sonar roda noutro job, com checkout limpo: sem passar o arquivo por
+      # artefato ele não vê cobertura nenhuma e reprova tudo como descoberto.
+      - name: Guardar a cobertura para o Sonar
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: error
 
       - name: Navegador para os testes de ponta a ponta
         run: python -m playwright install --with-deps chromium
@@ -67,6 +78,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Baixar a cobertura do job de testes
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+
       - name: Scan
         uses: SonarSource/sonarqube-scan-action@v8
         env:
@@ -86,4 +102,5 @@ jobs:
             -Dsonar.projectKey=rigst_dojo
             -Dsonar.organization=rigst
             -Dsonar.exclusions=**/migrations/**,**/staticfiles/**,**/node_modules/**,**/venv/**,**/.venv/**,**/*.jpg,**/*.jpeg,**/*.png,**/*.gif,**/*.ico,**/*.webp,**/*.pdf,**/*.woff,**/*.woff2,**/*.ttf,**/*.eot
+            -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.coverage.exclusions=**/migrations/**,**/tests.py,**/tests_*.py,**/test_*.py,**/tests/**,**/conftest.py,**/settings/**,**/settings.py,**/manage.py,**/wsgi.py,**/asgi.py,scripts/**

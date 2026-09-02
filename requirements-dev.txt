@@ -4,6 +4,11 @@ pytest==9.1.1
 pytest-django==4.14.0
 pytest-asyncio==1.4.0
 
+# Relatório de cobertura para o Sonar. Sem ele o scanner não recebe dado
+# nenhum e trata toda linha nova como descoberta, reprovando o Quality Gate
+# em qualquer PR com código Python.
+pytest-cov==7.1.0
+
 # O --reload do uvicorn só honra --reload-include com o watchfiles instalado;
 # sem ele, o reloader cai no modo que observa apenas *.py.
 watchfiles==1.2.0

@@ -7,6 +7,7 @@ staticfiles/
 .env
 .pytest_cache/
 .coverage
+coverage.xml
 
 # Capturas de tela que divergiram da referência. As referências, essas sim,
 # são versionadas: sem elas não há com o que comparar.
