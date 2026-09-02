@@ -35,7 +35,6 @@ else:
     load_env_file(BASE_DIR / ".env")
 
 ENV = os.getenv("DJANGO_ENV", "development").lower()
-IS_PRODUCTION = ENV == "production"
 # `manage.py test` põe "test" no argv; o pytest não põe nada parecido. Sem a
 # segunda condição o bloco `if IS_TEST` nunca valeria para a suíte de verdade.
 # Três detecções porque cada forma de rodar a suíte deixa um rastro diferente:
@@ -47,7 +46,19 @@ IS_TEST = (
     "test" in sys.argv
     or Path(sys.argv[0]).name.startswith(("pytest", "py.test"))
     or "pytest" in sys.modules
-)
+) and os.getenv("DOJO_SIMULA_BOOT_REAL") != "1"
+
+# Suíte nunca é produção, mesmo com DJANGO_ENV=production no ambiente. O .env
+# da raiz é lido em qualquer execução local e traz o valor de produção; sem o
+# `not IS_TEST` aqui, rodar os testes na máquina ligava SECURE_SSL_REDIRECT,
+# cookies seguros e HSTS, e todo request do test client virava 301. IS_PRODUCTION
+# só é usado dentro deste arquivo, como default dessas chaves — teste que
+# queira uma delas ligada usa override_settings, como já faz o da CSP.
+#
+# Para o caso raro de exercitar o boot de produção inteiro (o teste que exige
+# cache compartilhado recarrega este módulo e espera o RuntimeError), há a
+# saída explícita DOJO_SIMULA_BOOT_REAL=1 no IS_TEST acima.
+IS_PRODUCTION = ENV == "production" and not IS_TEST
 
 
 def env_bool(nome, default=False):
@@ -145,7 +156,10 @@ ASGI_APPLICATION = "config.asgi.application"
 # Alvo do projeto: PostgreSQL (defina DATABASE_URL). Sem ele, cai em SQLite
 # para desenvolvimento local rodar sem dependência externa.
 # ---------------------------------------------------------------------------
-DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+# Vazio na suíte pelo mesmo motivo do IA_BACKEND: o .env aponta para o
+# Postgres de produção, e sem isto `pytest` tenta criar a base de teste lá.
+# Cai no SQLite do bloco abaixo, que é o que a CI já usa.
+DATABASE_URL = "" if IS_TEST else os.getenv("DATABASE_URL", "").strip()
 DB_CONN_MAX_AGE = int(os.getenv("DJANGO_DB_CONN_MAX_AGE", "60"))
 DB_SSL_REQUIRE = env_bool("DJANGO_DB_SSL_REQUIRE", default=IS_PRODUCTION)
 
@@ -353,7 +367,14 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 
 # "fake" devolve respostas fixas sem tocar a rede. É o padrão na suíte de
 # testes: teste que depende de chave de API não roda no CI de ninguém.
-IA_BACKEND = os.getenv("DOJO_IA_BACKEND", "fake" if IS_TEST else "anthropic").strip()
+#
+# O IS_TEST vem ANTES do getenv, e não como default dele: o .env da raiz é
+# lido em qualquer execução local e define DOJO_IA_BACKEND, que ganhava do
+# default e mandava a suíte para a API de verdade — gastando dinheiro e
+# deixando os testes não-determinísticos. Na CI não aparecia, porque lá não
+# há .env. Teste que queira o motor real troca settings.IA_BACKEND com
+# override_settings; ia/motor.py o relê a cada chamada, de propósito.
+IA_BACKEND = "fake" if IS_TEST else os.getenv("DOJO_IA_BACKEND", "anthropic").strip()
 
 # Sonnet, sempre e para tudo (briefing, plano, próximo passo, revisão e
 # conversa passam todos por `settings.IA_MODELO`, ver ia/motores/anthropic_motor.py):

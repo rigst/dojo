@@ -201,6 +201,9 @@ def test_producao_recusa_subir_sem_cache_compartilhado(monkeypatch):
         ("DJANGO_ALLOWED_HOSTS", "dojo.exemplo.com"),
         ("DATABASE_URL", "postgres://u:p@localhost:5432/dojo"),
         ("DOJO_REDIS_CACHE_URL", ""), ("DOJO_CACHE_NO_BANCO", "0"),
+        # Sem isto o settings se reconhece como suíte e desliga o modo de
+        # produção, que é justamente o que este teste precisa exercitar.
+        ("DOJO_SIMULA_BOOT_REAL", "1"),
     ]:
         monkeypatch.setenv(nome, valor)
 
