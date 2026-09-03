@@ -113,7 +113,20 @@ jobs:
       # `settings.py` entra nas exclusões de cobertura na forma de arquivo:
       # o glob `**/settings/**` dos outros projetos não casa com settings em
       # arquivo único.
+      # `issue.ignore.multicriteria`: o S5344 (CRITICAL, "use a secure hashing
+      # algorithm") aponta o MD5PasswordHasher em config/settings.py. É falso
+      # positivo, e verificável: a linha está dentro de `if IS_TEST:` e é a
+      # ÚNICA atribuição de PASSWORD_HASHERS do arquivo — produção usa o padrão
+      # do Django (PBKDF2). O hasher rápido existe porque o de produção domina
+      # o tempo da suíte e não prova nada.
+      #
+      # Declarado aqui, e não marcado como "Safe" na interface do SonarCloud,
+      # de propósito: assim a exceção é versionada, revisável em PR e some se
+      # alguém mexer no arquivo. Marcação na interface não aparece no diff.
       sonar-args: >-
         -Dsonar.qualitygate.wait=true
+        -Dsonar.issue.ignore.multicriteria=e1
+        -Dsonar.issue.ignore.multicriteria.e1.ruleKey=python:S5344
+        -Dsonar.issue.ignore.multicriteria.e1.resourceKey=config/settings.py
         -Dsonar.exclusions=**/migrations/**,**/staticfiles/**,**/node_modules/**,**/venv/**,**/.venv/**,**/*.jpg,**/*.jpeg,**/*.png,**/*.gif,**/*.ico,**/*.webp,**/*.pdf,**/*.woff,**/*.woff2,**/*.ttf,**/*.eot,scripts/**,deploy/**
         -Dsonar.coverage.exclusions=**/migrations/**,**/tests.py,**/tests_*.py,**/test_*.py,**/tests/**,**/conftest.py,**/settings.py,**/manage.py,**/wsgi.py,**/asgi.py,scripts/**,deploy/**
