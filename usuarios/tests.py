@@ -87,13 +87,13 @@ def test_troca_de_senha_funciona_pela_conta(client, aluno):
         "/conta/senha/",
         {
             "old_password": "senha-de-teste-123",
-            "new_password1": "outra-senha-bem-longa-7",
-            "new_password2": "outra-senha-bem-longa-7",
+            "new_password1": "senha-nova-bem-longa-7",
+            "new_password2": "senha-nova-bem-longa-7",
         },
     )
     aluno.refresh_from_db()
     assert resposta.status_code == 302
-    assert aluno.check_password("outra-senha-bem-longa-7")
+    assert aluno.check_password("senha-nova-bem-longa-7")
 
 
 def test_recuperacao_de_senha_manda_email(client, aluno, mailoutbox):

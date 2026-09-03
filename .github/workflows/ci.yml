@@ -25,7 +25,7 @@ jobs:
     # Fixado no SHA, e não na tag v1: tag é ponteiro móvel, e quem puder
     # reescrevê-la passa a rodar código arbitrário com os secrets deste repo.
     # O comentário ao lado é o que o Dependabot lê para propor a subida.
-    uses: rigst/ci/.github/workflows/python-django.yml@d4f7242e23d61510fd8c964275f4cbd0ce55e419 # v1
+    uses: rigst/ci/.github/workflows/python-django.yml@182e57ed18875bee574ea562c8315476fc8b9bf9 # v1
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     with:
@@ -38,6 +38,11 @@ jobs:
       # Por isso os dois apontam para o mesmo lugar e a diferença fica no env.
       django-settings-module: config.settings
       test-settings-module: config.settings
+
+      # ERROR, e não o WARNING padrão: `security.W021` (HSTS preload) é escolha
+      # deliberada — o domínio não está na lista de preload dos navegadores, e
+      # entrar nela é caminho sem volta fácil. Mesma decisão do sistema_arq.
+      django-check-fail-level: ERROR
 
       # Testes rodam em SQLite (o `else` do bloco DATABASES), sem Postgres.
       postgres: false
@@ -61,6 +66,14 @@ jobs:
       test-env: |
         DJANGO_ENV=development
         DOJO_IA_BACKEND=fake
+        # O pipeline exporta django-env TAMBÉM nos jobs de teste e de e2e, e o
+        # test-env vem depois — então é aqui que se desfaz o que só vale em
+        # produção. Sem zerar isto, o subprocesso do e2e (que não é pytest, e
+        # portanto não cai no atalho IS_TEST dos settings) escolhe o
+        # DatabaseCache e procura a tabela `cache_dojo`, que o migrate do teste
+        # não cria: toda página vira erro e o Playwright expira esperando
+        # seletor. O sintoma parece teste instável; a causa é vazamento de env.
+        DOJO_CACHE_NO_BANCO=
 
       # --- soft-fail temporário ---
       # ruff e mypy nunca rodaram neste repo: são 42 e 13 achados
@@ -74,6 +87,12 @@ jobs:
       # continuam fora: a renderização de texto depende das fontes da máquina,
       # e a referência gravada localmente não bate com a do runner.
       run-e2e: true
+
+      # O `-m` que o pipeline passa SUBSTITUI o do addopts do pytest.ini, então
+      # sem isto os testes `visual` voltam a ser coletados no job comum — que
+      # não instala navegador — e a suíte quebra por configuração perdida, não
+      # por defeito. Ver rigst/ci, input `pytest-markers`.
+      pytest-markers: "not ia_real and not visual"
 
       # --- conformidade: fica para depois ---
       # run-lock, run-licencas e run-sbom exigem um requirements.lock, que este
