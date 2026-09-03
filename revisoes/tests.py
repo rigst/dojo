@@ -293,3 +293,29 @@ def test_classe_badge_cobre_os_tres_vereditos(passos):
     for veredito, classe in esperado.items():
         revisao = Revisao(submissao=submissao, veredito=veredito, resumo="r")
         assert revisao.classe_badge == classe
+
+
+def test_detalhe_inline_devolve_o_fragmento_da_revisao(client, passos):
+    aluno = passos[0].etapa.plano.projeto.usuario
+    submissao = Submissao.objects.create(passo=passos[0], usuario=aluno, conteudo="x")
+    revisao = Revisao.objects.create(
+        submissao=submissao, veredito=Revisao.Veredito.ATENDE, resumo="ok"
+    )
+
+    client.force_login(aluno)
+    resposta = client.get(f"/revisoes/inline/{revisao.pk}/")
+    assert resposta.status_code == 200
+
+
+def test_detalhe_inline_nao_vaza_revisao_de_outro(client, passos):
+    from django.contrib.auth import get_user_model
+
+    aluno = passos[0].etapa.plano.projeto.usuario
+    submissao = Submissao.objects.create(passo=passos[0], usuario=aluno, conteudo="x")
+    revisao = Revisao.objects.create(
+        submissao=submissao, veredito=Revisao.Veredito.ATENDE, resumo="ok"
+    )
+
+    invasor = get_user_model().objects.create_user("invasor", password="senha-de-teste-123")
+    client.force_login(invasor)
+    assert client.get(f"/revisoes/inline/{revisao.pk}/").status_code == 404
