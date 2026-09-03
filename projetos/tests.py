@@ -607,3 +607,39 @@ def test_semear_stacks_respeita_os_slugs_manuais(db):
     call_command("semear_stacks", stdout=StringIO())
     for nome, slug in SLUGS_MANUAIS.items():
         assert Stack.objects.get(nome=nome).slug == slug
+
+
+# --- serviços: guardas e versionamento --------------------------------------
+
+
+def test_etapa_pendente_e_passo_atual_aceitam_plano_inexistente(db):
+    """Projeto recém-criado ainda não tem plano. As duas funções são chamadas
+    pela tela antes disso existir, e sem a guarda o painel quebraria em vez de
+    mostrar 'nada planejado ainda'."""
+    from projetos.servicos import etapa_pendente, passo_atual
+
+    assert etapa_pendente(None) is None
+    assert passo_atual(None) is None
+
+
+def test_salvar_plano_inicial_desativa_o_plano_anterior(projeto):
+    """Replanejar versiona em vez de sobrescrever, e só um plano fica ativo —
+    dois ativos fariam a tela do projeto escolher um deles por acaso."""
+    from asgiref.sync import async_to_sync
+
+    from ia.motores import fake_motor
+    from projetos.models import Plano
+    from projetos.servicos import salvar_plano_inicial
+
+    class _Pedido:
+        titulo_projeto = "Lista"
+        objetivo = "Tarefas."
+
+    gerado, _uso = async_to_sync(fake_motor.gerar_plano)(_Pedido())
+
+    salvar_plano_inicial(projeto, gerado, "fake")
+    salvar_plano_inicial(projeto, gerado, "fake")
+
+    ativos = Plano.objects.filter(projeto=projeto, ativo=True)
+    assert ativos.count() == 1
+    assert ativos.first().versao == Plano.objects.filter(projeto=projeto).count()
