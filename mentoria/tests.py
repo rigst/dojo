@@ -208,3 +208,15 @@ def test_str_da_mensagem_traz_papel_e_inicio_do_conteudo(projeto):
     )
     # Trunca em 60: no admin uma resposta longa empurraria a coluna toda.
     assert str(mensagem) == f"{mensagem.get_papel_display()}: {'a' * 60}"
+
+
+def test_str_da_conversa_distingue_geral_de_passo(projeto):
+    """As duas conversas convivem no admin; sem distinguir, viram linhas iguais."""
+    from projetos.models import Passo
+
+    geral = Conversa.objects.create(projeto=projeto)
+    assert str(geral) == f"Conversa geral de {projeto}"
+
+    passo = Passo.objects.filter(etapa__plano__projeto=projeto).first()
+    do_passo = Conversa.objects.create(projeto=projeto, passo=passo)
+    assert str(do_passo) == f"Conversa de {passo}"

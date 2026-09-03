@@ -227,3 +227,71 @@ def test_ferramenta_desconhecida_vira_texto_e_nao_excecao(aluno):
 
 def test_tabela_de_precos_cobre_o_modelo_configurado(settings):
     assert settings.IA_MODELO in PRECOS
+
+
+def test_concluir_ultimo_passo_avisa_que_o_proximo_nao_foi_preparado(projeto, aluno):
+    """Os passos nascem um de cada vez. Quando a fila acaba mas a etapa ainda
+    aceita passo novo, o chat não gera — manda a pessoa voltar ao projeto."""
+    passos = list(Passo.objects.filter(etapa__plano__projeto=projeto).order_by("ordem"))
+    # A etapa nasce fechada pelo salvar_plano; reabri-la é o que representa o
+    # estado real de "ainda cabe passo aqui, mas ele não foi gerado".
+    etapa = passos[-1].etapa
+    etapa.passos_prontos = False
+    etapa.save(update_fields=["passos_prontos"])
+
+    for passo in passos[:-1]:
+        async_to_sync(ferramentas.executar)(
+            "concluir_passo", {"passo_id": passo.pk, "justificativa": "rodou"}, aluno
+        )
+
+    ultimo = passos[-1]
+    ultimo.refresh_from_db()
+    saida = async_to_sync(ferramentas.executar)(
+        "concluir_passo", {"passo_id": ultimo.pk, "justificativa": "rodou"}, aluno
+    )
+
+    assert "ainda não foi preparado" in saida
+
+
+def test_concluir_ultimo_passo_de_etapa_fechada_avisa_que_era_o_fim(projeto, aluno):
+    passos = list(Passo.objects.filter(etapa__plano__projeto=projeto).order_by("ordem"))
+    # A etapa já nasce fechada pelo salvar_plano: nada a preparar depois dela.
+    for passo in passos[:-1]:
+        async_to_sync(ferramentas.executar)(
+            "concluir_passo", {"passo_id": passo.pk, "justificativa": "rodou"}, aluno
+        )
+    saida = async_to_sync(ferramentas.executar)(
+        "concluir_passo", {"passo_id": passos[-1].pk, "justificativa": "rodou"}, aluno
+    )
+
+    assert "Era o último da fila" in saida
+
+
+# --- motor -----------------------------------------------------------------
+
+
+def test_cada_entrada_do_motor_pede_o_schema_certo(monkeypatch):
+    """As quatro funções são finas de propósito: só escolhem o schema. É
+    justamente por serem finas que trocar um pelo outro passa despercebido —
+    o erro só apareceria como resposta bem-formada e sem sentido."""
+    from ia.motores import anthropic_motor
+    from ia.schemas import BriefingGerado, PassoSeguinteGerado, PlanoInicialGerado, RevisaoCodigo
+
+    pedidos = []
+
+    async def falso(pedido, schema):
+        pedidos.append(schema)
+        return schema
+
+    monkeypatch.setattr(anthropic_motor, "_estruturado", falso)
+
+    esperado = [
+        (anthropic_motor.gerar_briefing, BriefingGerado),
+        (anthropic_motor.gerar_plano, PlanoInicialGerado),
+        (anthropic_motor.gerar_proximo_passo, PassoSeguinteGerado),
+        (anthropic_motor.revisar, RevisaoCodigo),
+    ]
+    for funcao, schema in esperado:
+        assert async_to_sync(funcao)(object()) is schema
+
+    assert pedidos == [s for _, s in esperado]
