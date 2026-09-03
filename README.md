@@ -1,6 +1,7 @@
 # Dojo
 
 [![CI](https://github.com/rigst/dojo/actions/workflows/ci.yml/badge.svg)](https://github.com/rigst/dojo/actions/workflows/ci.yml)
+[![Cobertura](https://codecov.io/gh/rigst/dojo/branch/main/graph/badge.svg)](https://codecov.io/gh/rigst/dojo)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=rigst_dojo&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=rigst_dojo)
 [![Licença: AGPL v3](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/)
