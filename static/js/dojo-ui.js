@@ -171,10 +171,33 @@
         });
     }
 
+    /* A altura real da barra de topo, publicada como variável de CSS.
+     *
+     * O chat da tela do passo gruda logo abaixo dela, e a barra não tem altura
+     * fixa: com a lateral recolhida ela passa a mostrar a marca e cresce uns
+     * 11px. Com a medida errada por baixo, o chat entrava atrás da barra ao
+     * rolar. Não há como o CSS ler a altura de outro elemento, então quem mede
+     * é isto aqui; o valor declarado na folha continua sendo o padrão, e vale
+     * sozinho se o script não rodar. */
+    function alturaDoTopo() {
+        var topo = document.querySelector(".app-topo");
+        if (!topo || !window.ResizeObserver) return;
+
+        function publicar() {
+            var altura = topo.getBoundingClientRect().height;
+            if (!altura) return;  // Escondida: fica o padrão da folha.
+            document.documentElement.style.setProperty("--ds-topo-alt", altura + "px");
+        }
+
+        new ResizeObserver(publicar).observe(topo);
+        publicar();
+    }
+
     function iniciar() {
         preencherBarras();
         tema();
         ladoDoSite();
+        alturaDoTopo();
         atalhosDePasso();
         marcarEnvio();
         avisos();
