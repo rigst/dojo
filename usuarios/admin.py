@@ -6,7 +6,14 @@ from usuarios.models import UsoMensal, Usuario
 
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
-    list_display = ("username", "email", "eh_visitante", "limite_proprio_usd", "date_joined", "is_staff")
+    list_display = (
+        "username",
+        "email",
+        "eh_visitante",
+        "limite_proprio_usd",
+        "date_joined",
+        "is_staff",
+    )
     list_filter = (*UserAdmin.list_filter, "eh_visitante")
     fieldsets = (
         *(UserAdmin.fieldsets or ()),

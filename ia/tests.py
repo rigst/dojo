@@ -47,6 +47,7 @@ def projeto(aluno):
 
 # --- custo ------------------------------------------------------------------
 
+
 def test_custo_soma_entrada_saida_e_cache():
     uso = Uso(modelo="claude-opus-5", entrada=1_000_000, saida=1_000_000)
     assert uso.custo_usd == Decimal("30.000000")
@@ -75,6 +76,7 @@ def test_uso_soma_rodadas_do_laco_de_ferramentas():
 
 # --- cota -------------------------------------------------------------------
 
+
 def test_quota_barra_quem_estourou(aluno, settings):
     settings.IA_LIMITE_MENSAL_USD = 1
     registro = uso_do_mes(aluno)
@@ -101,6 +103,7 @@ def test_visitante_tem_teto_proprio_e_menor(aluno, settings):
         verificar_quota(aluno)
     assert "Crie uma conta" in str(erro.value)
 
+
 def test_registrar_uso_acumula_no_mes(aluno):
     registrar_uso(aluno, Uso(modelo="claude-opus-5", saida=1_000_000))
     registrar_uso(aluno, Uso(modelo="claude-opus-5", saida=1_000_000))
@@ -112,6 +115,7 @@ def test_registrar_uso_acumula_no_mes(aluno):
 
 # --- prefixo de cache -------------------------------------------------------
 
+
 def test_prefixo_do_sistema_e_identico_entre_dois_turnos(projeto, aluno):
     """O prefixo cacheado tem de sair byte a byte igual em turnos seguidos.
 
@@ -120,7 +124,9 @@ def test_prefixo_do_sistema_e_identico_entre_dois_turnos(projeto, aluno):
     e nada na tela denuncia isso. Este teste denuncia.
     """
     primeiro = preparo.para_conversa(projeto, None, [{"role": "user", "content": "a"}], aluno)
-    segundo = preparo.para_conversa(projeto, None, [{"role": "user", "content": "outra bem diferente"}], aluno)
+    segundo = preparo.para_conversa(
+        projeto, None, [{"role": "user", "content": "outra bem diferente"}], aluno
+    )
 
     assert primeiro.sistema == segundo.sistema
     assert all(bloco["cache_control"] == {"type": "ephemeral"} for bloco in primeiro.sistema)
@@ -158,6 +164,7 @@ def test_codigo_do_aluno_vai_marcado_como_dado(projeto, aluno):
 
 
 # --- ferramentas ------------------------------------------------------------
+
 
 def test_concluir_passo_libera_o_proximo(projeto, aluno):
     primeiro, segundo, _ = list(Passo.objects.filter(etapa__plano__projeto=projeto))

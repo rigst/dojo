@@ -73,4 +73,3 @@ class Revisao(models.Model):
             self.Veredito.NAO_ATENDE: "ds-badge--erro",
         }
         return classes[self.veredito]
-

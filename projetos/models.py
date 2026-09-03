@@ -38,7 +38,6 @@ class Stack(models.Model):
         super().save(*args, **kwargs)
 
 
-
 class ProjetoQuerySet(models.QuerySet):
     def do_usuario(self, usuario):
         return self.filter(usuario=usuario)
@@ -75,7 +74,9 @@ class Projeto(Registro):
     # objetivo de verdade (ver `salvar_plano_inicial`), e são esses que ficam.
     titulo = models.CharField("título", max_length=120, default="Novo projeto", blank=True)
     subtitulo = models.CharField(
-        "subtítulo", max_length=200, blank=True,
+        "subtítulo",
+        max_length=200,
+        blank=True,
         help_text="Escrito pelo mentor ao gerar o plano. Fica em branco até lá.",
     )
     objetivo = models.TextField(
@@ -86,7 +87,10 @@ class Projeto(Registro):
     nivel = models.CharField("nível", max_length=14, choices=Nivel.choices, default=Nivel.INICIANTE)
     horas_por_semana = models.PositiveSmallIntegerField(default=5)
     preferencia_didatica = models.CharField(
-        "como você quer ser ensinado", max_length=10, choices=Didatica.choices, default=Didatica.SOCRATICO
+        "como você quer ser ensinado",
+        max_length=10,
+        choices=Didatica.choices,
+        default=Didatica.SOCRATICO,
     )
     status = models.CharField(max_length=13, choices=Status.choices, default=Status.RASCUNHO)
 
@@ -160,7 +164,9 @@ class Plano(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["projeto", "versao"], name="versao_unica_por_projeto"),
             models.UniqueConstraint(
-                fields=["projeto"], condition=models.Q(ativo=True), name="um_plano_ativo_por_projeto"
+                fields=["projeto"],
+                condition=models.Q(ativo=True),
+                name="um_plano_ativo_por_projeto",
             ),
         ]
 
@@ -189,8 +195,11 @@ class Etapa(models.Model):
         """Já entregou o objetivo dela: não precisa de mais passo, e os que
         tem estão todos concluídos. Usada por `Projeto.progresso`."""
         passos = list(self.passos.all())
-        return bool(self.passos_prontos and passos and all(p.status == Passo.Status.CONCLUIDO for p in passos))
-
+        return bool(
+            self.passos_prontos
+            and passos
+            and all(p.status == Passo.Status.CONCLUIDO for p in passos)
+        )
 
 
 class PassoQuerySet(models.QuerySet):
@@ -286,5 +295,3 @@ class Passo(models.Model):
         fila = self._fila()
         i = self._indice()
         return fila[i + 1] if i + 1 < len(fila) else None
-
-

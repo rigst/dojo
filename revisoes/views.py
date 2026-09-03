@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_GET
 
 from core import sse
 from ia.contabilidade import QuotaExcedida
@@ -72,7 +73,9 @@ def submeter(request, pk):
     for arquivo in arquivos:
         texto = _texto_do_arquivo(arquivo)
         if texto is None:
-            return _erro(f"“{arquivo.name}” não deu para ler como texto (grande demais ou não é código).")
+            return _erro(
+                f"“{arquivo.name}” não deu para ler como texto (grande demais ou não é código)."
+            )
         # O nome do arquivo faz parte da revisão: é o que diz ao mentor qual
         # arquivo é qual quando vem mais de um.
         partes.append(f"--- arquivo: {arquivo.name} ---\n{texto}")
@@ -83,18 +86,23 @@ def submeter(request, pk):
         return _erro("Cole o código ou anexe um arquivo antes de pedir a revisão.")
 
     if len(conteudo) > MAX_CARACTERES:
-        return _erro("Isso é grande demais para uma revisão útil. Mande só os arquivos que este passo pediu.")
+        return _erro(
+            "Isso é grande demais para uma revisão útil. Mande só os arquivos que este passo pediu."
+        )
 
     submissao = Submissao.objects.create(passo=passo, usuario=request.user, conteudo=conteudo)
 
     if inline:
-        return JsonResponse({
-            "pk": submissao.pk,
-            "stream_url": reverse("revisao_stream", args=[submissao.pk]),
-        })
+        return JsonResponse(
+            {
+                "pk": submissao.pk,
+                "stream_url": reverse("revisao_stream", args=[submissao.pk]),
+            }
+        )
     return redirect("revisao_aguardar", pk=submissao.pk)
 
 
+@require_GET
 @login_required
 def aguardar(request, pk):
     submissao = get_object_or_404(Submissao, pk=pk, usuario=request.user)
@@ -103,6 +111,7 @@ def aguardar(request, pk):
     return render(request, "revisoes/aguardar.html", {"submissao": submissao})
 
 
+@require_GET
 async def revisar_stream(request, pk):
     usuario = await request.auser()
     if not usuario.is_authenticated:
@@ -133,6 +142,7 @@ async def revisar_stream(request, pk):
     return sse.resposta(eventos())
 
 
+@require_GET
 @login_required
 def detalhe(request, pk):
     from revisoes.models import Revisao
@@ -145,6 +155,7 @@ def detalhe(request, pk):
     )
 
 
+@require_GET
 @login_required
 def detalhe_inline(request, pk):
     """Fragmento HTML da revisão para injeção inline no passo."""

@@ -18,7 +18,9 @@ def outro(db):
 
 @pytest.fixture
 def projeto(aluno):
-    p = Projeto.objects.create(usuario=aluno, titulo="Lista de tarefas", objetivo="Um app de tarefas.")
+    p = Projeto.objects.create(
+        usuario=aluno, titulo="Lista de tarefas", objetivo="Um app de tarefas."
+    )
     p.stacks.add(Stack.objects.create(nome="Django", categoria=Stack.Categoria.FRAMEWORK))
     return p
 
@@ -51,7 +53,9 @@ def test_so_o_primeiro_passo_nasce_aberto(projeto):
     disponíveis, o plano viraria uma lista de tarefas."""
     salvar_plano(projeto, _gerado(), "fake")
 
-    status = list(Passo.objects.filter(etapa__plano__projeto=projeto).values_list("status", flat=True))
+    status = list(
+        Passo.objects.filter(etapa__plano__projeto=projeto).values_list("status", flat=True)
+    )
     assert status == [Passo.Status.DISPONIVEL, Passo.Status.BLOQUEADO, Passo.Status.BLOQUEADO]
 
 
@@ -264,7 +268,10 @@ def test_projeto_de_outro_nao_pode_ser_editado_nem_excluido(client, projeto, out
     client.force_login(outro)
     assert client.get(f"/projetos/{projeto.pk}/editar/").status_code == 404
     assert client.post(f"/projetos/{projeto.pk}/arquivar/").status_code == 404
-    assert client.post(f"/projetos/{projeto.pk}/excluir/", {"confirmacao": projeto.titulo}).status_code == 404
+    assert (
+        client.post(f"/projetos/{projeto.pk}/excluir/", {"confirmacao": projeto.titulo}).status_code
+        == 404
+    )
     assert Projeto.objects.filter(pk=projeto.pk).exists()
 
 

@@ -14,7 +14,11 @@ def aluno(db):
 def test_cadastro_cria_conta_e_entra(client, db):
     resposta = client.post(
         "/conta/criar/",
-        {"username": "novato", "password1": "praticar-todo-dia-9", "password2": "praticar-todo-dia-9"},
+        {
+            "username": "novato",
+            "password1": "praticar-todo-dia-9",
+            "password2": "praticar-todo-dia-9",
+        },
     )
     assert resposta.status_code == 302
     assert get_user_model().objects.filter(username="novato").exists()
@@ -196,11 +200,13 @@ def test_producao_recusa_subir_sem_cache_compartilhado(monkeypatch):
     import importlib
 
     for nome, valor in [
-        ("DJANGO_ENV", "production"), ("DJANGO_DEBUG", "False"),
+        ("DJANGO_ENV", "production"),
+        ("DJANGO_DEBUG", "False"),
         ("DJANGO_SECRET_KEY", "chave-longa-o-suficiente-para-producao-passar"),
         ("DJANGO_ALLOWED_HOSTS", "dojo.exemplo.com"),
         ("DATABASE_URL", "postgres://u:p@localhost:5432/dojo"),
-        ("DOJO_REDIS_CACHE_URL", ""), ("DOJO_CACHE_NO_BANCO", "0"),
+        ("DOJO_REDIS_CACHE_URL", ""),
+        ("DOJO_CACHE_NO_BANCO", "0"),
         # Sem isto o settings se reconhece como suíte e desliga o modo de
         # produção, que é justamente o que este teste precisa exercitar.
         ("DOJO_SIMULA_BOOT_REAL", "1"),
@@ -230,9 +236,7 @@ def test_teto_por_conta_vence_o_do_sistema(db, settings):
 def test_teto_por_conta_tambem_vale_para_visitante(db, settings):
     settings.IA_LIMITE_VISITANTE_USD = 0.5
 
-    visitante = get_user_model().objects.create_user(
-        username="v", password="x", eh_visitante=True
-    )
+    visitante = get_user_model().objects.create_user(username="v", password="x", eh_visitante=True)
     assert visitante.limite_mensal_usd == Decimal("0.5")
 
     visitante.limite_proprio_usd = Decimal("3")
@@ -328,5 +332,7 @@ def test_projeto_de_exemplo_nao_gasta_api(db, monkeypatch):
 
 
 def test_str_do_uso_mensal_traz_usuario_competencia_e_custo(aluno, db):
-    uso = UsoMensal.objects.create(usuario=aluno, ano_mes="2026-09", custo_usd=Decimal("1.23"), mensagens=4)
+    uso = UsoMensal.objects.create(
+        usuario=aluno, ano_mes="2026-09", custo_usd=Decimal("1.23"), mensagens=4
+    )
     assert str(uso) == f"{aluno} · 2026-09 · US$ 1.23"

@@ -59,7 +59,9 @@ def _eventos(resposta):
     for bloco in bruto.split("\n\n"):
         linhas = [linha for linha in bloco.splitlines() if linha and not linha.startswith(":")]
         if len(linhas) == 2:
-            saida.append((linhas[0].removeprefix("event: "), json.loads(linhas[1].removeprefix("data: "))))
+            saida.append(
+                (linhas[0].removeprefix("event: "), json.loads(linhas[1].removeprefix("data: ")))
+            )
     return saida
 
 
@@ -68,7 +70,10 @@ def test_codigo_aprovado_conclui_o_passo_e_libera_o_proximo(client, aluno, passo
     primeiro, segundo = passos
     client.force_login(aluno)
 
-    resposta = client.post(f"/revisoes/passo/{primeiro.pk}/submeter/", {"conteudo": "def somar(a, b):\n    return a + b\n"})
+    resposta = client.post(
+        f"/revisoes/passo/{primeiro.pk}/submeter/",
+        {"conteudo": "def somar(a, b):\n    return a + b\n"},
+    )
     submissao = Submissao.objects.get()
     assert resposta["Location"] == f"/revisoes/aguardar/{submissao.pk}/"
 
@@ -91,7 +96,10 @@ def test_codigo_reprovado_deixa_o_passo_em_revisao(client, aluno, passos):
     primeiro, segundo = passos
     client.force_login(aluno)
 
-    client.post(f"/revisoes/passo/{primeiro.pk}/submeter/", {"conteudo": "def somar(a, b):\n    pass  # TODO\n"})
+    client.post(
+        f"/revisoes/passo/{primeiro.pk}/submeter/",
+        {"conteudo": "def somar(a, b):\n    pass  # TODO\n"},
+    )
     submissao = Submissao.objects.get()
     _eventos(client.get(f"/revisoes/aguardar/{submissao.pk}/stream/"))
 
@@ -251,7 +259,10 @@ def test_revisao_aprovada_leva_ao_proximo_passo(client, aluno, passos):
     primeiro, segundo = passos
     client.force_login(aluno)
 
-    client.post(f"/revisoes/passo/{primeiro.pk}/submeter/", {"conteudo": "def somar(a, b):\n    return a + b\n"})
+    client.post(
+        f"/revisoes/passo/{primeiro.pk}/submeter/",
+        {"conteudo": "def somar(a, b):\n    return a + b\n"},
+    )
     submissao = Submissao.objects.get()
     _eventos(client.get(f"/revisoes/aguardar/{submissao.pk}/stream/"))
 
@@ -260,14 +271,20 @@ def test_revisao_aprovada_leva_ao_proximo_passo(client, aluno, passos):
 
 
 def test_str_da_revisao_traz_veredito_e_passo(passos):
-    submissao = Submissao.objects.create(passo=passos[0], usuario=passos[0].etapa.plano.projeto.usuario, conteudo="x")
-    revisao = Revisao.objects.create(submissao=submissao, veredito=Revisao.Veredito.ATENDE, resumo="ok")
+    submissao = Submissao.objects.create(
+        passo=passos[0], usuario=passos[0].etapa.plano.projeto.usuario, conteudo="x"
+    )
+    revisao = Revisao.objects.create(
+        submissao=submissao, veredito=Revisao.Veredito.ATENDE, resumo="ok"
+    )
     assert str(revisao) == f"{revisao.get_veredito_display()}: {submissao.passo}"
 
 
 def test_classe_badge_cobre_os_tres_vereditos(passos):
     """O badge é o que a tela mostra; veredito sem classe sai sem cor nenhuma."""
-    submissao = Submissao.objects.create(passo=passos[0], usuario=passos[0].etapa.plano.projeto.usuario, conteudo="x")
+    submissao = Submissao.objects.create(
+        passo=passos[0], usuario=passos[0].etapa.plano.projeto.usuario, conteudo="x"
+    )
     esperado = {
         Revisao.Veredito.ATENDE: "ds-badge--ok",
         Revisao.Veredito.RESSALVAS: "ds-badge--atencao",

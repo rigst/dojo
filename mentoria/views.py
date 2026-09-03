@@ -4,6 +4,7 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_GET
 
 from core import sse
 from core.mixins import obter_do_usuario
@@ -17,6 +18,7 @@ from projetos.models import Passo, Projeto
 MAX_PERGUNTA = 6000
 
 
+@require_GET
 @login_required
 def chat(request, pk):
     projeto = obter_do_usuario(Projeto, request.user, pk=pk)
@@ -28,6 +30,7 @@ def chat(request, pk):
     )
 
 
+@require_GET
 async def stream(request, pk):
     """Responde à pergunta do aluno, token a token.
 
@@ -49,13 +52,22 @@ async def stream(request, pk):
     passo_id = request.GET.get("passo")
     if passo_id:
         passo = await sync_to_async(
-            lambda: Passo.objects.do_usuario(usuario).filter(pk=passo_id).select_related("etapa__plano__projeto").first()
+            lambda: (
+                Passo.objects.do_usuario(usuario)
+                .filter(pk=passo_id)
+                .select_related("etapa__plano__projeto")
+                .first()
+            )
         )()
 
     # Cada passo tem a conversa dele, separada das outras; sem passo em foco, é
     # a conversa geral do projeto (ver mentoria/models.py:Conversa).
     conversa = await sync_to_async(
-        lambda: servicos.obter_conversa_do_passo(passo) if passo else servicos.obter_conversa_geral(projeto)
+        lambda: (
+            servicos.obter_conversa_do_passo(passo)
+            if passo
+            else servicos.obter_conversa_geral(projeto)
+        )
     )()
 
     async def eventos():

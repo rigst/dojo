@@ -34,11 +34,7 @@ def historico_para_api(conversa):
     """
     mensagens = list(conversa.mensagens.order_by("-criado_em")[:JANELA_MENSAGENS])
     mensagens.reverse()
-    return [
-        {"role": m.papel, "content": m.conteudo}
-        for m in mensagens
-        if m.conteudo.strip()
-    ]
+    return [{"role": m.papel, "content": m.conteudo} for m in mensagens if m.conteudo.strip()]
 
 
 def registrar_pergunta(conversa, texto, passo=None):

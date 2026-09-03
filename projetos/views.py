@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_GET
 
 from core import sse
 from core.mixins import obter_do_usuario
@@ -28,13 +29,12 @@ from projetos.servicos import (
 _TAREFAS_EM_VOO: set[asyncio.Task] = set()
 
 
+@require_GET
 @login_required
 def lista(request):
     arquivados = request.GET.get("arquivados") == "1"
     consulta = Projeto.objects.do_usuario(request.user).prefetch_related("stacks")
-    consulta = (
-        consulta.filter(status=Projeto.Status.ARQUIVADO) if arquivados else consulta.ativos()
-    )
+    consulta = consulta.filter(status=Projeto.Status.ARQUIVADO) if arquivados else consulta.ativos()
     projetos = list(consulta)
 
     # "Onde eu parei": o passo aberto do projeto mexido por último. É a primeira
@@ -47,7 +47,11 @@ def lista(request):
             .filter(
                 etapa__plano__ativo=True,
                 etapa__plano__projeto=projetos[0],
-                status__in=[Passo.Status.DISPONIVEL, Passo.Status.EM_ANDAMENTO, Passo.Status.EM_REVISAO],
+                status__in=[
+                    Passo.Status.DISPONIVEL,
+                    Passo.Status.EM_ANDAMENTO,
+                    Passo.Status.EM_REVISAO,
+                ],
             )
             .select_related("etapa__plano__projeto")
             .first()
@@ -144,6 +148,7 @@ def excluir(request, pk):
     return render(request, "projetos/excluir.html", {"projeto": projeto})
 
 
+@require_GET
 @login_required
 def detalhe(request, pk):
     projeto = obter_do_usuario(Projeto, request.user, pk=pk)
@@ -169,16 +174,24 @@ def detalhe(request, pk):
     return render(
         request,
         "projetos/detalhe.html",
-        {"projeto": projeto, "plano": plano, "etapas": etapas,
-         "feitos": feitos, "total": total, "pct": pct, "atual": atual,
-         "concluido": total > 0 and feitos == total,
-         # Só as duas últimas: a lista de ações cresceria sem fim num projeto
-         # replanejado muitas vezes, e quem quer a v1 de dez versões atrás
-         # está fazendo arqueologia, não navegando.
-         "versoes_anteriores": projeto.planos.filter(ativo=False)[:2]},
+        {
+            "projeto": projeto,
+            "plano": plano,
+            "etapas": etapas,
+            "feitos": feitos,
+            "total": total,
+            "pct": pct,
+            "atual": atual,
+            "concluido": total > 0 and feitos == total,
+            # Só as duas últimas: a lista de ações cresceria sem fim num projeto
+            # replanejado muitas vezes, e quem quer a v1 de dez versões atrás
+            # está fazendo arqueologia, não navegando.
+            "versoes_anteriores": projeto.planos.filter(ativo=False)[:2],
+        },
     )
 
 
+@require_GET
 @login_required
 def planejar(request, pk):
     """Tela que dispara a geração do plano. O trabalho acontece no stream.
@@ -206,6 +219,7 @@ def planejar(request, pk):
     )
 
 
+@require_GET
 async def briefing_stream(request, pk):
     """Entrega as perguntas do mentor para a tela de planejamento.
 
@@ -244,6 +258,7 @@ async def briefing_stream(request, pk):
     return sse.resposta(eventos())
 
 
+@require_GET
 async def planejar_stream(request, pk):
     """Gera o plano e informa o progresso enquanto isso.
 
@@ -286,6 +301,7 @@ async def planejar_stream(request, pk):
     return sse.resposta(eventos())
 
 
+@require_GET
 @login_required
 def passo_gerando(request, pk):
     """Tela de espera enquanto o mentor prepara o próximo passo.
@@ -348,6 +364,7 @@ async def passo_pre_gerar(request, pk):
     return HttpResponse(status=204)
 
 
+@require_GET
 async def passo_gerar_stream(request, pk):
     """Gera o próximo passo e informa o progresso, no mesmo padrão do plano."""
     usuario = await request.auser()
@@ -386,6 +403,7 @@ async def passo_gerar_stream(request, pk):
     return sse.resposta(eventos())
 
 
+@require_GET
 @login_required
 def plano_versao(request, pk, versao):
     """Um plano antigo, só leitura.
@@ -407,6 +425,7 @@ def plano_versao(request, pk, versao):
     )
 
 
+@require_GET
 @login_required
 def passo_revisoes(request, pk):
     """Todas as revisões de um passo, da mais recente para a mais antiga."""
@@ -444,6 +463,7 @@ def _plano_editavel(usuario, projeto_pk):
     return projeto, plano
 
 
+@require_GET
 @login_required
 def plano_editar(request, pk):
     projeto, plano = _plano_editavel(request.user, pk)
@@ -553,6 +573,7 @@ def passo_remover(request, pk):
     return redirect("plano_editar", pk=passo.projeto.pk)
 
 
+@require_GET
 @login_required
 def passo_detalhe(request, pk):
     passo = get_object_or_404(
@@ -585,6 +606,7 @@ def passo_detalhe(request, pk):
         and not Passo.objects.filter(etapa__plano=plano, status=Passo.Status.BLOQUEADO).exists()
     ):
         from django.urls import reverse
+
         pre_gerar_url = reverse("projeto_passo_pre_gerar", args=[projeto.pk])
 
     return render(
@@ -637,6 +659,7 @@ def passo_concluir(request, pk):
     return redirect("projeto_detalhe", pk=passo.projeto.pk)
 
 
+@require_GET
 @login_required
 def exportar_markdown(request, pk):
     """O plano em Markdown, para levar para fora do app.
@@ -649,8 +672,18 @@ def exportar_markdown(request, pk):
     if not plano:
         raise Http404
 
-    linhas = [f"# {projeto.titulo}", "", projeto.objetivo, "", f"**Stack:** {projeto.stacks_texto}", "",
-              f"## Plano (versão {plano.versao})", "", plano.resumo, ""]
+    linhas = [
+        f"# {projeto.titulo}",
+        "",
+        projeto.objetivo,
+        "",
+        f"**Stack:** {projeto.stacks_texto}",
+        "",
+        f"## Plano (versão {plano.versao})",
+        "",
+        plano.resumo,
+        "",
+    ]
 
     for etapa in plano.etapas.prefetch_related("passos"):
         linhas += [f"### {etapa.ordem}. {etapa.titulo}", ""]

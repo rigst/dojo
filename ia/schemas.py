@@ -41,7 +41,9 @@ class EtapaGerada(BaseModel):
 
 
 class PlanoGerado(BaseModel):
-    resumo: str = Field(description="O projeto em um parágrafo, do jeito que o aluno vai construí-lo.")
+    resumo: str = Field(
+        description="O projeto em um parágrafo, do jeito que o aluno vai construí-lo."
+    )
     etapas: list[EtapaGerada]
 
 
@@ -74,7 +76,9 @@ class PlanoInicialGerado(BaseModel):
     subtitulo: str = Field(
         description="Uma frase curta dizendo o que o projeto faz e para quem. Não repete o título."
     )
-    resumo: str = Field(description="O projeto em um parágrafo, do jeito que o aluno vai construí-lo.")
+    resumo: str = Field(
+        description="O projeto em um parágrafo, do jeito que o aluno vai construí-lo."
+    )
     etapas: list[EtapaEsboco]
     primeiro_passo: PassoGerado = Field(description="O primeiro passo da primeira etapa, completo.")
 

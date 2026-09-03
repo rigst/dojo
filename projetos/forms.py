@@ -23,7 +23,12 @@ class ProjetoForm(forms.ModelForm):
         # campo do modelo.
         fields = ("titulo", "subtitulo", "objetivo", "stacks", "nivel")
         widgets = {
-            "objetivo": forms.Textarea(attrs={"rows": 5, "placeholder": "Ex.: um app de lista de tarefas com login, para eu usar de verdade no dia a dia."}),
+            "objetivo": forms.Textarea(
+                attrs={
+                    "rows": 5,
+                    "placeholder": "Ex.: um app de lista de tarefas com login, para eu usar de verdade no dia a dia.",
+                }
+            ),
             "nivel": forms.RadioSelect,
             "stacks": forms.CheckboxSelectMultiple,
         }
@@ -109,7 +114,9 @@ class PassoForm(forms.ModelForm):
         self.fields["o_que_enviar"].label = "O que mandar para a revisão"
         self.fields["o_que_enviar"].help_text = "Uma frase: qual arquivo, função ou trecho."
         if self.instance and self.instance.pk:
-            self.fields["criterios_aceite"].initial = "\n".join(self.instance.criterios_aceite or [])
+            self.fields["criterios_aceite"].initial = "\n".join(
+                self.instance.criterios_aceite or []
+            )
             self.fields["armadilhas"].initial = "\n".join(self.instance.armadilhas or [])
 
     @staticmethod

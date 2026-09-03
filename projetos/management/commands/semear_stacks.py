@@ -88,4 +88,6 @@ class Command(BaseCommand):
                 defaults["slug"] = SLUGS_MANUAIS[nome]
             _, nova = Stack.objects.get_or_create(nome=nome, defaults=defaults)
             criadas += int(nova)
-        self.stdout.write(self.style.SUCCESS(f"{criadas} stack(s) criada(s); {len(STACKS)} no total."))
+        self.stdout.write(
+            self.style.SUCCESS(f"{criadas} stack(s) criada(s); {len(STACKS)} no total.")
+        )

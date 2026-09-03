@@ -69,4 +69,3 @@ class Mensagem(models.Model):
     @property
     def do_mentor(self):
         return self.papel == self.Papel.MENTOR
-

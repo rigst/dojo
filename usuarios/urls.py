@@ -12,7 +12,6 @@ urlpatterns = [
     path("sair/", auth_views.LogoutView.as_view(), name="logout"),
     path("criar/", views.cadastrar, name="cadastrar"),
     path("visitante/", views.entrar_como_visitante, name="entrar_visitante"),
-
     # Trocar e recuperar senha. Não existiam: quem esquecesse a senha ficava
     # sem conta, e quem quisesse trocá-la só conseguia pelo admin do Django.
     # As views são as do próprio Django; o que é nosso são os templates.
