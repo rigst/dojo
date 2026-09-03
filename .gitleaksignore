@@ -1,0 +1,19 @@
+# Achados aceitos, um por linha, no formato commit:arquivo:regra:linha.
+#
+# O gitleaks varre o HISTÓRICO, não a árvore atual: corrigir o arquivo não
+# apaga o achado do commit em que ele entrou. Para valor fictício já commitado,
+# o caminho é aceitá-lo aqui — reescrever histórico por senha de fixture não se
+# paga.
+#
+# c7d0835 é o commit inicial do dojo. As duas linhas são a senha nova de um
+# teste que troca a senha do usuário. É fictícia, e escapava do allowlist
+# compartilhado do rigst/ci apenas porque começava com outra palavra: o regex
+# de senha de fixture casa o segredo inteiro, a partir do início, e a lista
+# começa em senha/password/passwd/pwd/pass. O valor na árvore atual já foi
+# renomeado para uma forma que casa, então não há reincidência.
+#
+# Não reproduza aqui o valor recusado: citá-lo, ainda que em comentário, cria
+# um achado NOVO no commit que edita este arquivo. Aconteceu na primeira
+# tentativa.
+c7d0835423d1cfc7a38573328d6c1229c2792c31:usuarios/tests.py:generic-api-key:90
+c7d0835423d1cfc7a38573328d6c1229c2792c31:usuarios/tests.py:generic-api-key:91
