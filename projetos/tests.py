@@ -643,3 +643,61 @@ def test_salvar_plano_inicial_desativa_o_plano_anterior(projeto):
     ativos = Plano.objects.filter(projeto=projeto, ativo=True)
     assert ativos.count() == 1
     assert ativos.first().versao == Plano.objects.filter(projeto=projeto).count()
+
+
+# --- tela de espera e disparo do próximo passo ------------------------------
+
+
+def test_passo_gerando_manda_para_o_projeto_quando_nao_ha_o_que_gerar(client, aluno, projeto):
+    """Só se chega aqui por link direto ou F5 tardio. Renderizar a espera nesse
+    caso deixaria a pessoa olhando um spinner que nunca termina."""
+    salvar_plano(projeto, _gerado(), "fake")
+
+    client.force_login(aluno)
+    resposta = client.get(f"/projetos/{projeto.pk}/planejar/passo/")
+
+    assert resposta.status_code == 302
+    assert resposta.url == f"/projetos/{projeto.pk}/"
+
+
+def test_passo_gerando_mostra_a_espera_enquanto_gera(client, aluno, projeto):
+    salvar_plano(projeto, _gerado(), "fake")
+    projeto.gerando = True
+    projeto.save(update_fields=["gerando"])
+
+    client.force_login(aluno)
+    resposta = client.get(f"/projetos/{projeto.pk}/planejar/passo/")
+
+    assert resposta.status_code == 200
+
+
+def test_pre_gerar_so_aceita_post(client, aluno, projeto):
+    client.force_login(aluno)
+    assert client.get(f"/projetos/{projeto.pk}/planejar/passo/pre-gerar/").status_code == 405
+
+
+def test_pre_gerar_nao_dispara_com_geracao_em_curso(client, aluno, projeto):
+    """Duas abas abertas não podem virar duas gerações do mesmo passo."""
+    salvar_plano(projeto, _gerado(), "fake")
+    projeto.gerando = True
+    projeto.save(update_fields=["gerando"])
+
+    client.force_login(aluno)
+    resposta = client.post(f"/projetos/{projeto.pk}/planejar/passo/pre-gerar/")
+    assert resposta.status_code == 204
+
+
+def test_pre_gerar_nao_dispara_com_passo_bloqueado_na_fila(client, aluno, projeto):
+    """Já existe passo materializado esperando: gerar outro furaria a fila."""
+    salvar_plano(projeto, _gerado(), "fake")
+
+    client.force_login(aluno)
+    resposta = client.post(f"/projetos/{projeto.pk}/planejar/passo/pre-gerar/")
+    assert resposta.status_code == 204
+    assert Passo.objects.filter(etapa__plano__projeto=projeto).count() == 3
+
+
+def test_pre_gerar_de_projeto_alheio_nao_dispara(client, db, projeto):
+    outro = get_user_model().objects.create_user("intruso", password="senha-de-teste-123")
+    client.force_login(outro)
+    assert client.post(f"/projetos/{projeto.pk}/planejar/passo/pre-gerar/").status_code == 404
