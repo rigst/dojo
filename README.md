@@ -1,6 +1,6 @@
 # Dojo
 
-[![CI](https://github.com/rigst/dojo/actions/workflows/testes.yml/badge.svg)](https://github.com/rigst/dojo/actions/workflows/testes.yml)
+[![CI](https://github.com/rigst/dojo/actions/workflows/ci.yml/badge.svg)](https://github.com/rigst/dojo/actions/workflows/ci.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=rigst_dojo&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=rigst_dojo)
 [![Licença: AGPL v3](https://img.shields.io/badge/licen%C3%A7a-AGPL--3.0-blue.svg)](LICENSE)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/)
@@ -105,9 +105,16 @@ As de tela não rodam no CI: a renderização de texto depende das fontes
 instaladas na máquina, e a referência gravada aqui não bate com a do runner.
 Rode-as à mão antes de commitar mudança de CSS.
 
-O CI (`.github/workflows/testes.yml`) roda a suíte, os testes de ponta a ponta,
-o `manage.py check`, o `makemigrations --check` (modelo alterado sem migration
-passa nos testes e quebra no deploy) e o pyflakes.
+O CI (`.github/workflows/ci.yml`) chama o pipeline compartilhado do
+[rigst/ci](https://github.com/rigst/ci), o mesmo dos outros sete projetos:
+suíte com cobertura, ponta a ponta, `check --deploy`, migrações sem pendência,
+ruff, mypy, bandit, gitleaks e SonarCloud. O pyflakes saiu — o ruff cobre o
+mesmo e mais.
+
+`ruff` e `mypy` estão em `soft-fail` por enquanto: são 42 e 13 achados
+pré-existentes de antes da migração. Saem de lá conforme forem zerados.
+`run-lock`, `licenças` e `SBOM` esperam um `requirements.lock`, que este repo
+ainda não tem.
 
 ## Identidade
 

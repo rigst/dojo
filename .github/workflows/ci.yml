@@ -1,0 +1,102 @@
+name: CI
+
+# O pipeline vive em github.com/rigst/ci. Ajuste lá vale para todos os projetos.
+#
+# O dojo era o único dos 8 com pipeline próprio, e pagava por isso: ficou sem a
+# guarda do Sonar contra PR do Dependabot, sem lock com hashes, sem ruff, mypy,
+# bandit, gitleaks, licenças e SBOM. Boa parte das reprovações do Quality Gate
+# vinha daí.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Botão de reprovocação. Em 02/09/2026 um merge na main do sistema_vetorial
+  # não gerou evento de push: zero check-runs no commit, logo nenhum CI e —
+  # porque o CD pende de `workflow_run` — nenhum deploy. Um commit entrou na
+  # main sem validação e o servidor ficou para trás, em silêncio.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    # Fixado no SHA, e não na tag v1: tag é ponteiro móvel, e quem puder
+    # reescrevê-la passa a rodar código arbitrário com os secrets deste repo.
+    # O comentário ao lado é o que o Dependabot lê para propor a subida.
+    uses: rigst/ci/.github/workflows/python-django.yml@d4f7242e23d61510fd8c964275f4cbd0ce55e419 # v1
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    with:
+      python-version: "3.13"
+      requirements-file: requirements.txt
+      dev-requirements-file: requirements-dev.txt
+      source-paths: "core usuarios projetos mentoria revisoes ia legal config"
+
+      # Settings em arquivo único: o ambiente vem de DJANGO_ENV, não do módulo.
+      # Por isso os dois apontam para o mesmo lugar e a diferença fica no env.
+      django-settings-module: config.settings
+      test-settings-module: config.settings
+
+      # Testes rodam em SQLite (o `else` do bloco DATABASES), sem Postgres.
+      postgres: false
+
+      # Valores fictícios, só para o check --deploy conseguir subir os settings
+      # com IS_PRODUCTION ligado. Nada aqui é segredo real.
+      #
+      # As três primeiras são exigidas com RuntimeError explícito em produção;
+      # DOJO_CACHE_NO_BANCO existe porque produção recusa cache local — a trava
+      # de criação de visitante precisa valer entre workers.
+      django-env: |
+        DJANGO_ENV=production
+        DJANGO_SECRET_KEY=ci-only-7f6e5d4c3b2a1908-NaoEhUmaChaveReal-zyxwvut
+        DJANGO_ALLOWED_HOSTS=example.com
+        DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
+        DOJO_CACHE_NO_BANCO=1
+
+      # A suíte roda contra o dublê: nenhum teste do CI fala com a API da
+      # Anthropic. Os que falam levam o marcador `ia_real` e ficam de fora
+      # pelo addopts do pytest.ini.
+      test-env: |
+        DJANGO_ENV=development
+        DOJO_IA_BACKEND=fake
+
+      # --- soft-fail temporário ---
+      # ruff e mypy nunca rodaram neste repo: são 42 e 13 achados
+      # pré-existentes. Entram tolerados para que a migração em si não fique
+      # vermelha, e saem daqui assim que forem zerados — portão que fica aberto
+      # "por enquanto" não protege de nada. Os outros seis bloqueiam desde já.
+      soft-fail: "ruff mypy"
+
+      # --- ponta a ponta ---
+      # Mesmos testes que o workflow antigo rodava com -m e2e. Os `visual`
+      # continuam fora: a renderização de texto depende das fontes da máquina,
+      # e a referência gravada localmente não bate com a do runner.
+      run-e2e: true
+
+      # --- conformidade: fica para depois ---
+      # run-lock, run-licencas e run-sbom exigem um requirements.lock, que este
+      # repo ainda não tem. É o próximo passo, e é o que resolve as
+      # reclamações do Sonar sobre `pip install` sem versões travadas.
+      run-lock: false
+      run-licencas: false
+      run-sbom: false
+
+      # Desligado nas PRs do Dependabot: o GitHub não entrega os secrets do
+      # Actions a esse ator, e sem o SONAR_TOKEN o scanner falha com
+      # "Not authorized" — travando toda atualização de dependência.
+      run-sonar: ${{ github.actor != 'dependabot[bot]' }}
+      sonar-project-key: rigst_dojo
+      sonar-organization: rigst
+      # `qualitygate.wait`: sem isto o job termina verde assim que envia a
+      # análise, e o gate reprovando não aparece no CI. O gate do dojo está em
+      # ERROR hoje, então isto o torna visível em vez de silencioso.
+      #
+      # `settings.py` entra nas exclusões de cobertura na forma de arquivo:
+      # o glob `**/settings/**` dos outros projetos não casa com settings em
+      # arquivo único.
+      sonar-args: >-
+        -Dsonar.qualitygate.wait=true
+        -Dsonar.exclusions=**/migrations/**,**/staticfiles/**,**/node_modules/**,**/venv/**,**/.venv/**,**/*.jpg,**/*.jpeg,**/*.png,**/*.gif,**/*.ico,**/*.webp,**/*.pdf,**/*.woff,**/*.woff2,**/*.ttf,**/*.eot,scripts/**,deploy/**
+        -Dsonar.coverage.exclusions=**/migrations/**,**/tests.py,**/tests_*.py,**/test_*.py,**/tests/**,**/conftest.py,**/settings.py,**/manage.py,**/wsgi.py,**/asgi.py,scripts/**,deploy/**
