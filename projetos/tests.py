@@ -535,3 +535,37 @@ def test_concluir_passo_sem_fila_pronta_manda_preparar_o_proximo(client, aluno, 
     resposta = client.post(f"/projetos/passo/{passo.pk}/concluir/")
 
     assert resposta["Location"] == f"/projetos/{projeto.pk}/planejar/passo/"
+
+
+# Os __str__ abaixo aparecem no admin e em qualquer log ou mensagem de erro que
+# imprima o objeto. Sem teste, uma mudança de campo os quebra em silêncio e só
+# se descobre lendo um traceback confuso.
+def test_str_da_stack_e_o_nome(db):
+    stack = Stack.objects.create(nome="Postgres", categoria=Stack.Categoria.BANCO)
+    assert str(stack) == "Postgres"
+
+
+def test_str_da_etapa_traz_ordem_e_titulo(projeto):
+    salvar_plano(projeto, _gerado(), "fake")
+    etapa = Etapa.objects.filter(plano__projeto=projeto).first()
+    assert str(etapa) == f"{etapa.ordem}. {etapa.titulo}"
+
+
+def test_str_do_passo_traz_numero_e_titulo(projeto):
+    salvar_plano(projeto, _gerado(), "fake")
+    passo = Passo.objects.filter(etapa__plano__projeto=projeto).first()
+    assert str(passo) == f"{passo.numero} {passo.titulo}"
+
+
+def test_stacks_por_categoria_agrupa_e_nao_perde_opcao(projeto):
+    """O agrupamento existe para a tela não virar 26 caixas em fila."""
+    from projetos.forms import ProjetoForm
+
+    Stack.objects.create(nome="Vue", categoria=Stack.Categoria.FRAMEWORK)
+    form = ProjetoForm(instance=projeto)
+
+    grupos = form.stacks_por_categoria()
+    assert grupos, "esperava ao menos uma categoria com opções"
+    # Nenhuma opção some no caminho: a soma dos grupos é o total do campo.
+    total = sum(len(g["opcoes"]) for g in grupos)
+    assert total == Stack.objects.count()

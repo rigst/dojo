@@ -325,3 +325,8 @@ def test_projeto_de_exemplo_nao_gasta_api(db, monkeypatch):
 
     usuario = get_user_model().objects.create_user(username="ana", password="x")
     criar_projeto_exemplo(usuario)
+
+
+def test_str_do_uso_mensal_traz_usuario_competencia_e_custo(aluno, db):
+    uso = UsoMensal.objects.create(usuario=aluno, ano_mes="2026-09", custo_usd=Decimal("1.23"), mensagens=4)
+    assert str(uso) == f"{aluno} · 2026-09 · US$ 1.23"

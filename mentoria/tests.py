@@ -186,3 +186,10 @@ def test_resposta_interrompida_e_gravada_com_o_parcial(aluno, projeto):
     assert mensagem.erro == "cancelado"
     assert mensagem.conteudo == "metade da explicação"
     assert mensagem.custo_usd > 0
+
+
+def test_str_da_mensagem_traz_papel_e_inicio_do_conteudo(projeto):
+    conversa = Conversa.objects.create(projeto=projeto)
+    mensagem = Mensagem.objects.create(conversa=conversa, papel=Mensagem.Papel.ALUNO, conteudo="a" * 80)
+    # Trunca em 60: no admin uma resposta longa empurraria a coluna toda.
+    assert str(mensagem) == f"{mensagem.get_papel_display()}: {'a' * 60}"

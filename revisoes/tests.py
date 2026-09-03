@@ -257,3 +257,22 @@ def test_revisao_aprovada_leva_ao_proximo_passo(client, aluno, passos):
 
     conteudo = client.get(f"/revisoes/{Revisao.objects.get().pk}/").content
     assert f'href="/projetos/passo/{segundo.pk}/"'.encode() in conteudo
+
+
+def test_str_da_revisao_traz_veredito_e_passo(passos):
+    submissao = Submissao.objects.create(passo=passos[0], usuario=passos[0].etapa.plano.projeto.usuario, conteudo="x")
+    revisao = Revisao.objects.create(submissao=submissao, veredito=Revisao.Veredito.ATENDE, resumo="ok")
+    assert str(revisao) == f"{revisao.get_veredito_display()}: {submissao.passo}"
+
+
+def test_classe_badge_cobre_os_tres_vereditos(passos):
+    """O badge é o que a tela mostra; veredito sem classe sai sem cor nenhuma."""
+    submissao = Submissao.objects.create(passo=passos[0], usuario=passos[0].etapa.plano.projeto.usuario, conteudo="x")
+    esperado = {
+        Revisao.Veredito.ATENDE: "ds-badge--ok",
+        Revisao.Veredito.RESSALVAS: "ds-badge--atencao",
+        Revisao.Veredito.NAO_ATENDE: "ds-badge--erro",
+    }
+    for veredito, classe in esperado.items():
+        revisao = Revisao(submissao=submissao, veredito=veredito, resumo="r")
+        assert revisao.classe_badge == classe
