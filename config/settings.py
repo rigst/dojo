@@ -121,7 +121,7 @@ ROOT_URLCONF = "config.urls"
 # .html. O sintoma é uma mudança de template que "não aparece" nem com recarga
 # forçada do navegador. Em desenvolvimento, então, os loaders vão explícitos e
 # sem cache; em produção o cache volta, que é onde ele serve para alguma coisa.
-TEMPLATE_LOADERS = [
+TEMPLATE_LOADERS: list = [
     "django.template.loaders.filesystem.Loader",
     "django.template.loaders.app_directories.Loader",
 ]

@@ -14,7 +14,11 @@ def aluno(db):
 def test_cadastro_cria_conta_e_entra(client, db):
     resposta = client.post(
         "/conta/criar/",
-        {"username": "novato", "password1": "praticar-todo-dia-9", "password2": "praticar-todo-dia-9"},
+        {
+            "username": "novato",
+            "password1": "praticar-todo-dia-9",
+            "password2": "praticar-todo-dia-9",
+        },
     )
     assert resposta.status_code == 302
     assert get_user_model().objects.filter(username="novato").exists()
@@ -87,13 +91,13 @@ def test_troca_de_senha_funciona_pela_conta(client, aluno):
         "/conta/senha/",
         {
             "old_password": "senha-de-teste-123",
-            "new_password1": "outra-senha-bem-longa-7",
-            "new_password2": "outra-senha-bem-longa-7",
+            "new_password1": "senha-nova-bem-longa-7",
+            "new_password2": "senha-nova-bem-longa-7",
         },
     )
     aluno.refresh_from_db()
     assert resposta.status_code == 302
-    assert aluno.check_password("outra-senha-bem-longa-7")
+    assert aluno.check_password("senha-nova-bem-longa-7")
 
 
 def test_recuperacao_de_senha_manda_email(client, aluno, mailoutbox):
@@ -196,11 +200,13 @@ def test_producao_recusa_subir_sem_cache_compartilhado(monkeypatch):
     import importlib
 
     for nome, valor in [
-        ("DJANGO_ENV", "production"), ("DJANGO_DEBUG", "False"),
+        ("DJANGO_ENV", "production"),
+        ("DJANGO_DEBUG", "False"),
         ("DJANGO_SECRET_KEY", "chave-longa-o-suficiente-para-producao-passar"),
         ("DJANGO_ALLOWED_HOSTS", "dojo.exemplo.com"),
         ("DATABASE_URL", "postgres://u:p@localhost:5432/dojo"),
-        ("DOJO_REDIS_CACHE_URL", ""), ("DOJO_CACHE_NO_BANCO", "0"),
+        ("DOJO_REDIS_CACHE_URL", ""),
+        ("DOJO_CACHE_NO_BANCO", "0"),
         # Sem isto o settings se reconhece como suíte e desliga o modo de
         # produção, que é justamente o que este teste precisa exercitar.
         ("DOJO_SIMULA_BOOT_REAL", "1"),
@@ -230,9 +236,7 @@ def test_teto_por_conta_vence_o_do_sistema(db, settings):
 def test_teto_por_conta_tambem_vale_para_visitante(db, settings):
     settings.IA_LIMITE_VISITANTE_USD = 0.5
 
-    visitante = get_user_model().objects.create_user(
-        username="v", password="x", eh_visitante=True
-    )
+    visitante = get_user_model().objects.create_user(username="v", password="x", eh_visitante=True)
     assert visitante.limite_mensal_usd == Decimal("0.5")
 
     visitante.limite_proprio_usd = Decimal("3")
@@ -261,6 +265,7 @@ def test_entrada_certa_zera_o_contador(client, db, settings):
     """Quem errou a senha duas vezes e acertou na terceira não pode carregar o
     contador para a próxima sessão."""
     from django.core.cache import cache
+
     from usuarios.seguranca import bloqueado
 
     cache.clear()
@@ -292,6 +297,7 @@ def test_visitante_nasce_com_projeto_de_exemplo(client, db):
     """Um painel vazio é a pior primeira tela para quem entrou só para ver o
     app funcionando."""
     from django.core.cache import cache
+
     from projetos.models import Passo, Projeto
 
     cache.clear()
@@ -323,3 +329,10 @@ def test_projeto_de_exemplo_nao_gasta_api(db, monkeypatch):
 
     usuario = get_user_model().objects.create_user(username="ana", password="x")
     criar_projeto_exemplo(usuario)
+
+
+def test_str_do_uso_mensal_traz_usuario_competencia_e_custo(aluno, db):
+    uso = UsoMensal.objects.create(
+        usuario=aluno, ano_mes="2026-09", custo_usd=Decimal("1.23"), mensagens=4
+    )
+    assert str(uso) == f"{aluno} · 2026-09 · US$ 1.23"

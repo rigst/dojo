@@ -84,20 +84,39 @@ def servidor():
     def gerenciar(*argumentos):
         subprocess.run(
             [sys.executable, "manage.py", *argumentos],
-            cwd=RAIZ, env=ambiente, check=True, capture_output=True,
+            cwd=RAIZ,
+            env=ambiente,
+            check=True,
+            capture_output=True,
         )
 
     gerenciar("migrate", "--no-input")
     gerenciar("semear_stacks")
     subprocess.run(
         [sys.executable, "testes_navegador/semear.py"],
-        cwd=RAIZ, env=ambiente, check=True, capture_output=True,
+        cwd=RAIZ,
+        env=ambiente,
+        check=True,
+        capture_output=True,
     )
 
     processo = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "config.asgi:application",
-         "--host", "127.0.0.1", "--port", str(porta), "--log-level", "warning"],
-        cwd=RAIZ, env=ambiente, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            "config.asgi:application",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(porta),
+            "--log-level",
+            "warning",
+        ],
+        cwd=RAIZ,
+        env=ambiente,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
     )
     try:
         _esperar(base + "/", processo)

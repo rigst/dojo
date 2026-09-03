@@ -72,7 +72,10 @@ async def gerar_briefing(pedido):
                 PerguntaBriefing(
                     pergunta="Tem alguma tecnologia que você quer evitar neste projeto?",
                     porque="Evita um plano inteiro em cima de algo que você não quer aprender agora.",
-                    opcoes=["Não, pode usar o que fizer sentido", "Sim, tem uma ou mais para evitar"],
+                    opcoes=[
+                        "Não, pode usar o que fizer sentido",
+                        "Sim, tem uma ou mais para evitar",
+                    ],
                 ),
             ]
         ),

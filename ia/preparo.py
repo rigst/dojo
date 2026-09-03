@@ -58,7 +58,7 @@ def _sistema(projeto, extra="", passo=None):
         {"type": "text", "text": prompts.MENTOR, "cache_control": {"type": "ephemeral"}},
         {
             "type": "text",
-            "text": "\n\n".join(filter(None, [estilo] + partes)),
+            "text": "\n\n".join(filter(None, [estilo, *partes])),
             "cache_control": {"type": "ephemeral"},
         },
     ]
@@ -99,7 +99,9 @@ def para_proximo_passo(projeto, etapa, usuario):
 def para_briefing(projeto, usuario):
     return Pedido(
         sistema=_sistema(projeto, extra=prompts.ENTREVISTADOR),
-        mensagens=[{"role": "user", "content": "O que você precisa saber antes de montar o plano?"}],
+        mensagens=[
+            {"role": "user", "content": "O que você precisa saber antes de montar o plano?"}
+        ],
         chave_api=_chave(usuario),
         titulo_projeto=projeto.titulo,
     )

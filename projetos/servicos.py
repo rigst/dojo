@@ -193,9 +193,7 @@ def atualizar_status_do_projeto(plano):
         return
 
     concluidos = passos.filter(status=Passo.Status.CONCLUIDO).count()
-    novo_status = (
-        projeto.Status.CONCLUIDO if concluidos == total else projeto.Status.EM_ANDAMENTO
-    )
+    novo_status = projeto.Status.CONCLUIDO if concluidos == total else projeto.Status.EM_ANDAMENTO
     if projeto.status != novo_status and projeto.status != projeto.Status.ARQUIVADO:
         projeto.status = novo_status
         projeto.save(update_fields=["status", "atualizado_em"])
@@ -221,7 +219,9 @@ def _iniciar_geracao(projeto_pk, briefing_pendente=""):
 
 
 def _finalizar_geracao(projeto_pk, erro=""):
-    Projeto.objects.filter(pk=projeto_pk).update(gerando=False, erro_geracao=erro, briefing_pendente="")
+    Projeto.objects.filter(pk=projeto_pk).update(
+        gerando=False, erro_geracao=erro, briefing_pendente=""
+    )
 
 
 async def gerar_e_salvar_plano(projeto, usuario, respostas_briefing=""):

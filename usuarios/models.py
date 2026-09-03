@@ -63,7 +63,9 @@ class UsoMensal(models.Model):
     cada resposta responde em uma leitura.
     """
 
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="usos")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="usos"
+    )
     # "AAAA-MM" em texto: ordena igual à data e não depende do fuso na hora de
     # comparar dois meses.
     ano_mes = models.CharField(max_length=7)
@@ -76,9 +78,9 @@ class UsoMensal(models.Model):
         ]
         ordering = ["-ano_mes"]
 
+    def __str__(self):
+        return f"{self.usuario} · {self.ano_mes} · US$ {self.custo_usd}"
+
     @staticmethod
     def competencia_atual():
         return timezone.localdate().strftime("%Y-%m")
-
-    def __str__(self):
-        return f"{self.usuario} · {self.ano_mes} · US$ {self.custo_usd}"

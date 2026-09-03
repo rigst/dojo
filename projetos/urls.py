@@ -12,8 +12,14 @@ urlpatterns = [
     path("<int:pk>/planejar/stream/", views.planejar_stream, name="projeto_planejar_stream"),
     path("<int:pk>/planejar/briefing/", views.briefing_stream, name="projeto_briefing_stream"),
     path("<int:pk>/planejar/passo/", views.passo_gerando, name="projeto_passo_gerando"),
-    path("<int:pk>/planejar/passo/stream/", views.passo_gerar_stream, name="projeto_passo_gerar_stream"),
-    path("<int:pk>/planejar/passo/pre-gerar/", views.passo_pre_gerar, name="projeto_passo_pre_gerar"),
+    path(
+        "<int:pk>/planejar/passo/stream/",
+        views.passo_gerar_stream,
+        name="projeto_passo_gerar_stream",
+    ),
+    path(
+        "<int:pk>/planejar/passo/pre-gerar/", views.passo_pre_gerar, name="projeto_passo_pre_gerar"
+    ),
     path("<int:pk>/plano.md", views.exportar_markdown, name="projeto_markdown"),
     path("<int:pk>/plano/editar/", views.plano_editar, name="plano_editar"),
     path("<int:pk>/plano/v<int:versao>/", views.plano_versao, name="plano_versao"),

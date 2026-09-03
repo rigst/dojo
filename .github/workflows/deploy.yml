@@ -2,7 +2,11 @@ name: CD
 
 on:
   workflow_run:
-    workflows: ["testes"]
+    # Casa pelo `name:` do workflow, não pelo nome do arquivo. O CI do dojo
+    # passou de `testes` para `CI` ao migrar para o pipeline compartilhado;
+    # deixar "testes" aqui faria o CD simplesmente nunca disparar, sem erro
+    # nenhum — o mesmo silêncio do push perdido de 02/09.
+    workflows: ["CI"]
     types: [completed]
 
 jobs:

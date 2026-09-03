@@ -25,7 +25,10 @@ def do_projeto(projeto):
 
     linhas += ["", f"PLANO (versão {plano.versao})", plano.resumo, ""]
     for etapa in plano.etapas.prefetch_related("passos"):
-        linhas.append(f"Etapa {etapa.ordem}: {etapa.titulo}" + (f" — {etapa.objetivo}" if etapa.objetivo else ""))
+        linhas.append(
+            f"Etapa {etapa.ordem}: {etapa.titulo}"
+            + (f" — {etapa.objetivo}" if etapa.objetivo else "")
+        )
         passos = list(etapa.passos.all())
         for passo in passos:
             marca = {

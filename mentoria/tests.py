@@ -66,16 +66,20 @@ def _eventos(resposta):
     bruto = _corpo(resposta).decode()
     saida = []
     for bloco in bruto.split("\n\n"):
-        linhas = [l for l in bloco.splitlines() if l and not l.startswith(":")]
+        linhas = [linha for linha in bloco.splitlines() if linha and not linha.startswith(":")]
         if len(linhas) == 2:
-            saida.append((linhas[0].removeprefix("event: "), json.loads(linhas[1].removeprefix("data: "))))
+            saida.append(
+                (linhas[0].removeprefix("event: "), json.loads(linhas[1].removeprefix("data: ")))
+            )
     return saida
 
 
 @pytest.mark.django_db(transaction=True)
 def test_stream_responde_em_pedacos_e_grava_a_conversa(client, aluno, projeto):
     client.force_login(aluno)
-    resposta = client.get(f"/projetos/{projeto.pk}/chat/stream/", {"pergunta": "por que migration?"})
+    resposta = client.get(
+        f"/projetos/{projeto.pk}/chat/stream/", {"pergunta": "por que migration?"}
+    )
 
     eventos = _eventos(resposta)
     tipos = [e for e, _ in eventos]
@@ -154,14 +158,18 @@ def test_cada_passo_tem_a_propria_conversa_separada(client, aluno, projeto):
     )
 
     client.force_login(aluno)
-    _eventos(client.get(
-        f"/projetos/{projeto.pk}/chat/stream/",
-        {"pergunta": "dúvida do primeiro", "passo": primeiro.pk},
-    ))
-    _eventos(client.get(
-        f"/projetos/{projeto.pk}/chat/stream/",
-        {"pergunta": "dúvida do segundo", "passo": segundo.pk},
-    ))
+    _eventos(
+        client.get(
+            f"/projetos/{projeto.pk}/chat/stream/",
+            {"pergunta": "dúvida do primeiro", "passo": primeiro.pk},
+        )
+    )
+    _eventos(
+        client.get(
+            f"/projetos/{projeto.pk}/chat/stream/",
+            {"pergunta": "dúvida do segundo", "passo": segundo.pk},
+        )
+    )
 
     conversa_1 = Conversa.objects.get(passo=primeiro)
     conversa_2 = Conversa.objects.get(passo=segundo)
@@ -181,8 +189,22 @@ def test_resposta_interrompida_e_gravada_com_o_parcial(aluno, projeto):
 
     conversa = Conversa.objects.create(projeto=projeto)
     mensagem = registrar_resposta(
-        conversa, "metade da explicação", None, Uso(modelo="fake", entrada=10, saida=5), "", "cancelado"
+        conversa,
+        "metade da explicação",
+        None,
+        Uso(modelo="fake", entrada=10, saida=5),
+        "",
+        "cancelado",
     )
     assert mensagem.erro == "cancelado"
     assert mensagem.conteudo == "metade da explicação"
     assert mensagem.custo_usd > 0
+
+
+def test_str_da_mensagem_traz_papel_e_inicio_do_conteudo(projeto):
+    conversa = Conversa.objects.create(projeto=projeto)
+    mensagem = Mensagem.objects.create(
+        conversa=conversa, papel=Mensagem.Papel.ALUNO, conteudo="a" * 80
+    )
+    # Trunca em 60: no admin uma resposta longa empurraria a coluna toda.
+    assert str(mensagem) == f"{mensagem.get_papel_display()}: {'a' * 60}"

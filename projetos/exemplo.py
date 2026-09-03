@@ -11,9 +11,9 @@ gasto que a conta de visitante existe para conter. O chat, a revisão de código
 o replanejamento continuam sendo o mentor de verdade.
 """
 
+from ia.schemas import EtapaGerada, PassoGerado, PlanoGerado, RecursoGerado
 from projetos.models import Projeto, Stack
 from projetos.servicos import salvar_plano
-from ia.schemas import EtapaGerada, PassoGerado, PlanoGerado, RecursoGerado
 
 TITULO = "Encurtador de links"
 
@@ -77,8 +77,14 @@ ETAPAS = [
                     "Versionar o `.venv`. São milhares de arquivos que não servem em outra máquina.",
                 ],
                 recursos=[
-                    RecursoGerado(titulo="Flask: guia de início rápido", url="https://flask.palletsprojects.com/en/stable/quickstart/"),
-                    RecursoGerado(titulo="Python: ambientes virtuais", url="https://docs.python.org/pt-br/3/library/venv.html"),
+                    RecursoGerado(
+                        titulo="Flask: guia de início rápido",
+                        url="https://flask.palletsprojects.com/en/stable/quickstart/",
+                    ),
+                    RecursoGerado(
+                        titulo="Python: ambientes virtuais",
+                        url="https://docs.python.org/pt-br/3/library/venv.html",
+                    ),
                 ],
                 estimativa_min=45,
             ),
@@ -113,7 +119,10 @@ ETAPAS = [
                     "Esquecer o `__init__.py` ou a configuração de caminho e ver `ModuleNotFoundError: app` ao rodar o pytest de outra pasta.",
                 ],
                 recursos=[
-                    RecursoGerado(titulo="Flask: testando aplicações", url="https://flask.palletsprojects.com/en/stable/testing/"),
+                    RecursoGerado(
+                        titulo="Flask: testando aplicações",
+                        url="https://flask.palletsprojects.com/en/stable/testing/",
+                    ),
                 ],
                 estimativa_min=40,
             ),
@@ -158,7 +167,10 @@ ETAPAS = [
                     "Montar SQL com f-string a partir do que veio do usuário. É injeção de SQL; use parâmetros com `?`.",
                 ],
                 recursos=[
-                    RecursoGerado(titulo="Python: módulo sqlite3", url="https://docs.python.org/pt-br/3/library/sqlite3.html"),
+                    RecursoGerado(
+                        titulo="Python: módulo sqlite3",
+                        url="https://docs.python.org/pt-br/3/library/sqlite3.html",
+                    ),
                 ],
                 estimativa_min=60,
             ),
@@ -198,8 +210,14 @@ ETAPAS = [
                     "Confiar que a colisão nunca acontece. Em 6 caracteres ela acontece, e o `IntegrityError` vira erro 500 na cara do usuário.",
                 ],
                 recursos=[
-                    RecursoGerado(titulo="MDN: códigos de status HTTP", url="https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status"),
-                    RecursoGerado(titulo="Python: módulo secrets", url="https://docs.python.org/pt-br/3/library/secrets.html"),
+                    RecursoGerado(
+                        titulo="MDN: códigos de status HTTP",
+                        url="https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status",
+                    ),
+                    RecursoGerado(
+                        titulo="Python: módulo secrets",
+                        url="https://docs.python.org/pt-br/3/library/secrets.html",
+                    ),
                 ],
                 estimativa_min=75,
             ),
@@ -237,7 +255,10 @@ ETAPAS = [
                     "Devolver a página de 404 padrão do Flask, que expõe mais do que precisa em modo debug.",
                 ],
                 recursos=[
-                    RecursoGerado(titulo="MDN: redirecionamentos HTTP", url="https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Redirections"),
+                    RecursoGerado(
+                        titulo="MDN: redirecionamentos HTTP",
+                        url="https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Redirections",
+                    ),
                 ],
                 estimativa_min=60,
             ),
@@ -281,8 +302,13 @@ ETAPAS = [
                     "Marcar a saída com `|safe` para 'consertar' um caractere escapado.",
                 ],
                 recursos=[
-                    RecursoGerado(titulo="Jinja: templates", url="https://jinja.palletsprojects.com/en/stable/templates/"),
-                    RecursoGerado(titulo="OWASP: XSS", url="https://owasp.org/www-community/attacks/xss/"),
+                    RecursoGerado(
+                        titulo="Jinja: templates",
+                        url="https://jinja.palletsprojects.com/en/stable/templates/",
+                    ),
+                    RecursoGerado(
+                        titulo="OWASP: XSS", url="https://owasp.org/www-community/attacks/xss/"
+                    ),
                 ],
                 estimativa_min=70,
             ),
@@ -320,8 +346,14 @@ ETAPAS = [
                     "Deixar a chave secreta com um valor padrão em produção. Sirva um padrão só quando estiver em desenvolvimento e falhe alto no resto.",
                 ],
                 recursos=[
-                    RecursoGerado(titulo="Flask: fábrica de aplicação", url="https://flask.palletsprojects.com/en/stable/patterns/appfactories/"),
-                    RecursoGerado(titulo="The Twelve-Factor App: configuração", url="https://12factor.net/pt_br/config"),
+                    RecursoGerado(
+                        titulo="Flask: fábrica de aplicação",
+                        url="https://flask.palletsprojects.com/en/stable/patterns/appfactories/",
+                    ),
+                    RecursoGerado(
+                        titulo="The Twelve-Factor App: configuração",
+                        url="https://12factor.net/pt_br/config",
+                    ),
                 ],
                 estimativa_min=55,
             ),

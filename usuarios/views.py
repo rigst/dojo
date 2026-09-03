@@ -8,6 +8,7 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_GET
 
 from ia.contabilidade import uso_do_mes
 from mentoria.models import Mensagem
@@ -149,6 +150,7 @@ def tema(request):
     return HttpResponse(status=204)
 
 
+@require_GET
 @login_required
 def exportar_dados(request):
     """Tudo que é seu, em JSON.
@@ -157,7 +159,7 @@ def exportar_dados(request):
     pessoal, e quem escreveu tem de poder levar embora.
     """
     usuario = request.user
-    dados = {
+    dados: dict = {
         "usuario": {
             "username": usuario.get_username(),
             "email": usuario.email,
@@ -204,7 +206,9 @@ def exportar_dados(request):
                 # é tudo que a pessoa escreveu e recebeu, então sai junto.
                 "conversa": [
                     {"papel": m.papel, "conteudo": m.conteudo, "em": m.criado_em.isoformat()}
-                    for m in Mensagem.objects.filter(conversa__projeto=projeto).order_by("criado_em")
+                    for m in Mensagem.objects.filter(conversa__projeto=projeto).order_by(
+                        "criado_em"
+                    )
                 ],
             }
         )

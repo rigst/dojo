@@ -21,9 +21,30 @@ register = template.Library()
 LIMITE_LINHAS = 6
 
 TAGS_PERMITIDAS = {
-    "p", "br", "strong", "em", "code", "pre", "ul", "ol", "li",
-    "h2", "h3", "h4", "blockquote", "a", "table", "thead", "tbody",
-    "tr", "th", "td", "hr", "details", "summary", "span",
+    "p",
+    "br",
+    "strong",
+    "em",
+    "code",
+    "pre",
+    "ul",
+    "ol",
+    "li",
+    "h2",
+    "h3",
+    "h4",
+    "blockquote",
+    "a",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "th",
+    "td",
+    "hr",
+    "details",
+    "summary",
+    "span",
 }
 ATRIBUTOS_PERMITIDOS = {"a": {"href", "title"}, "details": {"class"}, "summary": {"class"}}
 

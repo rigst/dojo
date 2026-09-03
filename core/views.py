@@ -1,7 +1,9 @@
 from django.db import connection
 from django.http import HttpResponse
+from django.views.decorators.http import require_GET
 
 
+@require_GET
 def saude(request):
     """Sonda de saúde para o nginx e para o systemd.
 

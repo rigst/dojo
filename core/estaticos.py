@@ -11,8 +11,10 @@ do conteúdo no nome do arquivo, que é a forma correta de invalidar cache.
 """
 
 from django.contrib.staticfiles.views import serve
+from django.views.decorators.http import require_GET
 
 
+@require_GET
 def servir_sem_cache(request, path, **kwargs):
     resposta = serve(request, path, **kwargs)
     resposta["Cache-Control"] = "no-store"
