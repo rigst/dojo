@@ -220,3 +220,20 @@ def test_str_da_conversa_distingue_geral_de_passo(projeto):
     passo = Passo.objects.filter(etapa__plano__projeto=projeto).first()
     do_passo = Conversa.objects.create(projeto=projeto, passo=passo)
     assert str(do_passo) == f"Conversa de {passo}"
+
+
+def test_chat_abre_com_a_conversa_geral_do_projeto(client, aluno, projeto):
+    client.force_login(aluno)
+    resposta = client.get(f"/projetos/{projeto.pk}/chat/")
+    assert resposta.status_code == 200
+    # A conversa geral é criada na primeira visita: sem isso a tela abriria
+    # vazia e a primeira pergunta não teria onde pousar.
+    assert Conversa.objects.filter(projeto=projeto, passo__isnull=True).exists()
+
+
+def test_chat_de_projeto_alheio_nao_abre(client, db, projeto):
+    from django.contrib.auth import get_user_model
+
+    invasor = get_user_model().objects.create_user("invasor", password="senha-de-teste-123")
+    client.force_login(invasor)
+    assert client.get(f"/projetos/{projeto.pk}/chat/").status_code == 404

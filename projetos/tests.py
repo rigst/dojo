@@ -576,3 +576,34 @@ def test_stacks_por_categoria_agrupa_e_nao_perde_opcao(projeto):
     # Nenhuma opção some no caminho: a soma dos grupos é o total do campo.
     total = sum(len(g["opcoes"]) for g in grupos)
     assert total == Stack.objects.count()
+
+
+def test_semear_stacks_cria_e_nao_duplica(db):
+    """O comando roda no deploy. Se duplicasse, a tela de escolha de stack
+    encheria de repetidas; se não criasse, ninguém escolheria nada."""
+    from io import StringIO
+
+    from django.core.management import call_command
+
+    saida = StringIO()
+    call_command("semear_stacks", stdout=saida)
+    total = Stack.objects.count()
+    assert total > 0
+    assert "no total" in saida.getvalue()
+
+    # Segunda vez: idempotente, é o que o help do comando promete.
+    call_command("semear_stacks", stdout=StringIO())
+    assert Stack.objects.count() == total
+
+
+def test_semear_stacks_respeita_os_slugs_manuais(db):
+    """Alguns nomes gerariam slug ruim no automático (C#, C++)."""
+    from io import StringIO
+
+    from django.core.management import call_command
+
+    from projetos.management.commands.semear_stacks import SLUGS_MANUAIS
+
+    call_command("semear_stacks", stdout=StringIO())
+    for nome, slug in SLUGS_MANUAIS.items():
+        assert Stack.objects.get(nome=nome).slug == slug
