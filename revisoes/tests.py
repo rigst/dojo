@@ -319,3 +319,33 @@ def test_detalhe_inline_nao_vaza_revisao_de_outro(client, passos):
     invasor = get_user_model().objects.create_user("invasor", password="senha-de-teste-123")
     client.force_login(invasor)
     assert client.get(f"/revisoes/inline/{revisao.pk}/").status_code == 404
+
+
+def test_submeter_inline_sem_conteudo_devolve_json_de_erro(client, passos):
+    """A tela do passo submete por fetch e espera JSON. Devolver redirect aqui
+    faria o erro sumir sem mensagem nenhuma para o aluno."""
+    aluno = passos[0].etapa.plano.projeto.usuario
+    client.force_login(aluno)
+
+    resposta = client.post(
+        f"/revisoes/passo/{passos[0].pk}/submeter/",
+        {"conteudo": "   "},
+        headers={"accept": "application/json"},
+    )
+
+    assert resposta.status_code == 400
+    assert "erro" in resposta.json()
+
+
+def test_submeter_inline_com_conteudo_devolve_a_submissao_em_json(client, passos):
+    aluno = passos[0].etapa.plano.projeto.usuario
+    client.force_login(aluno)
+
+    resposta = client.post(
+        f"/revisoes/passo/{passos[0].pk}/submeter/",
+        {"conteudo": "print('oi')"},
+        headers={"accept": "application/json"},
+    )
+
+    assert resposta.status_code == 200
+    assert resposta.json()["pk"] == Submissao.objects.latest("id").pk
