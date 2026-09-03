@@ -3,6 +3,13 @@
 
 {% block title %}{{ passo.titulo }}{% endblock %}
 
+{% comment %}
+No desktop o chat mora fixo na coluna da direita, da barra de topo ao pé da
+janela. Quem carrega o respiro vertical da tela, para o sticky alcançar as duas
+pontas da rolagem, é a coluna de leitura, e não o `.app-main` (ver dojo.css).
+{% endcomment %}
+{% block body_class %}tela-passo{% endblock %}
+
 {% block content %}
 <div class="passo-tela" data-passo-tela
      {% if anterior %}data-anterior="{{ anterior.get_absolute_url }}"{% endif %}

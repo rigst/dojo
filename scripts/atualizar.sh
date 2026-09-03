@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
 #
-# Atualiza a instalação em /srv/dojo. Rode como o usuário dojo:
+# Atualiza a instalação, rodado pelo usuário que roda o serviço:
 #
-#   sudo -u dojo /srv/dojo/scripts/atualizar.sh
+#   /var/www/dojo/scripts/atualizar.sh
 #
-# O restart no fim precisa de sudo; a linha está comentada com a alternativa.
+# O restart no fim precisa de sudo.
 set -euo pipefail
 
-RAIZ="${DOJO_RAIZ:-/srv/dojo}"
+# A raiz é a do próprio script, e não um caminho escrito à mão: a instalação
+# mora em /var/www/dojo (veja WorkingDirectory em dojo.service) e o /srv/dojo
+# que estava aqui matava o script no `cd` da primeira linha. DOJO_RAIZ continua
+# mandando, para quem instalar noutro lugar.
+RAIZ="${DOJO_RAIZ:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+
+# O ambiente virtual se chama `venv` nesta máquina e `.venv` na convenção mais
+# nova; aceitar os dois evita que o nome da pasta decida se o deploy roda.
 VENV="$RAIZ/.venv"
+[ -d "$VENV" ] || VENV="$RAIZ/venv"
 
 cd "$RAIZ"
 

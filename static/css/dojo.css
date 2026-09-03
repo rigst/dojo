@@ -822,13 +822,36 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 .passo-tela { display: grid; gap: var(--ma-6); grid-template-columns: minmax(0, 1fr); align-items: start; width: 100%; max-width: 82rem; margin-inline: auto; }
 @media (min-width: 64rem) {
     .passo-tela { grid-template-columns: minmax(0, 1fr) 29rem; }
-    /* O chat acompanha a rolagem do documento: a pergunta costuma nascer no
-     * meio da leitura, e ter de rolar de volta até ele quebra o raciocínio. */
+
+    /* O chat é uma coluna parada: da barra de topo ao pé da janela, sempre da
+     * mesma altura, enquanto a leitura rola ao lado. A pergunta costuma nascer
+     * no meio do texto, e ter de rolar de volta até ele quebra o raciocínio.
+     *
+     * Para o sticky valer da primeira à última linha da rolagem, a área de
+     * grade precisa ir de ponta a ponta do documento, e ela terminava antes:
+     * o respiro vertical era padding do `.app-main`, portanto FORA da grade.
+     * Com 3rem em cima o chat nascia 3rem abaixo do topo e passava do pé da
+     * janela; com 4.5rem embaixo a área acabava cedo e, no fim da página, ele
+     * soltava do topo e era cortado. O mesmo respiro aplicado à coluna de
+     * leitura fica dentro da grade: a tela é a de sempre, e o sticky alcança
+     * as duas pontas. */
+    .tela-passo .app-main { padding-block: 0; }
+    .tela-passo .passo-doc { padding-block: var(--ma-7) var(--ma-8); }
+
     .passo-tela .chat {
         position: sticky;
         top: var(--ds-topo-alt);
         height: calc(100vh - var(--ds-topo-alt));
+        /* Vence o `min-height: 26rem` da folha do chat: em janela baixa ele
+         * encolhe junto em vez de estourar para fora da tela. */
+        min-height: 0;
     }
+
+    /* A entrada da página desliza os blocos com `transform`, e ancestral
+     * transformado desmonta o `position: sticky` enquanto a animação corre:
+     * quem rolava no primeiro meio segundo arrastava o chat junto. Para ele,
+     * só a opacidade. */
+    .app-main > .passo-tela > .chat { animation-name: ds-surge; }
 }
 .passo-doc { display: flex; flex-direction: column; gap: var(--ma-6); max-width: 44rem; }
 .passo-doc section { margin: 0; }
@@ -887,8 +910,18 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
  * vira uma coluna de altura fixa e só o fluxo de mensagens rola. Antes o chat
  * tinha altura calculada em rem e sobrava documento para rolar em volta. Duas
  * barras de rolagem lado a lado. */
+/* A janela inteira é o frame, e o que sobra dela é o main: `height: 100vh` no
+ * main media a janela toda e ignorava a barra de topo, que é irmã dele dentro
+ * do frame. O documento ficava ~3rem mais alto que a janela, e essas 3rem de
+ * rolagem levavam o chat junto, cortando o compositor embaixo. Medir por
+ * `flex: 1` dispensa saber a altura da barra. */
+.tela-conversa .app-frame { height: 100vh; display: flex; flex-direction: column; }
 .tela-conversa .app-main {
-    height: 100vh; overflow: hidden; padding-bottom: var(--ma-5);
+    /* `auto`, e não `hidden`: em janela normal nada rola, porque o conteúdo
+     * mede exatamente a janela. Em janela muito baixa, onde o cabeçalho e a
+     * altura mínima do chat não cabem juntos, é o que deixa o compositor
+     * alcançável em vez de cortado fora da tela. */
+    flex: 1; min-height: 0; overflow: auto; padding-bottom: var(--ma-5);
     display: flex; flex-direction: column;
 }
 .tela-conversa .page { flex: 1; min-height: 0; }
@@ -1544,6 +1577,9 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
     from { opacity: 0; transform: translateY(18px); }
     to   { opacity: 1; transform: none; }
 }
+/* A mesma entrada, sem o deslize: para quem não pode ser transformado sem
+ * perder outra coisa (o chat da tela do passo, que é sticky). */
+@keyframes ds-surge { from { opacity: 0; } to { opacity: 1; } }
 
 /* 3. A régua da seção sendo puxada, junto com o bloco a que pertence. */
 .secao-titulo::after { transform-origin: left center; animation: ds-regua 760ms var(--ds-ease-out) 220ms both; }
