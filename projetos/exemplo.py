@@ -11,9 +11,9 @@ gasto que a conta de visitante existe para conter. O chat, a revisão de código
 o replanejamento continuam sendo o mentor de verdade.
 """
 
+from ia.schemas import EtapaGerada, PassoGerado, PlanoGerado, RecursoGerado
 from projetos.models import Projeto, Stack
 from projetos.servicos import salvar_plano
-from ia.schemas import EtapaGerada, PassoGerado, PlanoGerado, RecursoGerado
 
 TITULO = "Encurtador de links"
 

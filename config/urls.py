@@ -4,7 +4,7 @@ from django.urls import include, path, re_path
 
 from core.estaticos import servir_sem_cache
 
-urlpatterns = [
+urlpatterns: list = [
     path("admin/", admin.site.urls),
     path("", include("core.urls")),
     path("conta/", include("usuarios.urls")),

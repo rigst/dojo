@@ -57,7 +57,7 @@ def _eventos(resposta):
 
     saida = []
     for bloco in bruto.split("\n\n"):
-        linhas = [l for l in bloco.splitlines() if l and not l.startswith(":")]
+        linhas = [linha for linha in bloco.splitlines() if linha and not linha.startswith(":")]
         if len(linhas) == 2:
             saida.append((linhas[0].removeprefix("event: "), json.loads(linhas[1].removeprefix("data: "))))
     return saida
@@ -189,6 +189,7 @@ def test_arquivo_binario_e_recusado_com_orientacao(client, aluno, passos):
 
 def test_arquivo_grande_demais_e_recusado_sem_criar_submissao(client, aluno, passos, settings):
     from django.core.files.uploadedfile import SimpleUploadedFile
+
     from revisoes import views as revisoes_views
 
     settings_bkp = revisoes_views.MAX_BYTES_POR_ARQUIVO
@@ -207,6 +208,7 @@ def test_arquivo_grande_demais_e_recusado_sem_criar_submissao(client, aluno, pas
 
 def test_arquivos_demais_sao_recusados_de_uma_vez(client, aluno, passos):
     from django.core.files.uploadedfile import SimpleUploadedFile
+
     from revisoes.views import MAX_ARQUIVOS
 
     client.force_login(aluno)

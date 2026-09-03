@@ -83,7 +83,7 @@ class Command(BaseCommand):
     def handle(self, *args, **opcoes):
         criadas = 0
         for nome, categoria in STACKS:
-            defaults = {"categoria": categoria}
+            defaults: dict[str, str] = {"categoria": categoria}
             if nome in SLUGS_MANUAIS:
                 defaults["slug"] = SLUGS_MANUAIS[nome]
             _, nova = Stack.objects.get_or_create(nome=nome, defaults=defaults)

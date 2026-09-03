@@ -1,3 +1,5 @@
+from typing import cast
+
 from django import forms
 
 from projetos.models import Etapa, Passo, Projeto, Stack
@@ -28,7 +30,10 @@ class ProjetoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["stacks"].queryset = Stack.objects.all()
+        # self.fields[...] é tipado como Field genérico, que não tem
+        # `queryset`. O cast diz ao mypy o que a Meta.widgets já garante.
+        campo = cast(forms.ModelMultipleChoiceField, self.fields["stacks"])
+        campo.queryset = Stack.objects.all()
         # Sem instância ainda (criação): o campo nem aparece no template, e
         # marcá-lo obrigatório travaria o envio de um formulário que não pode
         # preenchê-lo. Com instância (edição), continua exigindo texto: um
@@ -47,8 +52,11 @@ class ProjetoForm(forms.ModelForm):
         """
         # Uma consulta só: as opções carregam a pk, e o mapa evita ir ao banco
         # uma vez por caixa de seleção.
-        por_pk = {s.pk: s for s in self.fields["stacks"].queryset}
-        grupos = {}
+        campo = cast(forms.ModelMultipleChoiceField, self.fields["stacks"])
+        # `queryset` é Optional nos stubs; aqui o __init__ já o definiu, mas
+        # o `or ()` deixa isso explícito em vez de depender da ordem.
+        por_pk = {s.pk: s for s in (campo.queryset or ())}
+        grupos: dict[str, list] = {}
         for opcao in self["stacks"]:
             stack = por_pk.get(opcao.data["value"].value)
             if stack is None:

@@ -76,9 +76,10 @@ class UsoMensal(models.Model):
         ]
         ordering = ["-ano_mes"]
 
+    def __str__(self):
+        return f"{self.usuario} · {self.ano_mes} · US$ {self.custo_usd}"
+
     @staticmethod
     def competencia_atual():
         return timezone.localdate().strftime("%Y-%m")
 
-    def __str__(self):
-        return f"{self.usuario} · {self.ano_mes} · US$ {self.custo_usd}"

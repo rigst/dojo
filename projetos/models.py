@@ -29,13 +29,14 @@ class Stack(models.Model):
     class Meta:
         ordering = ["categoria", "nome"]
 
+    def __str__(self):
+        return self.nome
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.nome)
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return self.nome
 
 
 class ProjetoQuerySet(models.QuerySet):
@@ -180,6 +181,9 @@ class Etapa(models.Model):
     class Meta:
         ordering = ["ordem"]
 
+    def __str__(self):
+        return f"{self.ordem}. {self.titulo}"
+
     @property
     def concluida(self):
         """Já entregou o objetivo dela: não precisa de mais passo, e os que
@@ -187,8 +191,6 @@ class Etapa(models.Model):
         passos = list(self.passos.all())
         return bool(self.passos_prontos and passos and all(p.status == Passo.Status.CONCLUIDO for p in passos))
 
-    def __str__(self):
-        return f"{self.ordem}. {self.titulo}"
 
 
 class PassoQuerySet(models.QuerySet):
@@ -235,6 +237,12 @@ class Passo(models.Model):
     class Meta:
         ordering = ["etapa__ordem", "ordem"]
 
+    def __str__(self):
+        return f"{self.numero} {self.titulo}"
+
+    def get_absolute_url(self):
+        return reverse("passo_detalhe", args=[self.pk])
+
     @property
     def projeto(self):
         return self.etapa.plano.projeto
@@ -279,8 +287,4 @@ class Passo(models.Model):
         i = self._indice()
         return fila[i + 1] if i + 1 < len(fila) else None
 
-    def get_absolute_url(self):
-        return reverse("passo_detalhe", args=[self.pk])
 
-    def __str__(self):
-        return f"{self.numero} {self.titulo}"

@@ -1,9 +1,9 @@
 import pytest
 from django.contrib.auth import get_user_model
 
+from ia.schemas import EtapaGerada, PassoGerado, PlanoGerado
 from projetos.models import Etapa, Passo, Plano, Projeto, Stack
 from projetos.servicos import salvar_plano
-from ia.schemas import EtapaGerada, PassoGerado, PlanoGerado
 
 
 @pytest.fixture
@@ -336,7 +336,7 @@ def test_mover_no_topo_nao_faz_nada(client, aluno, projeto):
 
 def test_remover_passo_recompoe_a_numeracao(client, aluno, projeto):
     salvar_plano(projeto, _gerado(), "fake")
-    _, segundo, terceiro = list(Passo.objects.filter(etapa__plano__projeto=projeto))
+    _, segundo, _terceiro = list(Passo.objects.filter(etapa__plano__projeto=projeto))
 
     client.force_login(aluno)
     client.post(f"/projetos/passo/{segundo.pk}/remover/")

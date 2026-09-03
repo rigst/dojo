@@ -5,7 +5,7 @@ interpretar depois: assim um campo faltando falha na hora, e não três telas
 adiante com uma tela em branco.
 """
 
-from typing import List, Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -25,24 +25,24 @@ class PassoGerado(BaseModel):
         "trecho, em uma frase. Não 'o código deste passo', e sim algo como 'o método save() do "
         "modelo Tarefa' ou 'a rota POST /tarefas e o handler dela'."
     )
-    criterios_aceite: List[str] = Field(
+    criterios_aceite: list[str] = Field(
         default_factory=list,
         description="Como o aluno sabe que terminou. Verificáveis, não vagos.",
     )
-    armadilhas: List[str] = Field(default_factory=list)
-    recursos: List[RecursoGerado] = Field(default_factory=list)
-    estimativa_min: Optional[int] = None
+    armadilhas: list[str] = Field(default_factory=list)
+    recursos: list[RecursoGerado] = Field(default_factory=list)
+    estimativa_min: int | None = None
 
 
 class EtapaGerada(BaseModel):
     titulo: str
     objetivo: str = ""
-    passos: List[PassoGerado]
+    passos: list[PassoGerado]
 
 
 class PlanoGerado(BaseModel):
     resumo: str = Field(description="O projeto em um parágrafo, do jeito que o aluno vai construí-lo.")
-    etapas: List[EtapaGerada]
+    etapas: list[EtapaGerada]
 
 
 class EtapaEsboco(BaseModel):
@@ -75,7 +75,7 @@ class PlanoInicialGerado(BaseModel):
         description="Uma frase curta dizendo o que o projeto faz e para quem. Não repete o título."
     )
     resumo: str = Field(description="O projeto em um parágrafo, do jeito que o aluno vai construí-lo.")
-    etapas: List[EtapaEsboco]
+    etapas: list[EtapaEsboco]
     primeiro_passo: PassoGerado = Field(description="O primeiro passo da primeira etapa, completo.")
 
 
@@ -91,14 +91,14 @@ class PassoSeguinteGerado(BaseModel):
 class PerguntaBriefing(BaseModel):
     pergunta: str = Field(description="Curta e concreta, respondível em uma frase.")
     porque: str = Field(description="O que muda no plano conforme a resposta.")
-    opcoes: List[str] = Field(
+    opcoes: list[str] = Field(
         description="3 a 5 alternativas curtas para escolher, da mais provável à mais rara. "
         "Sem campo de texto livre: a pessoa escolhe a que mais se encaixa."
     )
 
 
 class BriefingGerado(BaseModel):
-    perguntas: List[PerguntaBriefing] = Field(description="Entre 3 e 5.")
+    perguntas: list[PerguntaBriefing] = Field(description="Entre 3 e 5.")
 
 
 class ProblemaEncontrado(BaseModel):
@@ -117,7 +117,7 @@ class CriterioAvaliado(BaseModel):
 class RevisaoCodigo(BaseModel):
     veredito: Literal["atende", "atende_com_ressalvas", "nao_atende"]
     resumo: str
-    criterios_avaliados: List[CriterioAvaliado] = Field(default_factory=list)
-    pontos_fortes: List[str] = Field(default_factory=list)
-    problemas: List[ProblemaEncontrado] = Field(default_factory=list)
+    criterios_avaliados: list[CriterioAvaliado] = Field(default_factory=list)
+    pontos_fortes: list[str] = Field(default_factory=list)
+    problemas: list[ProblemaEncontrado] = Field(default_factory=list)
     proximo_passo_sugerido: str = ""

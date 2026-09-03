@@ -75,12 +75,10 @@ jobs:
         # seletor. O sintoma parece teste instável; a causa é vazamento de env.
         DOJO_CACHE_NO_BANCO=
 
-      # --- soft-fail temporário ---
-      # ruff e mypy nunca rodaram neste repo: são 42 e 13 achados
-      # pré-existentes. Entram tolerados para que a migração em si não fique
-      # vermelha, e saem daqui assim que forem zerados — portão que fica aberto
-      # "por enquanto" não protege de nada. Os outros seis bloqueiam desde já.
-      soft-fail: "ruff mypy"
+      # Nada em soft-fail: toda etapa bloqueia. ruff e mypy foram zerados no
+      # mesmo PR — 42 e 13 achados —, sem nenhum `# type: ignore`, então não há
+      # motivo para deixar o portão aberto "por enquanto".
+      soft-fail: ""
 
       # --- ponta a ponta ---
       # Mesmos testes que o workflow antigo rodava com -m e2e. Os `visual`

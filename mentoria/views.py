@@ -91,7 +91,7 @@ async def stream(request, pk):
                 conversa, "".join(partes), passo, uso, stop_reason, erro="cancelado"
             )
             raise
-        except Exception as falha:  # noqa: BLE001
+        except Exception as falha:
             erro_texto = str(falha)
 
         mensagem = await sync_to_async(servicos.registrar_resposta)(

@@ -126,7 +126,7 @@ async def revisar_stream(request, pk):
         except asyncio.CancelledError:
             tarefa.cancel()
             raise
-        except Exception as erro:  # noqa: BLE001
+        except Exception as erro:
             tarefa.cancel()
             yield sse.quadro("erro", {"mensagem": f"A revisão falhou: {erro}"})
 

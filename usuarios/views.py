@@ -157,7 +157,7 @@ def exportar_dados(request):
     pessoal, e quem escreveu tem de poder levar embora.
     """
     usuario = request.user
-    dados = {
+    dados: dict = {
         "usuario": {
             "username": usuario.get_username(),
             "email": usuario.email,

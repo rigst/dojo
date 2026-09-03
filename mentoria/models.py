@@ -63,9 +63,10 @@ class Mensagem(models.Model):
     class Meta:
         ordering = ["criado_em"]
 
+    def __str__(self):
+        return f"{self.get_papel_display()}: {self.conteudo[:60]}"
+
     @property
     def do_mentor(self):
         return self.papel == self.Papel.MENTOR
 
-    def __str__(self):
-        return f"{self.get_papel_display()}: {self.conteudo[:60]}"

@@ -66,7 +66,7 @@ def _eventos(resposta):
     bruto = _corpo(resposta).decode()
     saida = []
     for bloco in bruto.split("\n\n"):
-        linhas = [l for l in bloco.splitlines() if l and not l.startswith(":")]
+        linhas = [linha for linha in bloco.splitlines() if linha and not linha.startswith(":")]
         if len(linhas) == 2:
             saida.append((linhas[0].removeprefix("event: "), json.loads(linhas[1].removeprefix("data: "))))
     return saida

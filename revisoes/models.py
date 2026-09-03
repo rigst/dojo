@@ -48,6 +48,9 @@ class Revisao(models.Model):
     class Meta:
         ordering = ["-criado_em"]
 
+    def __str__(self):
+        return f"{self.get_veredito_display()}: {self.submissao.passo}"
+
     @property
     def aprovado(self):
         """Passa o passo adiante.
@@ -61,11 +64,13 @@ class Revisao(models.Model):
 
     @property
     def classe_badge(self):
-        return {
+        # dict[str, str] e não dict[Veredito, str]: TextChoices é subclasse
+        # de str, e o campo devolve str — anotar assim deixa os dois lados
+        # concordarem sem converter nada em tempo de execução.
+        classes: dict[str, str] = {
             self.Veredito.ATENDE: "ds-badge--ok",
             self.Veredito.RESSALVAS: "ds-badge--atencao",
             self.Veredito.NAO_ATENDE: "ds-badge--erro",
-        }[self.veredito]
+        }
+        return classes[self.veredito]
 
-    def __str__(self):
-        return f"{self.get_veredito_display()}: {self.submissao.passo}"

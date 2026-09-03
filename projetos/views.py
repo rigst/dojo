@@ -23,6 +23,10 @@ from projetos.servicos import (
     passo_atual,
 )
 
+# Referências fortes às tasks de fundo, para o coletor não recolher uma no
+# meio da execução. Ver o comentário no create_task correspondente.
+_TAREFAS_EM_VOO: set[asyncio.Task] = set()
+
 
 @login_required
 def lista(request):
@@ -231,7 +235,7 @@ async def briefing_stream(request, pk):
         except asyncio.CancelledError:
             tarefa.cancel()
             raise
-        except Exception as erro:  # noqa: BLE001
+        except Exception as erro:
             tarefa.cancel()
             # O briefing é um extra: se falhar, a tela cai no campo livre e a
             # pessoa segue para o plano. Não vale interromper o fluxo por ele.
@@ -263,7 +267,7 @@ async def planejar_stream(request, pk):
                     break
                 yield sse.comentario("pensando")
 
-            plano, uso = tarefa.result()
+            _plano, uso = tarefa.result()
             yield sse.quadro(
                 "fim",
                 {"url": projeto.get_absolute_url(), "custo": str(uso.custo_usd)},
@@ -275,7 +279,7 @@ async def planejar_stream(request, pk):
             # tela que não existe mais.
             tarefa.cancel()
             raise
-        except Exception as erro:  # noqa: BLE001
+        except Exception as erro:
             tarefa.cancel()
             yield sse.quadro("erro", {"mensagem": f"Não deu para gerar o plano: {erro}"})
 
@@ -333,7 +337,14 @@ async def passo_pre_gerar(request, pk):
     if not etapa:
         return HttpResponse(status=204)
 
-    asyncio.create_task(gerar_e_salvar_proximo_passo(projeto, usuario))
+    # O loop de eventos guarda só referência fraca à task: sem manter uma
+    # forte, o coletor pode recolhê-la no meio da geração e o passo some
+    # sem erro nenhum. Diferente dos outros create_task deste arquivo, que
+    # são aguardados dentro do gerador SSE, este é fire-and-forget — a view
+    # responde 204 na hora. O descarte no callback evita o vazamento.
+    tarefa = asyncio.create_task(gerar_e_salvar_proximo_passo(projeto, usuario))
+    _TAREFAS_EM_VOO.add(tarefa)
+    tarefa.add_done_callback(_TAREFAS_EM_VOO.discard)
     return HttpResponse(status=204)
 
 
@@ -368,7 +379,7 @@ async def passo_gerar_stream(request, pk):
         except asyncio.CancelledError:
             tarefa.cancel()
             raise
-        except Exception as erro:  # noqa: BLE001
+        except Exception as erro:
             tarefa.cancel()
             yield sse.quadro("erro", {"mensagem": f"Não deu para preparar o próximo passo: {erro}"})
 

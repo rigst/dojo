@@ -261,6 +261,7 @@ def test_entrada_certa_zera_o_contador(client, db, settings):
     """Quem errou a senha duas vezes e acertou na terceira não pode carregar o
     contador para a próxima sessão."""
     from django.core.cache import cache
+
     from usuarios.seguranca import bloqueado
 
     cache.clear()
@@ -292,6 +293,7 @@ def test_visitante_nasce_com_projeto_de_exemplo(client, db):
     """Um painel vazio é a pior primeira tela para quem entrou só para ver o
     app funcionando."""
     from django.core.cache import cache
+
     from projetos.models import Passo, Projeto
 
     cache.clear()

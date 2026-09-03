@@ -189,7 +189,7 @@ def test_ferramenta_nao_mexe_em_passo_de_outro_usuario(projeto, db):
 
 
 def test_quebrar_passo_insere_os_novos_na_ordem_certa(projeto, aluno):
-    primeiro, segundo, terceiro = list(Passo.objects.filter(etapa__plano__projeto=projeto))
+    primeiro, _segundo, _terceiro = list(Passo.objects.filter(etapa__plano__projeto=projeto))
 
     async_to_sync(ferramentas.executar)(
         "quebrar_passo",

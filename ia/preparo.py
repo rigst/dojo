@@ -58,7 +58,7 @@ def _sistema(projeto, extra="", passo=None):
         {"type": "text", "text": prompts.MENTOR, "cache_control": {"type": "ephemeral"}},
         {
             "type": "text",
-            "text": "\n\n".join(filter(None, [estilo] + partes)),
+            "text": "\n\n".join(filter(None, [estilo, *partes])),
             "cache_control": {"type": "ephemeral"},
         },
     ]
