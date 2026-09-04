@@ -14,7 +14,7 @@ from mentoria import servicos
 from projetos.models import Passo, Projeto
 
 # Teto do que cabe numa pergunta. Não é sobre custo. É sobre o aluno colar um
-# arquivo inteiro no chat, que é o que a tela de revisão existe para receber.
+# arquivo inteiro no chat: o mentor orienta, não faz leitura de repositório.
 MAX_PERGUNTA = 6000
 
 

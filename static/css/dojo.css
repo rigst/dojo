@@ -855,7 +855,6 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 }
 .passo-doc { display: flex; flex-direction: column; gap: var(--ma-6); max-width: 44rem; }
 .passo-doc section { margin: 0; }
-.passo-pular { margin-top: calc(var(--ma-3) * -1); }
 
 .criterios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--ma-2); }
 /* Bloco, e não flex: o item é uma frase corrida, e o texto do mentor traz
@@ -891,8 +890,6 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 .problema { display: flex; gap: var(--ma-3); align-items: flex-start; }
 .problema p { margin: var(--ma-1) 0 0; font-size: 0.95rem; }
 
-.hist-revisoes { list-style: none; margin: var(--ma-4) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--ma-2); }
-.hist-revisoes a { display: inline-flex; align-items: center; gap: var(--ma-2); text-decoration: none; }
 
 /* O CHAT
  *
@@ -1673,74 +1670,16 @@ a.passo-titulo:hover { color: var(--ds-acento-tinta); text-decoration: underline
 .ficha--alerta .ficha-titulo { color: var(--ds-atencao); }
 .ficha--sucesso .ficha-titulo { color: var(--ds-ok); }
 
-/* A zona de ação: moldura, fundo de painel e o campo já grande. É o único
- * lugar da tela em que se escreve. */
+/* A zona de ação: moldura e fundo de painel. É o rodapé de trabalho do passo,
+ * onde antes ficava o formulário da revisão e hoje fica a única ação da tela,
+ * fechar o passo. */
 .passo-acao {
     padding: var(--ma-5) var(--ma-5) var(--ma-5);
     border: 1px solid var(--ds-line-dash); border-radius: var(--ds-raio-folha);
     background: var(--ds-panel);
 }
-.passo-acao > .ds-muted { margin: 0 0 var(--ma-1); max-width: 44rem; font-size: 0.92rem; }
-/* O que mandar, específico deste passo: sem isto a pessoa não sabe se cola o
- * arquivo inteiro, uma função ou um trecho de config. A cor é a mesma da
- * camada "o que fazer" — é a mesma pergunta, respondida de novo na hora de
- * agir. */
-.passo-acao-pedido {
-    margin: 0 0 var(--ma-4); max-width: 44rem; font-size: 0.92rem;
-    color: var(--ds-text-700); background: var(--ds-selo-veu);
-    border-radius: var(--ds-raio); padding: var(--ma-2) var(--ma-3);
-}
-.passo-acao-pedido strong { color: var(--ds-selo); }
-/* Mesmo princípio da faixa do chat: o painel já cerca a zona de ação, então o
- * campo se distingue pelo fundo mais claro e só ganha traço ao receber foco. */
-.passo-acao .campo--codigo textarea { background: var(--ds-surface); min-height: 11rem; border-color: transparent; }
-.passo-acao .campo--codigo textarea:focus { border-color: var(--ds-text-900); }
-
-/* Anexar em vez de colar: mesmo chip da Stack (borda fina, muda no hover),
- * porque os dois são "escolha discreta". Quem manda a revisão continua sendo
- * o botão preto — só que agora ele mora ao lado do que anexa, não solto numa
- * linha própria: são as duas ações desta barra, e uma pedindo mais destaque
- * que a outra sem justificativa (uma centralizada, outra sozinha à direita)
- * fazia elas parecerem duas telas em vez de um formulário só.
- *
- * A lista vem ANTES do botão que anexa, não depois: cada arquivo novo empilha
- * numa linha ali em cima, e o botão fica sempre no mesmo lugar por baixo
- * deles — a barra de ação não anda para baixo da tela a cada arquivo que
- * entra, só a lista cresce por cima dela. */
-.anexo { margin-top: var(--ma-3); display: flex; flex-direction: column; gap: var(--ma-2); }
-.anexo-barra { display: flex; align-items: center; justify-content: space-between; gap: var(--ma-3); }
-.anexo-botao {
-    display: inline-flex; align-items: center; gap: var(--ma-2); cursor: pointer;
-    padding: var(--ma-2) var(--ma-3); border-radius: var(--ds-raio);
-    border: 1px solid var(--ds-line-dash); background: var(--ds-surface);
-    font-size: 0.88rem; color: var(--ds-text-700);
-    transition: border-color var(--ds-fast) ease, color var(--ds-fast) ease;
-}
-.anexo-botao:hover { border-color: var(--ds-acento-linha); color: var(--ds-text-900); }
-.anexo-botao svg { width: 1rem; height: 1rem; }
-/* Foco chega pelo input escondido, não pelo label: sem isto o teclado nunca
- * mostra onde o foco está neste controle. */
-.anexo:has(#arquivos:focus-visible) .anexo-botao { outline: 2px solid var(--ds-selo); outline-offset: 2px; }
-
-.anexo-lista {
-    list-style: none; margin: 0; padding: 0;
-    display: flex; flex-direction: column; gap: var(--ma-1);
-}
-.anexo-item {
-    display: flex; align-items: center; justify-content: space-between; gap: var(--ma-3);
-    padding: var(--ma-1) var(--ma-1) var(--ma-1) var(--ma-3);
-    font-family: var(--ds-font-mono); font-size: 0.82rem; color: var(--ds-text-700);
-    background: var(--ds-surface); border: 1px solid var(--ds-line); border-radius: var(--ds-raio);
-}
-.anexo-remover {
-    border: 0; background: none; color: var(--ds-text-400); cursor: pointer;
-    width: 1.6rem; height: 1.6rem; border-radius: var(--ds-raio); font-size: 1rem; line-height: 1;
-}
-.anexo-remover:hover { color: var(--ds-erro); background: var(--ds-erro-veu); }
-
-.passo-acao .hist-revisoes { margin-top: var(--ma-5); }
-
-.passo-pular { display: flex; justify-content: center; margin-top: calc(var(--ma-3) * -1); }
+.passo-acao > .ds-muted { margin: 0 0 var(--ma-4); max-width: 44rem; font-size: 0.92rem; }
+.passo-acao-barra { display: flex; justify-content: flex-end; }
 
 /* A porta de visita, na tela de entrada. Separada do formulário por um "ou"
  * com fio dos dois lados: são dois caminhos, não uma sequência. */

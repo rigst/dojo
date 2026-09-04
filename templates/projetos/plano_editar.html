@@ -66,7 +66,7 @@
                     <form method="post" action="{% url 'passo_remover' passo.pk %}">
                         {% csrf_token %}
                         <button class="linha-ico linha-ico--perigo" type="submit" aria-label="Remover o passo"
-                                data-confirmar="Remover “{{ passo.titulo }}”? As submissões e a revisão deste passo vão junto.">
+                                data-confirmar="Remover “{{ passo.titulo }}”? Não dá para desfazer.">
                             {% include "core/_ico.html" with ico="excluir" %}
                         </button>
                     </form>

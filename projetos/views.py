@@ -581,10 +581,10 @@ def passo_detalhe(request, pk):
     )
 
     # Bloqueado é inacessível de verdade: nem o link nem a URL direta mostram o
-    # conteúdo. Só abre quando o anterior passar na revisão (atende ou
-    # atende_com_ressalvas contam, ver Revisao.aprovado), ou for concluído à
-    # mão. Passos são criados adiantados (ver passo_pre_gerar) só para não
-    # esperar o mentor no meio da fila, não para virarem leitura antecipada.
+    # conteúdo. Só abre quando o anterior for concluído, pelo botão da tela do
+    # passo ou pela ferramenta do chat. Passos são criados adiantados (ver
+    # passo_pre_gerar) só para não esperar o mentor no meio da fila, não para
+    # virarem leitura antecipada.
     if passo.status == Passo.Status.BLOQUEADO:
         messages.info(request, "Esse passo ainda está bloqueado. Termine o anterior para abri-lo.")
         if passo.anterior:
@@ -615,8 +615,6 @@ def passo_detalhe(request, pk):
         {
             "passo": passo,
             "projeto": projeto,
-            "revisoes": passo.submissoes.select_related("revisao")[:5],
-            "total_revisoes": passo.submissoes.count(),
             "mensagens": conversa.mensagens.all(),
             "anterior": passo.anterior,
             "proximo": passo.proximo,
@@ -627,7 +625,12 @@ def passo_detalhe(request, pk):
 
 @login_required
 def passo_concluir(request, pk):
-    """Conclusão manual: o aluno assume que fez, sem passar pela revisão."""
+    """Fecha o passo e abre o seguinte.
+
+    É a ação principal da tela do passo desde que a revisão saiu do fluxo: quem
+    diz que terminou é o aluno, conferindo os critérios de aceite. O mentor
+    ainda pode fechar por conta própria no chat (ver ia/ferramentas.py).
+    """
     passo = get_object_or_404(Passo.objects.do_usuario(request.user), pk=pk)
     if request.method == "POST":
         from django.utils import timezone
@@ -695,8 +698,6 @@ def exportar_markdown(request, pk):
             linhas += [f"  - O que fazer: {passo.o_que_fazer}"]
             linhas += [f"  - Como fazer: {passo.como_fazer}"]
             linhas += [f"  - Por quê: {passo.teoria}"]
-            if passo.o_que_enviar:
-                linhas += [f"  - O que mandar para revisão: {passo.o_que_enviar}"]
             for criterio in passo.criterios_aceite:
                 linhas.append(f"  - [ ] {criterio}")
             linhas.append("")

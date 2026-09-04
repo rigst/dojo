@@ -45,6 +45,61 @@ def do_projeto(projeto):
     return "\n".join(linhas)
 
 
+# Quantos passos anteriores vão INTEIROS para a geração do próximo. O contexto
+# do projeto já lista todos por título; o que este bloco acrescenta é o conteúdo,
+# e conteúdo custa. Oito é o que separa "não repete o que já foi ensinado" de
+# "reenvia o plano inteiro a cada passo": cobre a etapa em curso e boa parte da
+# anterior, que é onde a repetição de fato acontece.
+PASSOS_INTEIROS = 8
+
+
+def trabalho_feito(plano, limite=PASSOS_INTEIROS):
+    """O conteúdo dos passos que já existem, para o próximo não repeti-los.
+
+    Vai só na geração de passo (ver ia/preparo.py:para_proximo_passo), e não no
+    contexto de sempre: o chat já recebe o passo em foco inteiro, e mandar o
+    histórico completo em toda mensagem pagaria caro por algo que ali não muda
+    resposta nenhuma.
+
+    Entram os passos já criados, concluídos ou não. O que evita repetição é o
+    que já foi ESCRITO, não o que foi marcado como feito: um passo aberto que
+    manda instalar o Django continua sendo o passo que instalou o Django.
+    """
+    if not plano:
+        return ""
+
+    passos = list(
+        Passo.objects.filter(etapa__plano=plano)
+        .select_related("etapa")
+        .order_by("etapa__ordem", "ordem")
+    )
+    if not passos:
+        return ""
+
+    recentes = passos[-limite:]
+    linhas = ["O QUE JÁ FOI FEITO"]
+    if len(passos) > len(recentes):
+        linhas.append(
+            f"(os {len(passos) - len(recentes)} passos anteriores a estes estão no "
+            "plano acima, só por título)"
+        )
+
+    for passo in recentes:
+        estado = "concluído" if passo.status == Passo.Status.CONCLUIDO else "em aberto"
+        linhas += [
+            "",
+            f"--- Passo {passo.numero}: {passo.titulo} ({estado})",
+            f"O que fazer: {passo.o_que_fazer}",
+            f"Como fazer: {passo.como_fazer}",
+            f"Teoria já explicada: {passo.teoria}",
+        ]
+        if passo.criterios_aceite:
+            linhas.append("Critérios de aceite:")
+            linhas += [f"  - {c}" for c in passo.criterios_aceite]
+
+    return "\n".join(linhas)
+
+
 def do_passo(passo):
     """Detalhe do passo em foco. Vai junto do contexto do projeto."""
     if passo is None:

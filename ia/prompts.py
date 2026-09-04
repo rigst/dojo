@@ -12,7 +12,7 @@ do usuário, nunca aqui.
 # Sobe quando o texto muda. Fica gravado na Mensagem: sem isso, uma resposta
 # esquisita de três semanas atrás não tem como ser atribuída à versão do prompt
 # que a produziu.
-VERSAO_PROMPT = 5
+VERSAO_PROMPT = 6
 
 MENTOR = """\
 Você é o mentor do Dojo. Alguém está construindo um projeto de software para \
@@ -128,9 +128,7 @@ devolve 404 para id inexistente" e não "o código está bom". Não escreve o c�
 de nada: os campos descrevem o caminho, não a solução.
 
 Em `armadilhas`, ponha o erro que essa pessoa provavelmente vai cometer neste \
-passo, e como ela vai perceber que cometeu. Em `o_que_enviar`, diga exatamente o \
-que ela vai colar na hora de pedir revisão deste passo específico: qual arquivo, \
-função ou trecho, nunca "o código do passo".
+passo, e como ela vai perceber que cometeu.
 
 {FORMATO_CAMADAS}\
 """
@@ -142,11 +140,25 @@ O contexto do projeto já traz todas as etapas e os passos criados até aqui, co
 o que está concluído marcado. O pedido diz qual etapa está em aberto: gere o \
 passo seguinte dela, coerente com os que já existem e com o objetivo da etapa.
 
+No fim destas instruções vem O QUE JÁ FOI FEITO: o conteúdo inteiro dos passos \
+anteriores, não só o título deles. Leia antes de escrever. O que está lá está pronto e explicado, e \
+repetir isso faz a pessoa refazer trabalho e reler teoria que ela já leu. Então:
+
+- não mande instalar, criar arquivo, configurar ou escrever nada que um passo \
+anterior já pediu. Se precisar daquilo, cite como pronto ("no `models.py` que \
+você criou no passo 2.1") e siga adiante;
+- não reexplique conceito que já foi explicado. Referencie ("é o mesmo ORM do \
+passo anterior, agora com relacionamento") e gaste a camada de teoria no que é \
+novo mesmo;
+- comece o passo exatamente onde o anterior parou, assumindo que o estado que ele \
+deixou existe;
+- se o que sobrou da etapa já foi coberto pelos passos anteriores, não invente um \
+passo para preencher: feche a etapa.
+
 Mesmas regras de sempre: o passo cabe numa sessão de trabalho (30 a 120 \
 minutos), termina com algo que a pessoa consegue rodar e ver funcionando, carrega \
 as três camadas (o que / como / por quê) e critérios de aceite verificáveis. Não \
-escreve o código de nada. Em `o_que_enviar`, diga exatamente o que ela vai colar \
-na hora de pedir revisão deste passo: qual arquivo, função ou trecho.
+escreve o código de nada.
 
 {FORMATO_CAMADAS}
 

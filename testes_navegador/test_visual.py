@@ -71,7 +71,7 @@ def test_passo(autenticado, servidor, comparar_tela):
     autenticado.goto(f"{servidor}/")
     autenticado.click("text=Encurtador de links")
     autenticado.click("text=Ambiente virtual e primeira rota")
-    autenticado.wait_for_selector("#codigo")
+    autenticado.wait_for_selector("text=Concluir passo")
     comparar_tela(autenticado, "passo", mascarar=[MASCARA_DATA])
 
 
@@ -83,7 +83,7 @@ def test_passo_no_escuro(autenticado, servidor, comparar_tela):
     autenticado.goto(f"{servidor}/")
     autenticado.click("text=Encurtador de links")
     autenticado.click("text=Ambiente virtual e primeira rota")
-    autenticado.wait_for_selector("#codigo")
+    autenticado.wait_for_selector("text=Concluir passo")
     comparar_tela(autenticado, "passo-escuro", mascarar=[MASCARA_DATA])
 
 

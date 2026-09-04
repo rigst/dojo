@@ -38,7 +38,6 @@ def _gerado(qtd_passos=3):
                         o_que_fazer="faça",
                         como_fazer="assim",
                         teoria="porque",
-                        o_que_enviar="o trecho",
                         criterios_aceite=[f"critério {i}"],
                     )
                     for i in range(1, qtd_passos + 1)
@@ -172,7 +171,7 @@ def test_tela_do_passo_oferece_o_seguinte_quando_ja_aberto(client, aluno, projet
 
 def test_tela_do_passo_nao_linka_o_seguinte_bloqueado(client, aluno, projeto):
     """O próximo passo ainda bloqueado aparece só como aviso, sem link: ele
-    continua inacessível até este passar na revisão."""
+    continua inacessível até este ser concluído."""
     salvar_plano(projeto, _gerado(), "fake")
     primeiro = Passo.objects.filter(etapa__plano__projeto=projeto).first()
     assert primeiro.proximo.status == Passo.Status.BLOQUEADO
@@ -180,7 +179,40 @@ def test_tela_do_passo_nao_linka_o_seguinte_bloqueado(client, aluno, projeto):
     client.force_login(aluno)
     conteudo = client.get(f"/projetos/passo/{primeiro.pk}/").content
     assert f'href="/projetos/passo/{primeiro.proximo.pk}/"'.encode() not in conteudo
-    assert b"abre quando este passar na revis\xc3\xa3o" in conteudo
+    assert b"abre quando voc\xc3\xaa concluir este" in conteudo
+
+
+def test_tela_do_passo_nao_pede_mais_revisao(client, aluno, projeto):
+    """A zona de ação é concluir o passo, e só.
+
+    A revisão por passo saiu do fluxo: nada de campo para colar código, de
+    anexo nem de histórico de veredito na tela de quem está trabalhando.
+    """
+    salvar_plano(projeto, _gerado(), "fake")
+    primeiro = Passo.objects.filter(etapa__plano__projeto=projeto).first()
+
+    client.force_login(aluno)
+    conteudo = client.get(f"/projetos/passo/{primeiro.pk}/").content
+    assert f'action="/projetos/passo/{primeiro.pk}/concluir/"'.encode() in conteudo
+    assert b"Concluir passo" in conteudo
+    assert b"/revisoes/" not in conteudo
+    assert b'name="conteudo"' not in conteudo
+    assert b'name="arquivos"' not in conteudo
+
+
+def test_concluir_pela_tela_do_passo_abre_o_seguinte(client, aluno, projeto):
+    salvar_plano(projeto, _gerado(), "fake")
+    primeiro = Passo.objects.filter(etapa__plano__projeto=projeto).first()
+    segundo = primeiro.proximo
+
+    client.force_login(aluno)
+    resposta = client.post(f"/projetos/passo/{primeiro.pk}/concluir/")
+    assert resposta.status_code == 302
+
+    primeiro.refresh_from_db()
+    segundo.refresh_from_db()
+    assert primeiro.status == Passo.Status.CONCLUIDO
+    assert segundo.status == Passo.Status.DISPONIVEL
 
 
 def test_tela_do_projeto_destaca_o_passo_da_vez(client, aluno, projeto):

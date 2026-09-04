@@ -20,11 +20,6 @@ class PassoGerado(BaseModel):
     o_que_fazer: str = Field(description="A tarefa concreta, sem código pronto.")
     como_fazer: str = Field(description="O caminho: onde mexer, em que ordem, o que consultar.")
     teoria: str = Field(description="Por que é assim: o conceito e o trade-off por trás.")
-    o_que_enviar: str = Field(
-        description="O que colar na revisão deste passo especificamente: qual arquivo, função ou "
-        "trecho, em uma frase. Não 'o código deste passo', e sim algo como 'o método save() do "
-        "modelo Tarefa' ou 'a rota POST /tarefas e o handler dela'."
-    )
     criterios_aceite: list[str] = Field(
         default_factory=list,
         description="Como o aluno sabe que terminou. Verificáveis, não vagos.",

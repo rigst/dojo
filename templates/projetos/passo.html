@@ -96,82 +96,26 @@ pontas da rolagem, é a coluna de leitura, e não o `.app-main` (ver dojo.css).
         {% comment %}
         Daqui para baixo é o que se FAZ, e não o que se lê. A moldura separa as
         duas zonas: acima, a orientação; aqui, a única ação da tela.
+
+        Essa ação era mandar o código para revisão, e a revisão saiu: ela pedia
+        que a pessoa parasse, juntasse os arquivos e esperasse um veredito a
+        cada passo, e o custo disso em atrito era maior do que o que ela
+        acrescentava. Quem confere se o passo terminou é a lista "Você terminou
+        quando", ali em cima, e o chat ao lado para o que ficou em dúvida.
         {% endcomment %}
-        <section class="passo-acao" data-revisao-secao
-                 data-revisao-inline-base="{% url 'revisao_inline' 0 %}">
-            <h2 class="ficha-titulo">Mandar para revisão</h2>
-            <p class="ds-muted">O mentor avalia critério por critério e aponta o que falta, sem reescrever o seu código.</p>
-            {% if passo.o_que_enviar %}
-            <p class="passo-acao-pedido"><strong>O que mandar:</strong> {{ passo.o_que_enviar|prosa_curta }}</p>
-            {% endif %}
-
-            <form method="post" action="{% url 'revisao_submeter' passo.pk %}" enctype="multipart/form-data" data-forma-revisao>
+        <section class="passo-acao">
+            {% if passo.status == "concluido" %}
+            <h2 class="ficha-titulo">Passo concluído</h2>
+            <p class="ds-muted">Você já fechou este passo. Ele continua aqui para consulta.</p>
+            {% else %}
+            <h2 class="ficha-titulo">Terminou este passo?</h2>
+            <p class="ds-muted">Confira a lista de “você terminou quando” antes de fechar. Ficou dúvida no meio do caminho? O mentor está no chat, ao lado.</p>
+            <form method="post" action="{% url 'passo_concluir' passo.pk %}" class="passo-acao-barra">
                 {% csrf_token %}
-                <div class="campo campo--codigo">
-                    <label class="ds-so-leitor" for="codigo">Seu código ou diff</label>
-                    <textarea id="codigo" name="conteudo" rows="10" spellcheck="false"
-                              placeholder="{{ passo.o_que_enviar|default:'Cole aqui o código deste passo.' }}"></textarea>
-                </div>
-
-                {% comment %}
-                Cola OU anexa, e os dois juntos também funcionam: quem tem o
-                arquivo à mão não devia precisar abrir e copiar o conteúdo à
-                mão só para colar aqui.
-
-                A lista de anexos fica acima do botão que anexa, e não abaixo:
-                cada arquivo novo empilha numa linha ali, o botão que os traz
-                fica sempre no mesmo lugar por baixo deles, junto do botão que
-                manda — as duas ações da barra, lado a lado e justificadas nas
-                pontas, e não uma solta em cima da outra.
-                {% endcomment %}
-                <div class="anexo">
-                    <ul class="anexo-lista" data-anexo-lista hidden></ul>
-
-                    <div class="anexo-barra">
-                        <label class="anexo-botao" for="arquivos">
-                            {% include "core/_ico.html" with ico="anexo" %}
-                            <span>Anexar arquivo(s)</span>
-                        </label>
-                        <input type="file" id="arquivos" name="arquivos" multiple hidden
-                               accept=".py,.js,.jsx,.ts,.tsx,.html,.htm,.css,.scss,.json,.md,.txt,.sql,.yml,.yaml,.toml,.env,.sh,.go,.rs,.java,.rb,.php,.c,.h,.cpp,.cs,.kt,.swift,.dart">
-
-                        <button type="submit" class="ds-btn ds-btn--solid">Pedir revisão</button>
-                    </div>
-                </div>
+                <button type="submit" class="ds-btn ds-btn--solid">Concluir passo</button>
             </form>
-
-            <div data-revisao-slot hidden></div>
-
-            {% if revisoes %}
-            <ul class="hist-revisoes">
-                {% for submissao in revisoes %}
-                <li>
-                    {% if submissao.revisao %}
-                    <a href="{% url 'revisao_detalhe' submissao.revisao.pk %}">
-                        <span class="ds-badge {{ submissao.revisao.classe_badge }}">{{ submissao.revisao.get_veredito_display }}</span>
-                        <span class="ds-muted">{{ submissao.criado_em|date:"d/m H:i" }}</span>
-                    </a>
-                    {% else %}
-                    <a href="{% url 'revisao_aguardar' submissao.pk %}"><span class="ds-badge">sem revisão</span></a>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-            {% if total_revisoes > 5 %}
-            <p class="ds-muted"><a href="{% url 'passo_revisoes' passo.pk %}">Ver os {{ total_revisoes }} envios</a></p>
-            {% endif %}
             {% endif %}
         </section>
-
-        {% if passo.status != "concluido" %}
-        <form method="post" action="{% url 'passo_concluir' passo.pk %}" class="passo-pular">
-            {% csrf_token %}
-            <button type="submit" class="ds-btn ds-btn--discreto"
-                    data-confirmar="Marcar como concluído sem revisão?">
-                Marcar como concluído sem revisão
-            </button>
-        </form>
-        {% endif %}
 
         {% comment %}
         Ir e voltar entre passos sem passar pelo plano. Num app que é uma fila,
@@ -195,7 +139,7 @@ pontas da rolagem, é a coluna de leitura, e não o `.app-main` (ver dojo.css).
                 <span>
                     <span class="ds-kicker">Próximo</span>
                     <strong>{{ proximo.titulo }}</strong>
-                    <span class="ds-muted">abre quando este passar na revisão</span>
+                    <span class="ds-muted">abre quando você concluir este</span>
                 </span>
             </span>
             {% elif proximo %}
@@ -229,8 +173,6 @@ pontas da rolagem, é a coluna de leitura, e não o `.app-main` (ver dojo.css).
 <script src="{% static 'js/chat.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/criterios.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script src="{% static 'js/como-fazer.js' %}" nonce="{{ request.csp_nonce }}"></script>
-<script src="{% static 'js/anexos.js' %}" nonce="{{ request.csp_nonce }}"></script>
-<script src="{% static 'js/revisao-inline.js' %}" nonce="{{ request.csp_nonce }}"></script>
 {% if pre_gerar_url %}
 <script nonce="{{ request.csp_nonce }}">
 (function(){

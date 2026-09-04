@@ -32,7 +32,6 @@ def projeto(aluno):
                             o_que_fazer="faça",
                             como_fazer="assim",
                             teoria="porque",
-                            o_que_enviar="o trecho",
                             criterios_aceite=["roda"],
                         )
                         for i in (1, 2, 3)
@@ -143,6 +142,54 @@ def test_contexto_do_passo_entra_no_bloco_certo(projeto, aluno):
     # primeiro, senão trocar de passo invalidaria o prompt inteiro.
     assert passo.titulo not in pedido.sistema[0]["text"]
     assert passo.titulo in pedido.sistema[1]["text"]
+
+
+def test_proximo_passo_recebe_o_conteudo_dos_anteriores(projeto, aluno):
+    """Não basta a lista de títulos: o que evita repetição é o texto inteiro.
+
+    Sem isto o mentor manda instalar de novo o que já mandou instalar e
+    reexplica a teoria do passo anterior, porque do plano ele só via o título.
+    """
+    etapa = projeto.plano_ativo.etapas.first()
+    passo = etapa.passos.first()
+    passo.o_que_fazer = "instale o Django e rode o startproject"
+    passo.teoria = "o ORM guarda o mapeamento entre classe e tabela"
+    passo.save(update_fields=["o_que_fazer", "teoria"])
+
+    pedido = preparo.para_proximo_passo(projeto, etapa, aluno)
+    contexto = pedido.sistema[1]["text"]
+
+    assert "O QUE JÁ FOI FEITO" in contexto
+    assert "instale o Django e rode o startproject" in contexto
+    assert "o ORM guarda o mapeamento entre classe e tabela" in contexto
+    assert "roda" in contexto  # o critério de aceite do passo anterior
+
+
+def test_trabalho_feito_manda_so_os_passos_recentes(projeto, aluno):
+    """A janela existe para o custo não crescer com o plano.
+
+    Um plano longo mandaria dezenas de passos inteiros a cada geração. Os que
+    ficam de fora continuam no contexto do projeto, por título.
+    """
+    from ia import contexto as ctx
+
+    etapa = projeto.plano_ativo.etapas.first()
+    for i in range(4, 14):
+        Passo.objects.create(
+            etapa=etapa,
+            ordem=i,
+            titulo=f"Passo {i}",
+            o_que_fazer=f"marca-{i}",
+            status=Passo.Status.BLOQUEADO,
+        )
+
+    texto = ctx.trabalho_feito(projeto.plano_ativo)
+
+    assert "marca-13" in texto
+    assert "marca-6" in texto
+    # O passo 5 é o nono a contar do fim: fora da janela de oito.
+    assert "marca-5" not in texto
+    assert "os 5 passos anteriores a estes" in texto
 
 
 def test_codigo_do_aluno_vai_marcado_como_dado(projeto, aluno):

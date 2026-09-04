@@ -1,7 +1,7 @@
 """O servidor de verdade para os testes de navegador.
 
 O `live_server` do pytest-django sobe a aplicação em WSGI, e o Dojo depende de
-ASGI: o chat, a geração de plano e a espera da revisão são todos SSE, que sob
+ASGI: o chat e a geração de plano são SSE, que sob
 WSGI chegariam em bloco no fim em vez de irem pingando. Testar contra um
 servidor diferente do que roda em produção testaria outro app.
 
