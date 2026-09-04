@@ -69,9 +69,9 @@ def trabalho_feito(plano, limite=PASSOS_INTEIROS):
         return ""
 
     passos = list(
-        Passo.objects.filter(etapa__plano=plano).select_related("etapa").order_by(
-            "etapa__ordem", "ordem"
-        )
+        Passo.objects.filter(etapa__plano=plano)
+        .select_related("etapa")
+        .order_by("etapa__ordem", "ordem")
     )
     if not passos:
         return ""
