@@ -109,7 +109,6 @@ def _primeiro_passo():
             "perde essa referência e passa a depurar duas coisas ao mesmo "
             "tempo, o próprio código e a montagem do projeto."
         ),
-        o_que_enviar="O arquivo principal do projeto, com a rota da página inicial.",
         criterios_aceite=[
             "O servidor sobe sem erro no terminal.",
             "A página inicial responde 200 em localhost.",
@@ -182,7 +181,6 @@ async def gerar_proximo_passo(pedido):
                     "descobrir uma coluna errada só no deploy, quando corrigir "
                     "custa uma migration de correção em vez de uma tecla."
                 ),
-                o_que_enviar="O arquivo de modelos com a classe nova e a migration gerada.",
                 criterios_aceite=[
                     "A migration aplica sem erro.",
                     "O admin lista o modelo e permite criar um registro.",

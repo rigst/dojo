@@ -83,13 +83,20 @@ def para_plano(projeto, usuario, respostas_briefing=""):
 
 def para_proximo_passo(projeto, etapa, usuario):
     pedido = (
-        f"Gere o próximo passo da etapa {etapa.ordem} ({etapa.titulo}). O contexto "
-        "do projeto já mostra quais passos essa etapa tem até agora; não repita "
-        "nenhum. Diga também se, depois deste passo, a etapa já entrega o "
-        "objetivo dela."
+        f"Gere o próximo passo da etapa {etapa.ordem} ({etapa.titulo}). Ele começa "
+        "onde o último passo de O QUE JÁ FOI FEITO parou: não repita instrução, "
+        "arquivo nem teoria que já estejam lá. Diga também se, depois deste passo, "
+        "a etapa já entrega o objetivo dela."
+    )
+    # O conteúdo dos passos anteriores vai junto das instruções do planejador, e
+    # não só a lista de títulos que o contexto do projeto traz: sem o texto
+    # inteiro, o mentor não tem como saber que já mandou criar o `models.py` ou
+    # já explicou o que é uma migration, e manda de novo.
+    instrucoes = "\n\n".join(
+        filter(None, [prompts.PLANEJADOR_PASSO, ctx.trabalho_feito(projeto.plano_ativo)])
     )
     return Pedido(
-        sistema=_sistema(projeto, extra=prompts.PLANEJADOR_PASSO),
+        sistema=_sistema(projeto, extra=instrucoes),
         mensagens=[{"role": "user", "content": pedido}],
         chave_api=_chave(usuario),
         titulo_projeto=projeto.titulo,

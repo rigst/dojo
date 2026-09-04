@@ -51,10 +51,6 @@ DEFINICOES = [
                             "o_que_fazer": {"type": "string"},
                             "como_fazer": {"type": "string"},
                             "teoria": {"type": "string"},
-                            "o_que_enviar": {
-                                "type": "string",
-                                "description": "O que colar na revisão deste subpasso: qual arquivo, função ou trecho.",
-                            },
                             "criterios_aceite": {"type": "array", "items": {"type": "string"}},
                         },
                         "required": [
@@ -62,7 +58,6 @@ DEFINICOES = [
                             "o_que_fazer",
                             "como_fazer",
                             "teoria",
-                            "o_que_enviar",
                         ],
                         "additionalProperties": False,
                     },
@@ -148,7 +143,6 @@ def _quebrar_passo(usuario, entrada):
                 o_que_fazer=dados.get("o_que_fazer", ""),
                 como_fazer=dados.get("como_fazer", ""),
                 teoria=dados.get("teoria", ""),
-                o_que_enviar=dados.get("o_que_enviar", "")[:240],
                 criterios_aceite=dados.get("criterios_aceite", []),
                 status=Passo.Status.DISPONIVEL if i == 0 else Passo.Status.BLOQUEADO,
             )

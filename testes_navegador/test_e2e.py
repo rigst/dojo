@@ -49,13 +49,13 @@ def test_do_painel_ate_o_passo(autenticado, servidor):
     pagina.wait_for_selector("text=O servidor de pé")
 
     pagina.click("text=Ambiente virtual e primeira rota")
-    pagina.wait_for_selector("#codigo")
+    pagina.wait_for_selector("text=Concluir passo")
 
     corpo = pagina.inner_text("body")
     # As três camadas são a promessa do app: o que fazer, como, e por quê.
     assert "ambiente virtual" in corpo.lower()
     assert "Como fazer" in corpo or "como fazer" in corpo.lower()
-    assert "Pedir revisão" in corpo
+    assert "Concluir passo" in corpo
 
 
 def test_criar_projeto_e_gerar_o_plano(autenticado, servidor):
@@ -97,18 +97,20 @@ def test_chat_responde_no_passo(autenticado, servidor):
     assert resposta.strip()
 
 
-def test_submeter_codigo_e_receber_veredito(autenticado, servidor):
-    """A revisão fecha o ciclo do passo. Se ela não voltar, o passo nunca
-    conclui e o app inteiro para no primeiro item."""
+def test_concluir_o_passo_abre_o_seguinte(autenticado, servidor):
+    """Concluir é o que faz o plano andar. Se o botão não abrir o passo
+    seguinte, o app inteiro para no primeiro item."""
     pagina = autenticado
     pagina.click("text=Encurtador de links")
     pagina.click("text=Ambiente virtual e primeira rota")
 
-    pagina.fill("#codigo", "from flask import Flask\n\napp = Flask(__name__)\n")
-    pagina.click("text=Pedir revisão")
+    antes = pagina.url
+    pagina.click("text=Concluir passo")
 
-    pagina.wait_for_selector("text=/atende|Atende|ressalva|não atende/i", timeout=60000)
-    assert "critério" in pagina.inner_text("body").lower() or "Critério" in pagina.content()
+    # A conclusão redireciona para o passo recém-aberto, e o aviso diz qual é.
+    pagina.wait_for_selector("text=Liberado:", timeout=60000)
+    assert pagina.url != antes
+    assert "Como fazer" in pagina.inner_text("body")
 
 
 def test_conta_mostra_o_limite_e_nao_pede_chave(autenticado, servidor):

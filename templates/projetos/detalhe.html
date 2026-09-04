@@ -74,7 +74,7 @@
                         <span class="passo-num num">{{ passo.numero }}</span>
                         {% if passo.status == "bloqueado" %}
                         <span class="passo-titulo ds-muted">{{ passo.titulo }}</span>
-                        <span class="ds-badge" title="Abre quando o anterior passar na revisão.">na fila</span>
+                        <span class="ds-badge" title="Abre quando você concluir o anterior.">na fila</span>
                         {% else %}
                         <a class="passo-titulo" href="{{ passo.get_absolute_url }}">{{ passo.titulo }}</a>
                         {% if passo.status == "concluido" %}

@@ -68,7 +68,6 @@ def _criar_passo(etapa, passo_gerado, ordem, status):
         o_que_fazer=passo_gerado.o_que_fazer,
         como_fazer=passo_gerado.como_fazer,
         teoria=passo_gerado.teoria,
-        o_que_enviar=passo_gerado.o_que_enviar,
         criterios_aceite=passo_gerado.criterios_aceite,
         armadilhas=passo_gerado.armadilhas,
         recursos=[r.model_dump() for r in passo_gerado.recursos],

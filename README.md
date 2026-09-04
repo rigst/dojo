@@ -20,13 +20,15 @@ do `sistema_arq`.
    e o estilo de ensino (socrático ou direto).
 2. **Plano**: etapas e passos, cada passo com as três camadas e critérios de
    aceite verificáveis. O plano é versionado: replanejar cria a v2, não apaga a v1.
-3. **Passo a passo**: só o primeiro passo nasce aberto. O próximo abre quando
-   o atual é dado por concluído.
+3. **Passo a passo**: só o primeiro passo nasce aberto. Você fecha o atual no
+   botão da própria tela, e o seguinte abre. Quem confere se terminou é a lista
+   "você terminou quando", não um veredito.
 4. **Chat**: um por projeto, ancorado no passo em foco, com a resposta
-   chegando token a token (SSE).
-5. **Revisão**: você cola o código; o mentor avalia critério por critério e
-   aponta problemas com o porquê, sem reescrever o trecho certo. Veredito
-   `atende` conclui o passo e libera o seguinte.
+   chegando token a token (SSE). O mentor também fecha o passo por ali quando
+   a conversa mostra que ele foi cumprido.
+5. **Sem repetir o já feito**: cada passo é gerado quando você chega nele, e o
+   mentor recebe o conteúdo inteiro dos anteriores, não só os títulos. É o que
+   impede o plano de mandar instalar duas vezes a mesma coisa.
 
 O plano é editável a qualquer momento (`Editar o plano`): dá para corrigir o
 texto de um passo, mover, remover e acrescentar. É o antídoto para o plano que
@@ -50,9 +52,9 @@ Os `--reload-include` não são luxo: sozinho, o `--reload` observa só arquivos
 editá-lo, e o sintoma é uma mudança que "não aparece" nem com recarga forçada
 do navegador.
 
-**Use uvicorn, não `runserver`.** O chat, a geração do plano e a revisão são
-servidos por SSE; sob WSGI cada conversa aberta prenderia um worker inteiro até
-a resposta terminar.
+**Use uvicorn, não `runserver`.** O chat e a geração do plano são servidos por
+SSE; sob WSGI cada conversa aberta prenderia um worker inteiro até a resposta
+terminar.
 
 Sem chave de API? `DOJO_IA_BACKEND=fake` responde com um plano e uma conversa de
 exemplo, sem tocar a rede. Dá para mexer nas telas sem gastar nada.

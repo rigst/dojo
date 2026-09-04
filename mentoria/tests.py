@@ -32,7 +32,6 @@ def projeto(aluno):
                             o_que_fazer="faça",
                             como_fazer="assim",
                             teoria="porque",
-                            o_que_enviar="o trecho",
                             criterios_aceite=["roda"],
                         )
                     ],

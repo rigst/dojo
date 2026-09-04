@@ -101,7 +101,7 @@ class PassoForm(forms.ModelForm):
 
     class Meta:
         model = Passo
-        fields = ("titulo", "o_que_fazer", "como_fazer", "teoria", "o_que_enviar", "estimativa_min")
+        fields = ("titulo", "o_que_fazer", "como_fazer", "teoria", "estimativa_min")
         widgets = {
             "o_que_fazer": forms.Textarea(attrs={"rows": 3}),
             "como_fazer": forms.Textarea(attrs={"rows": 4}),
@@ -111,8 +111,6 @@ class PassoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["estimativa_min"].label = "Estimativa (minutos)"
-        self.fields["o_que_enviar"].label = "O que mandar para a revisão"
-        self.fields["o_que_enviar"].help_text = "Uma frase: qual arquivo, função ou trecho."
         if self.instance and self.instance.pk:
             self.fields["criterios_aceite"].initial = "\n".join(
                 self.instance.criterios_aceite or []

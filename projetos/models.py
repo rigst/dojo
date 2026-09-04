@@ -225,10 +225,9 @@ class Passo(models.Model):
     o_que_fazer = models.TextField(blank=True)
     como_fazer = models.TextField(blank=True)
     teoria = models.TextField("por que é assim", blank=True)
-    # O que colar na revisão, específico deste passo — "o método save() do
-    # modelo Tarefa", não "o código deste passo". Sem isto, quem chega na
-    # zona de ação da tela não sabe se manda o arquivo inteiro, uma função
-    # ou um trecho de configuração.
+    # Legado da revisão por passo, que saiu do fluxo. Nada escreve aqui desde
+    # então; a coluna fica para os passos antigos não perderem o texto, e sai
+    # numa limpeza futura, junto do resto do app `revisoes`.
     o_que_enviar = models.CharField("o que enviar para revisão", max_length=240, blank=True)
 
     criterios_aceite = models.JSONField(default=list, blank=True)
