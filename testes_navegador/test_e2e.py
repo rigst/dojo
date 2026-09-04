@@ -110,7 +110,9 @@ def test_concluir_o_passo_abre_o_seguinte(autenticado, servidor):
     # A conclusão redireciona para o passo recém-aberto, e o aviso diz qual é.
     pagina.wait_for_selector("text=Liberado:", timeout=60000)
     assert pagina.url != antes
-    assert "Como fazer" in pagina.inner_text("body")
+    # Em minúsculas: o rótulo da camada vai para a tela em versalete, e
+    # `inner_text` devolve o texto já transformado pelo CSS.
+    assert "como fazer" in pagina.inner_text("body").lower()
 
 
 def test_conta_mostra_o_limite_e_nao_pede_chave(autenticado, servidor):
