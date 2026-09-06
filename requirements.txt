@@ -19,7 +19,7 @@ redis==7.1.0
 # Mentoria: cliente oficial da Anthropic e validação dos retornos estruturados
 # (plano e revisão de código voltam como JSON schema, não como texto solto).
 anthropic==1.2.0
-pydantic==2.13.4
+pydantic==2.13.5
 
 # Render e sanitização das respostas do mentor. nh3 é obrigatório: o markdown
 # vem de um modelo de linguagem e não pode ir cru para o template.
