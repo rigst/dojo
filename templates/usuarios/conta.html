@@ -92,7 +92,8 @@
                     <input id="confirmacao" name="confirmacao" autocomplete="off">
                 </div>
                 <div class="form-actions">
-                    <button class="ds-btn ds-btn--perigo"
+                    <button type="submit"
+                            class="ds-btn ds-btn--perigo"
                             data-confirmar="Apagar a conta e todos os dados?">
                         {% if user.eh_visitante %}Encerrar a visita{% else %}Excluir conta{% endif %}
                     </button>
