@@ -78,25 +78,26 @@ jobs:
       # Nada em soft-fail: toda etapa bloqueia. ruff e mypy foram zerados no
       # mesmo PR — 42 e 13 achados —, sem nenhum `# type: ignore`, então não há
       # motivo para deixar o portão aberto "por enquanto".
-      # As etapas de qualidade entram toleradas enquanto o passivo é medido.
-      # Lista vazia significa "nada tolerado": ligá-las sem declarar aqui
-      # reprovaria no primeiro dia.
-      soft-fail: "diff,frontend"
+      # As duas etapas de qualidade entraram toleradas em 10/09/2026 e saíram
+      # no mesmo dia. O único achado bloqueante era um `button` sem `type`
+      # dentro do formulário de exclusão de conta, corrigido neste PR.
+      soft-fail: ""
 
-      # --- qualidade (primeira rodada: medir, não bloquear) ---
+      # --- qualidade ---
       #
-      # Procedimento da seção 8 do RUNBOOK: rodar, ler o resumo no painel do
-      # job, conferir se algum achado é falso positivo neste projeto, e só
-      # então trocar os `nenhum` por `erro` e tirar do soft-fail.
+      # Apertado em 2026-09-10. Sem a etapa de layout: este projeto não declara
+      # rotas públicas para o a11y, e inventar uma mediria a tela errada — ela
+      # entra quando as rotas forem declaradas. O passivo restante é aviso: 3
+      # seletores duplicados, 1 par de tags vazio e 10 avisos de ESLint.
       run-diff-quality: true
-      diff-quality-fail-on: nenhum
+      diff-quality-fail-on: erro
 
       # frontend-paths precisa ser explícito: o glob de CSS a partir da raiz
       # varre o venv/ inteiro e o job trava sem mensagem de erro.
       run-frontend: true
       frontend-paths: "static"
       template-paths: "templates"
-      frontend-fail-on: nenhum
+      frontend-fail-on: erro
 
       # --- ponta a ponta ---
       # Mesmos testes que o workflow antigo rodava com -m e2e. Os `visual`
