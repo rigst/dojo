@@ -1,23 +1,30 @@
 # /etc/systemd/system/dojo.service
 #
-# Instalação direta no servidor: um venv em /srv/dojo/.venv, o código em
-# /srv/dojo, e o gunicorn escutando num socket unix que só o nginx enxerga.
+# Esta é a unidade que roda em produção. Foi trazida para o repositório em
+# 12/09/2026, quando uma auditoria achou a cópia versionada descrevendo uma
+# instalação que não existe mais: /srv/dojo, `User=dojo`, venv em `.venv`. O
+# app migrou para /var/www/dojo com `User=rod`, padrão dos outros apps deste
+# servidor, e o arquivo daqui ficou para trás — quem o usasse para recriar o
+# serviço produziria algo que não sobe.
+#
+# O gunicorn escuta num socket unix que só o nginx enxerga.
 #
 # O ambiente vem do próprio .env do app, lido pelo settings, e não por
 # EnvironmentFile: o formato do systemd não aceita valor com espaço sem aspas,
 # e o .env tem pelo menos um (DJANGO_DEFAULT_FROM_EMAIL). Duas cópias da mesma
-# configuração, divergindo em silêncio, é pior que uma.
+# configuração, divergindo em silêncio, é pior que uma — que é exatamente o
+# defeito que este commit corrige noutro lugar.
 
 [Unit]
 Description=Dojo (gunicorn + uvicorn worker)
-After=network-online.target postgresql.service redis.service
+After=network-online.target postgresql.service redis-server.service
 Wants=network-online.target
 
 [Service]
 Type=notify
-User=dojo
-Group=dojo
-WorkingDirectory=/srv/dojo
+User=rod
+Group=www-data
+WorkingDirectory=/var/www/dojo
 Environment=DJANGO_ENV=production
 Environment=PYTHONUNBUFFERED=1
 
@@ -27,7 +34,11 @@ Environment=PYTHONUNBUFFERED=1
 #
 # O timeout é alto porque a conexão fica legitimamente parada enquanto o modelo
 # pensa. Quem prova que ela está viva é o batimento de core/sse.py.
-ExecStart=/srv/dojo/.venv/bin/gunicorn config.asgi:application \
+#
+# Sem `--config`: o gunicorn lê `./gunicorn.conf.py` a partir do
+# WorkingDirectory por descoberta. É de lá que vem o `control_socket`, que
+# precisa ficar fora de /home por causa do ProtectHome logo abaixo.
+ExecStart=/var/www/dojo/venv/bin/gunicorn config.asgi:application \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind unix:/run/dojo/dojo.sock \
     --workers 3 \
@@ -40,8 +51,8 @@ ExecReload=/bin/kill -s HUP $MAINPID
 Restart=on-failure
 RestartSec=3
 
-# Cria /run/dojo com dono dojo:dojo a cada boot e apaga na parada. Sem isso o
-# socket precisaria morar num diretório criado à mão, que some no reboot.
+# Cria /run/dojo com dono rod:www-data a cada boot e apaga na parada. Sem isso
+# o socket precisaria morar num diretório criado à mão, que some no reboot.
 RuntimeDirectory=dojo
 RuntimeDirectoryMode=0755
 
