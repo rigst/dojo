@@ -20,4 +20,10 @@
 # /run/dojo, que a própria unidade já cria (`RuntimeDirectory=dojo`, dono
 # rod:www-data) e apaga na parada — o lugar certo para um socket efêmero,
 # ao lado do dojo.sock que o nginx consome.
+#
+# Exige RESTART, não reload. O SIGHUP relê este arquivo, mas o arbiter não
+# reinicia o servidor de controle junto: o caminho continua sendo o resolvido
+# na subida. Medido em 12/09/2026 — depois do reload o erro persistia e o
+# socket não aparecia em /run/dojo; com `systemctl restart dojo` o erro foi a
+# zero e o gunicorn.ctl surgiu ao lado do dojo.sock.
 control_socket = "/run/dojo/gunicorn.ctl"
