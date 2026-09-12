@@ -111,13 +111,24 @@ jobs:
       # por defeito. Ver rigst/ci, input `pytest-markers`.
       pytest-markers: "not ia_real and not visual"
 
-      # --- conformidade: fica para depois ---
-      # run-lock, run-licencas e run-sbom exigem um requirements.lock, que este
-      # repo ainda não tem. É o próximo passo, e é o que resolve as
-      # reclamações do Sonar sobre `pip install` sem versões travadas.
-      run-lock: false
-      run-licencas: false
-      run-sbom: false
+      # --- conformidade ---
+      #
+      # Ligadas em 12/09/2026, quando o `requirements.lock` passou a existir.
+      # Este era o último projeto da frota sem lock.
+      run-lock: true
+      run-licencas: true
+      run-sbom: true
+
+      # A resolução do lock é feita para 3.12, e não para o `python-version`
+      # acima: o venv de produção deste app roda 3.12.3, enquanto o pipeline
+      # analisa em 3.13. Sob `--require-hashes` a diferença entre os dois
+      # conjuntos vira falha de build, e o lock tem que descrever o que roda
+      # no servidor — mesma razão pela qual o sistema_arq resolve o dele em
+      # 3.14.
+      #
+      # A divergência 3.12/3.13 em si é outro assunto, e vale fechar: hoje o
+      # CI aprova numa versão do Python que produção não usa.
+      lock-python-version: "3.12"
 
       # Desligado nas PRs do Dependabot: o GitHub não entrega os secrets do
       # Actions a esse ator, e sem o SONAR_TOKEN o scanner falha com
