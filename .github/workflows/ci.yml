@@ -131,7 +131,10 @@ jobs:
       #
       # `settings.py` entra nas exclusões de cobertura na forma de arquivo:
       # o glob `**/settings/**` dos outros projetos não casa com settings em
-      # arquivo único.
+      # arquivo único. O `gunicorn.conf.py` entra pelo mesmo motivo que o
+      # `wsgi.py` e o `manage.py` já estavam lá: é configuração de processo,
+      # lida pelo gunicorn na subida, e não código com comportamento a testar.
+      # Sem ele o gate reprova por cobertura qualquer PR que o toque.
       # `issue.ignore.multicriteria`: o S5344 (CRITICAL, "use a secure hashing
       # algorithm") aponta o MD5PasswordHasher em config/settings.py. É falso
       # positivo, e verificável: a linha está dentro de `if IS_TEST:` e é a
@@ -148,4 +151,4 @@ jobs:
         -Dsonar.issue.ignore.multicriteria.e1.ruleKey=python:S5344
         -Dsonar.issue.ignore.multicriteria.e1.resourceKey=config/settings.py
         -Dsonar.exclusions=**/migrations/**,**/staticfiles/**,**/node_modules/**,**/venv/**,**/.venv/**,**/*.jpg,**/*.jpeg,**/*.png,**/*.gif,**/*.ico,**/*.webp,**/*.pdf,**/*.woff,**/*.woff2,**/*.ttf,**/*.eot,scripts/**,deploy/**
-        -Dsonar.coverage.exclusions=**/migrations/**,**/tests.py,**/tests_*.py,**/test_*.py,**/tests/**,**/conftest.py,**/settings.py,**/manage.py,**/wsgi.py,**/asgi.py,scripts/**,deploy/**
+        -Dsonar.coverage.exclusions=**/migrations/**,**/tests.py,**/tests_*.py,**/test_*.py,**/tests/**,**/conftest.py,**/settings.py,**/manage.py,**/wsgi.py,**/asgi.py,**/gunicorn.conf.py,scripts/**,deploy/**
