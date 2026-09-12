@@ -29,7 +29,11 @@ jobs:
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     with:
-      python-version: "3.13"
+      # 3.12, igual ao venv de produção (3.12.3). Ficou em 3.13 por um
+      # tempo, e o CI aprovava numa versão do Python que o servidor não usa —
+      # qualquer diferença de comportamento entre as duas passava batida até
+      # chegar em produção.
+      python-version: "3.12"
       requirements-file: requirements.txt
       dev-requirements-file: requirements-dev.txt
       source-paths: "core usuarios projetos mentoria revisoes ia legal config"
@@ -119,16 +123,9 @@ jobs:
       run-licencas: true
       run-sbom: true
 
-      # A resolução do lock é feita para 3.12, e não para o `python-version`
-      # acima: o venv de produção deste app roda 3.12.3, enquanto o pipeline
-      # analisa em 3.13. Sob `--require-hashes` a diferença entre os dois
-      # conjuntos vira falha de build, e o lock tem que descrever o que roda
-      # no servidor — mesma razão pela qual o sistema_arq resolve o dele em
-      # 3.14.
-      #
-      # A divergência 3.12/3.13 em si é outro assunto, e vale fechar: hoje o
-      # CI aprova numa versão do Python que produção não usa.
-      lock-python-version: "3.12"
+      # Sem `lock-python-version`: o padrão é o `python-version`, que agora já
+      # é 3.12. Declará-lo de novo seria um segundo lugar para a mesma
+      # verdade, e é assim que os dois divergem depois.
 
       # Desligado nas PRs do Dependabot: o GitHub não entrega os secrets do
       # Actions a esse ator, e sem o SONAR_TOKEN o scanner falha com
