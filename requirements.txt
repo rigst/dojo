@@ -30,7 +30,7 @@ nh3==0.3.7
 cryptography==50.0.1
 
 # Monitoramento de erros (ativo só com SENTRY_DSN definido)
-sentry-sdk==2.68.1
+sentry-sdk==2.69.1
 
 # O pip entra aqui como qualquer outra dependência, e não como ferramenta à
 # parte. Ele é o que o CD executa a cada deploy, e enquanto não estava
