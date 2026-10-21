@@ -18,4 +18,4 @@ watchfiles==1.2.0
 # `playwright install chromium`.
 pytest-playwright==0.9.0
 pixelmatch==0.4.0
-pillow==12.3.0
+pillow==13.0.0
