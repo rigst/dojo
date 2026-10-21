@@ -28,7 +28,7 @@ sudo -u postgres createdb dojo --owner dojo
 sudo -u dojo git clone SEU_REPO /srv/dojo
 cd /srv/dojo
 sudo -u dojo python3 -m venv .venv
-sudo -u dojo .venv/bin/pip install -r requirements.txt
+sudo -u dojo .venv/bin/pip install --require-hashes -r requirements.lock
 ```
 
 ## 4. Configuração
