@@ -48,8 +48,12 @@ jobs:
       # entrar nela é caminho sem volta fácil. Mesma decisão do sistema_arq.
       django-check-fail-level: ERROR
 
-      # Testes rodam em SQLite (o `else` do bloco DATABASES), sem Postgres.
-      postgres: false
+      # Testes em PostgreSQL 16, o mesmo banco de produção: o pipeline sobe um
+      # container descartável (user/senha/db postgres) para pytest e e2e. O
+      # settings ignora DATABASE_URL na suíte (proteção contra o Postgres de
+      # produção do .env) e só aceita a saída explícita DOJO_TEST_DATABASE_URL,
+      # declarada no test-env abaixo. Localmente, sem ela, a suíte segue no
+      # SQLite.
 
       # Valores fictícios, só para o check --deploy conseguir subir os settings
       # com IS_PRODUCTION ligado. Nada aqui é segredo real.
@@ -78,6 +82,9 @@ jobs:
         # não cria: toda página vira erro e o Playwright expira esperando
         # seletor. O sintoma parece teste instável; a causa é vazamento de env.
         DOJO_CACHE_NO_BANCO=
+        # Banco da suíte: o Postgres do runner. Senha fictícia do container de
+        # CI, a mesma do DATABASE_URL acima.
+        DOJO_TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 
       # Nada em soft-fail: toda etapa bloqueia. ruff e mypy foram zerados no
       # mesmo PR — 42 e 13 achados —, sem nenhum `# type: ignore`, então não há

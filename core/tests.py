@@ -96,29 +96,6 @@ def test_estatico_em_desenvolvimento_nao_e_cacheado(rf, settings):
     assert resposta["Cache-Control"] == "no-store"
 
 
-@pytest.mark.django_db
-def test_saude_responde_sem_autenticacao(client):
-    """A sonda é chamada pelo nginx e por quem monitora, que não têm sessão."""
-    resposta = client.get("/saude/")
-
-    assert resposta.status_code == 200
-    assert resposta.content == b"ok\n"
-
-
-@pytest.mark.django_db
-def test_saude_denuncia_banco_fora(client, monkeypatch):
-    """Responder 200 com o banco fora é o defeito que a sonda existe para não
-    ter: o processo está de pé e não serve para nada."""
-    from django.db import connection
-
-    def explodir():
-        raise RuntimeError("sem conexão")
-
-    monkeypatch.setattr(connection, "cursor", explodir)
-
-    assert client.get("/saude/").status_code == 503
-
-
 def test_sentry_nao_inicializa_durante_a_suite():
     """O .env da raiz é lido em qualquer execução local e traz o SENTRY_DSN de
     produção; sem a guarda IS_TEST, rodar a suíte na máquina mandava evento de

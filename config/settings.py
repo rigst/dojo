@@ -156,10 +156,19 @@ ASGI_APPLICATION = "config.asgi.application"
 # Alvo do projeto: PostgreSQL (defina DATABASE_URL). Sem ele, cai em SQLite
 # para desenvolvimento local rodar sem dependência externa.
 # ---------------------------------------------------------------------------
-# Vazio na suíte pelo mesmo motivo do IA_BACKEND: o .env aponta para o
-# Postgres de produção, e sem isto `pytest` tenta criar a base de teste lá.
-# Cai no SQLite do bloco abaixo, que é o que a CI já usa.
-DATABASE_URL = "" if IS_TEST else os.getenv("DATABASE_URL", "").strip()
+# Na suíte o DATABASE_URL é ignorado pelo mesmo motivo do IA_BACKEND: o .env
+# aponta para o Postgres de produção, e sem isto `pytest` tenta criar a base de
+# teste lá.
+#
+# A saída explícita é DOJO_TEST_DATABASE_URL, lida SÓ sob IS_TEST e que nenhum
+# .env de produção define: o CI a aponta para o Postgres 16 descartável do
+# runner, para a suíte rodar no mesmo banco de produção (collation, ILIKE,
+# transações e constraints do SQLite não são os do Postgres). Sem ela, como
+# na máquina local, a suíte cai no SQLite do bloco abaixo.
+if IS_TEST:
+    DATABASE_URL = os.getenv("DOJO_TEST_DATABASE_URL", "").strip()
+else:
+    DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 DB_CONN_MAX_AGE = int(os.getenv("DJANGO_DB_CONN_MAX_AGE", "60"))
 DB_SSL_REQUIRE = env_bool("DJANGO_DB_SSL_REQUIRE", default=IS_PRODUCTION)
 
