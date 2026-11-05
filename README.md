@@ -283,9 +283,11 @@ processo, o que faria os limites valerem uma vez por worker. O settings recusa
 subir sem isso.
 
 O log vai para stderr, que sob systemd é o journal: `journalctl -u dojo -f`. E
-há uma sonda em `/saude/`, que toca o banco antes de responder, porque um
-processo de pé com a conexão perdida é o estado que uma sonda estática deixa
-passar.
+há uma sonda em `/healthz/` (e no nome antigo, `/saude/`), que toca o banco e
+o cache antes de responder, porque um processo de pé com a conexão perdida é o
+estado que uma sonda estática deixa passar. É ela que o smoke-test do
+`deploy/cd-deploy.sh` consulta: qualquer coisa diferente de 200 reverte o
+deploy.
 
 ## Licença
 
