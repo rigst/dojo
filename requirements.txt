@@ -1,36 +1,36 @@
-asgiref==3.12.1
-Django==6.1.1
+asgiref==3.13.0
+Django==6.1.2
 dj-database-url==3.1.2
 gunicorn==26.2.0
-sqlparse==0.6.0
+sqlparse==0.6.1
 
 # Servidor ASGI: o chat é servido por SSE, e em WSGI cada conversa aberta
 # prenderia um worker inteiro até a resposta terminar.
-uvicorn==0.52.4
+uvicorn==0.54.0
 
 # Banco de produção. Em desenvolvimento o padrão é SQLite.
-psycopg[binary]==3.2.12
+psycopg[binary]==3.3.6
 
 # Cliente do cache compartilhado. O backend de cache do Django é dele, e sem
 # este pacote produção não sobe: é no cache que moram as travas de força bruta
 # da entrada e de criação de contas de visitante.
-redis==7.1.0
+redis==8.1.0
 
 # Mentoria: cliente oficial da Anthropic e validação dos retornos estruturados
 # (plano e revisão de código voltam como JSON schema, não como texto solto).
-anthropic==1.2.0
-pydantic==2.13.4
+anthropic==2.4.0
+pydantic==2.14.2
 
 # Render e sanitização das respostas do mentor. nh3 é obrigatório: o markdown
 # vem de um modelo de linguagem e não pode ir cru para o template.
-Markdown==3.10.3
+Markdown==3.11.2
 nh3==0.3.7
 
 # Cifra a chave de API que o usuário guarda no perfil (BYOK).
-cryptography==50.0.1
+cryptography==50.0.2
 
 # Monitoramento de erros (ativo só com SENTRY_DSN definido)
-sentry-sdk==2.68.1
+sentry-sdk==2.73.0
 
 # O pip entra aqui como qualquer outra dependência, e não como ferramenta à
 # parte. Ele é o que o CD executa a cada deploy, e enquanto não estava
@@ -42,4 +42,4 @@ sentry-sdk==2.68.1
 #
 # Não use `pip install --upgrade pip` no deploy: isso instalaria versão não
 # fixada, que é o que o pin e o `--require-hashes` existem para evitar.
-pip==26.2.1
+pip==26.3
