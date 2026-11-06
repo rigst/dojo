@@ -43,10 +43,12 @@ jobs:
       django-settings-module: config.settings
       test-settings-module: config.settings
 
-      # ERROR, e não o WARNING padrão: `security.W021` (HSTS preload) é escolha
-      # deliberada — o domínio não está na lista de preload dos navegadores, e
-      # entrar nela é caminho sem volta fácil. Mesma decisão do sistema_arq.
-      django-check-fail-level: ERROR
+      # WARNING, o padrão do pipeline: qualquer aviso do `check --deploy` barra
+      # o CI. Antes ficava em ERROR só por causa do `security.W021` (HSTS
+      # preload), e com isso todo outro aviso de segurança passava calado. O
+      # W021 agora está em SILENCED_SYSTEM_CHECKS no settings, com o motivo:
+      # preload é decisão do domínio, não do app.
+      django-check-fail-level: WARNING
 
       # Testes em PostgreSQL 16, o mesmo banco de produção: o pipeline sobe um
       # container descartável (user/senha/db postgres) para pytest e e2e. O
