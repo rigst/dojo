@@ -328,6 +328,13 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool(
     "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=IS_PRODUCTION
 )
 SECURE_HSTS_PRELOAD = env_bool("DJANGO_SECURE_HSTS_PRELOAD", default=False)
+
+# `security.W021` (HSTS sem preload) silenciado: entrar na lista de preload dos
+# navegadores é decisão do domínio stolben.com inteiro, não deste app, e sair
+# dela leva meses. Com o aviso calado, o `check --deploy` do CI pode rodar em
+# WARNING e barrar qualquer outro aviso de segurança que apareça. Se o domínio
+# entrar na lista, ligue DJANGO_SECURE_HSTS_PRELOAD e tire esta linha.
+SILENCED_SYSTEM_CHECKS = ["security.W021"]
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", default=IS_PRODUCTION)
 
 if env_bool("DJANGO_USE_X_FORWARDED_PROTO", default=False):

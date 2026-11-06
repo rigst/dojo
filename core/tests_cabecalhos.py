@@ -28,3 +28,8 @@ def test_permissions_policy_vazia_desliga_o_cabecalho(client, settings):
     settings.PERMISSIONS_POLICY = ""
     assert "Permissions-Policy" not in client.get("/healthz/")
 
+
+def test_check_deploy_so_silencia_o_preload(settings):
+    """W021 calado por decisão de domínio; nenhum outro aviso pode ir junto,
+    senão o check --deploy em WARNING do CI deixa de proteger."""
+    assert settings.SILENCED_SYSTEM_CHECKS == ["security.W021"]
