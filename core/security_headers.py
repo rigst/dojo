@@ -5,7 +5,8 @@ from django.conf import settings
 
 
 class ContentSecurityPolicyMiddleware:
-    """Sorteia o nonce da requisição e assina a resposta com a CSP.
+    """Sorteia o nonce da requisição e assina a resposta com a CSP e a
+    Permissions-Policy.
 
     Precisa das duas metades. Síncrona e assíncrona. A view do chat é `async`
     e devolve um stream; se o middleware fosse só síncrono, o Django rodaria a
@@ -43,4 +44,11 @@ class ContentSecurityPolicyMiddleware:
             response["Content-Security-Policy"] = settings.CONTENT_SECURITY_POLICY.format(
                 nonce=nonce
             )
+        # Permissions-Policy vale em qualquer ambiente, ao contrário da CSP: ela
+        # só nega recursos que o Dojo não usa (câmera, microfone, localização,
+        # pagamento, USB), então não há o que quebrar em desenvolvimento. E
+        # `setdefault`, para uma view que precise liberar algo poder fazê-lo.
+        politica = getattr(settings, "PERMISSIONS_POLICY", "")
+        if politica:
+            response.setdefault("Permissions-Policy", politica)
         return response

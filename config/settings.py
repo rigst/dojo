@@ -368,6 +368,15 @@ CONTENT_SECURITY_POLICY = os.getenv(
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 )
 
+# Recursos do navegador que nenhuma tela usa ficam negados para a página e para
+# qualquer iframe. Mesmo valor da frota (o dracma manda o mesmo pelo nginx). O
+# Dojo não grava áudio nem vídeo, por isso câmera e microfone vão em `()` e não
+# em `(self)`. Vazio desliga o cabeçalho.
+PERMISSIONS_POLICY = os.getenv(
+    "DJANGO_PERMISSIONS_POLICY",
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+)
+
 # ---------------------------------------------------------------------------
 # Mentoria (Claude API)
 # A chave é uma só, de quem hospeda o app, e serve a todas as contas.
